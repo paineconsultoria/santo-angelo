@@ -3047,7 +3047,7 @@ function save(){
 }
 
 function exportarJSON(){
-  const blob=new Blob([JSON.stringify({allMonths,currentComp,nF,nT,nD},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({allMonths,currentComp,nF,nT,nD,saldoBancario},null,2)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download='custo-por-turma-mensal-'+new Date().toISOString().slice(0,10)+'.json';
@@ -3072,10 +3072,15 @@ function importarJSON(ev){
         allMonths[currentComp]={S:p.S,nF:p.nF||1,nT:p.nT||1,nD:p.nD||1};
         S=p.S; nF=p.nF||1; nT=p.nT||1; nD=p.nD||1;
       }
+      if(p.saldoBancario){
+        Object.assign(saldoBancario, p.saldoBancario);
+      }
       g('comp-input-sb').value=currentComp;
       g('comp-badge-sb').textContent=compLabel(currentComp);
       renderFunc(); renderTurmas(); renderDespTabela();
-      showToast('✅ Dados carregados com sucesso!');
+      saveAll();
+      saveSaldoState();
+      showToast('✅ Dados carregados e enviados para a nuvem!');
     }catch(err){ alert('❌ Arquivo inválido.'); }
   };
   r.readAsText(f); ev.target.value='';
