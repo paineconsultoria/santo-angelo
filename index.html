@@ -1,0 +1,3208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Custo por Turma — Gestão Pedagógica Mensal</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:        #182640;
+  --navy-mid:    #1e3058;
+  --navy-light:  #263d72;
+  --gold:        #c4933f;
+  --gold-lt:     #e0b86a;
+  --gold-pale:   #fdf3e0;
+  --white:       #ffffff;
+  --bg:          #f6f5f2;
+  --g100:        #eeece8;
+  --g200:        #dedbd5;
+  --g400:        #9b9790;
+  --g600:        #5a5855;
+  --g800:        #2c2b28;
+  --red:         #bf3327;
+  --red-lt:      #fcecea;
+  --green:       #1c7a52;
+  --green-lt:    #e6f5ee;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--g800);min-height:100vh;display:flex;}
+
+/* ── SIDEBAR ─────────────────────────────────────────── */
+.sidebar{width:230px;min-width:230px;background:var(--navy);display:flex;flex-direction:column;position:fixed;height:100vh;overflow-y:auto;z-index:100;}
+.sb-header{padding:22px 18px 18px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sb-logo{font-family:'Playfair Display',serif;font-size:15px;color:var(--gold-lt);line-height:1.35;}
+.sb-sub{font-size:10px;color:var(--g400);margin-top:3px;letter-spacing:.8px;text-transform:uppercase;}
+.sb-nav{padding:12px 0;flex:1;}
+.nav-group-label{font-size:9px;color:var(--g400);letter-spacing:1.2px;text-transform:uppercase;padding:14px 18px 5px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 18px;color:rgba(255,255,255,.55);cursor:pointer;font-size:12.5px;font-weight:400;transition:all .14s;border-left:3px solid transparent;}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,.05);}
+.nav-item.active{color:var(--gold-lt);background:rgba(196,147,63,.12);border-left-color:var(--gold);font-weight:500;}
+.nav-icon{font-size:15px;width:18px;text-align:center;}
+.sb-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);}
+.sb-comp{padding:12px 18px;border-top:1px solid rgba(255,255,255,.08);}
+.sb-comp input[type=month]:focus{outline:none;border-color:var(--gold);}
+.sb-footer-label{font-size:9px;color:var(--g400);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;}
+.btn-pair{display:flex;gap:7px;}
+.btn-tiny{flex:1;padding:6px 8px;font-size:11px;font-family:'IBM Plex Sans',sans-serif;font-weight:500;border:1px solid rgba(255,255,255,.12);border-radius:4px;background:rgba(255,255,255,.04);color:rgba(255,255,255,.6);cursor:pointer;transition:all .14s;text-align:center;}
+.btn-tiny:hover{background:rgba(255,255,255,.1);color:#fff;}
+
+/* ── MAIN ─────────────────────────────────────────────── */
+.main{margin-left:230px;flex:1;min-height:100vh;display:flex;flex-direction:column;}
+.page-hdr{background:var(--white);border-bottom:1px solid var(--g200);padding:18px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.page-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--navy);}
+.page-desc{font-size:12px;color:var(--g400);margin-top:2px;}
+.content{padding:24px 28px;flex:1;}
+.tab-section{display:none;}
+.tab-section.active{display:block;}
+
+/* ── CARDS ─────────────────────────────────────────────── */
+.card{background:var(--white);border:1px solid var(--g200);border-radius:8px;overflow:hidden;margin-bottom:20px;}
+.card-hdr{padding:13px 18px;background:var(--g100);border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-size:12px;font-weight:600;color:var(--navy);letter-spacing:.3px;text-transform:uppercase;}
+.card-body{padding:18px;}
+
+/* ── FORM ─────────────────────────────────────────────── */
+.form-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:13px;margin-bottom:13px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group.span2{grid-column:span 2;}
+.form-group.span3{grid-column:span 3;}
+label{font-size:10px;font-weight:600;color:var(--g600);letter-spacing:.5px;text-transform:uppercase;}
+input,select{padding:7px 10px;border:1px solid var(--g200);border-radius:4px;font-size:12.5px;font-family:'IBM Plex Sans',sans-serif;color:var(--g800);background:var(--white);transition:border-color .14s;width:100%;}
+input:focus,select:focus{outline:none;border-color:var(--navy);}
+input[type="number"]{font-family:'IBM Plex Mono',monospace;}
+.sub-hdr{margin:0 -18px;padding:9px 18px;margin-bottom:13px;font-size:10px;color:var(--navy);font-weight:700;text-transform:uppercase;letter-spacing:.6px;background:var(--gold-pale);border-top:1px solid #f0e0c0;border-bottom:1px solid #f0e0c0;}
+
+/* ── BUTTONS ─────────────────────────────────────────── */
+.btn{padding:8px 16px;border:none;border-radius:4px;font-size:12.5px;font-weight:500;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;transition:all .14s;}
+.btn-primary{background:var(--navy);color:#fff;}
+.btn-primary:hover{background:var(--navy-light);}
+.btn-gold{background:var(--gold);color:var(--navy);}
+.btn-gold:hover{background:var(--gold-lt);}
+.btn-ghost{background:transparent;border:1px solid var(--g200);color:var(--g600);}
+.btn-ghost:hover{background:var(--g100);}
+.btn-icon{background:transparent;border:none;color:var(--g400);cursor:pointer;padding:3px 5px;border-radius:3px;font-size:13px;line-height:1;}
+.btn-icon:hover{color:var(--red);background:var(--red-lt);}
+.btn-sm{padding:5px 12px;font-size:11px;}
+
+/* ── TABLES ─────────────────────────────────────────── */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+th{background:var(--navy);color:rgba(255,255,255,.82);padding:9px 11px;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:.5px;white-space:nowrap;}
+td{padding:8px 11px;border-bottom:1px solid var(--g100);color:var(--g800);white-space:nowrap;}
+tbody tr:hover td{background:#f8f8f5;}
+tfoot td{background:var(--navy);color:#fff;font-weight:600;padding:10px 11px;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+.tr{text-align:right;}
+.tc{text-align:center;}
+
+/* ── BADGES ──────────────────────────────────────────── */
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;}
+.b-navy{background:var(--navy);color:var(--gold-lt);}
+.b-gold{background:var(--gold-pale);color:#7a5200;}
+.b-blue{background:#e0e8ff;color:#2d4db0;}
+.b-yellow{background:#fef8e0;color:#8a6200;}
+.pos{color:var(--green);}
+.neg{color:var(--red);}
+
+/* ── KPI CARDS ───────────────────────────────────────── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;margin-bottom:20px;}
+.kpi{background:var(--white);border:1px solid var(--g200);border-radius:8px;padding:14px 16px;border-top:3px solid var(--g200);}
+.kpi.gold{border-top-color:var(--gold);}
+.kpi.pos{border-top-color:var(--green);}
+.kpi.neg{border-top-color:var(--red);}
+.kpi.navy{border-top-color:var(--navy);}
+.kpi-lbl{font-size:10px;color:var(--g400);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.kpi-val{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:500;color:var(--navy);}
+.kpi-val.pos{color:var(--green);}
+.kpi-val.neg{color:var(--red);}
+
+/* ── GRADE HORÁRIA TABLE ─────────────────────────────── */
+.grade-wrap{overflow:auto;max-height:68vh;}
+.grade-tbl{border-collapse:separate;border-spacing:0;font-size:11.5px;}
+.grade-tbl th,.grade-tbl td{border-bottom:1px solid var(--g100);border-right:1px solid var(--g100);}
+.grade-tbl .sticky{position:sticky;z-index:2;background:var(--white);}
+.grade-tbl .sticky:first-child{left:0;}
+.grade-tbl .sticky:nth-child(2){left:50px;}
+.grade-tbl th.sticky{background:var(--navy);z-index:3;}
+.grade-tbl th.sticky:nth-child(2){left:50px;}
+.grade-tbl .grade-in{width:52px;padding:3px 5px;border:1px solid transparent;background:transparent;font-size:11px;text-align:center;font-family:'IBM Plex Mono',monospace;}
+.grade-tbl .grade-in:focus{border-color:var(--gold);background:var(--white);outline:none;}
+.grade-tbl .grade-in:not([value=""]):not([value="0"]){font-weight:600;color:var(--navy);}
+.grade-tbl .total-col{background:rgba(24,38,64,.06)!important;font-weight:600;font-family:'IBM Plex Mono',monospace;}
+.grade-tbl .col-total-row{background:rgba(24,38,64,.04)!important;}
+
+/* ── CRITERIA BOX ────────────────────────────────────── */
+.criteria-box{background:var(--white);border:1px solid var(--g200);border-radius:8px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:flex-start;gap:30px;flex-wrap:wrap;}
+.criteria-title{font-size:10px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.radio-opt{display:flex;align-items:flex-start;gap:8px;cursor:pointer;}
+.radio-opt input{margin-top:2px;width:auto;flex-shrink:0;}
+.radio-label{font-size:12.5px;color:var(--g800);}
+.radio-desc{font-size:10.5px;color:var(--g400);margin-top:1px;}
+
+/* ── ALERT ───────────────────────────────────────────── */
+.alert{padding:11px 15px;border-radius:6px;font-size:12.5px;margin-bottom:16px;border:1px solid;}
+.alert-info{background:#edf3fc;color:#1a3b70;border-color:#c5d6f0;}
+.alert-warn{background:#fdf8ea;color:#7a5200;border-color:#f0dea0;}
+
+/* ── PROGRESS BAR ────────────────────────────────────── */
+.bar-bg{height:3px;background:var(--g200);border-radius:2px;margin-top:4px;}
+.bar-fill{height:100%;background:var(--gold);border-radius:2px;}
+
+/* ── RESULTADO TABLE ─────────────────────────────────── */
+.res-pos{background:var(--green-lt);color:var(--green);font-weight:700;}
+.res-neg{background:var(--red-lt);color:var(--red);font-weight:700;}
+
+/* ── COMPETÊNCIA BAR ─────────────────────────────────── */
+.comp-bar{background:var(--navy-mid);border-bottom:2px solid var(--gold);padding:9px 28px 9px 260px;display:flex;align-items:center;gap:14px;font-size:12px;color:rgba(255,255,255,.7);position:sticky;top:0;z-index:50;}
+.comp-bar label{font-size:10px;font-weight:700;color:var(--gold-lt);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;}
+.comp-bar input[type=month]{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:4px;padding:4px 10px;font-size:12.5px;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;}
+.comp-bar input[type=month]:focus{outline:none;border-color:var(--gold);}
+.comp-bar .comp-badge{background:var(--gold);color:var(--navy);font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:.3px;}
+.comp-bar .comp-sep{width:1px;height:20px;background:rgba(255,255,255,.15);}
+.comp-btn{padding:5px 13px;font-size:11.5px;font-weight:600;border-radius:4px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);cursor:pointer;font-family:'IBM Plex Sans',sans-serif;white-space:nowrap;transition:all .14s;}
+.comp-btn:hover{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.4);}
+.comp-btn.danger{border-color:rgba(191,51,39,.5);color:#f87171;}
+.comp-btn.danger:hover{background:rgba(191,51,39,.2);}
+.hist-months{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px;}
+.hist-chip{padding:5px 13px;border-radius:16px;font-size:11.5px;font-weight:600;background:var(--g100);border:1px solid var(--g200);color:var(--navy);cursor:pointer;transition:all .13s;}
+.hist-chip:hover{background:var(--gold-pale);border-color:var(--gold);}
+.hist-chip.active{background:var(--navy);color:var(--gold-lt);border-color:var(--navy);}
+.copy-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;}
+.copy-modal.open{display:flex;}
+.copy-box{background:#fff;border-radius:10px;padding:28px;width:420px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.copy-box h3{font-family:'Playfair Display',serif;font-size:17px;color:var(--navy);margin-bottom:6px;}
+.copy-box p{font-size:12.5px;color:var(--g600);margin-bottom:18px;line-height:1.5;}
+.copy-month-list{max-height:220px;overflow-y:auto;border:1px solid var(--g200);border-radius:6px;margin-bottom:18px;}
+.copy-month-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--g100);cursor:pointer;transition:background .12s;}
+.copy-month-item:last-child{border-bottom:none;}
+.copy-month-item:hover{background:var(--gold-pale);}
+.copy-month-item .cm-label{font-size:13px;font-weight:600;color:var(--navy);}
+.copy-month-item .cm-info{font-size:11px;color:var(--g400);}
+.copy-check{display:flex;flex-direction:column;gap:7px;margin-bottom:16px;}
+.copy-check label{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--g800);cursor:pointer;}
+.copy-check input{width:auto;}
+/* ── PREVIEW COST BOX ────────────────────────────────── */
+.cost-preview{margin-top:8px;padding:11px 15px;background:var(--g100);border-radius:6px;display:flex;align-items:center;justify-content:space-between;}
+.cost-preview span:first-child{font-size:12px;color:var(--g600);}
+.cost-preview-val{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:var(--navy);}
+
+/* ── DEMONSTRATIVO DE CUSTO ──────────────────────────── */
+.form-demo-grid{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start;}
+.demo-col{display:flex;flex-direction:column;position:sticky;top:20px;max-height:calc(100vh - 40px);overflow-y:auto;}
+.demo-aloc-turma{font-weight:600;color:var(--navy);}
+.demo-aloc-pct{font-size:10.5px;color:var(--g400);font-weight:400;}
+.demo-aloc-bar-wrap{height:5px;background:var(--g100);border-radius:3px;margin-top:4px;overflow:hidden;}
+.demo-aloc-bar{height:5px;background:var(--gold);border-radius:3px;transition:width .3s;}
+.demo-box{background:var(--g100);border:1px solid var(--g200);border-radius:8px;overflow:visible;flex-shrink:0;}
+.demo-box-hdr{background:var(--navy);padding:11px 14px;display:flex;align-items:center;gap:8px;}
+.demo-box-hdr span{font-size:11px;font-weight:700;color:var(--gold-lt);text-transform:uppercase;letter-spacing:.6px;}
+.demo-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.demo-tbl td{padding:5px 12px;border-bottom:1px solid var(--g200);vertical-align:middle;}
+.demo-tbl tr:last-child td{border-bottom:none;}
+.demo-lbl{color:var(--g600);line-height:1.3;}
+.demo-lbl small{display:block;font-size:10px;color:var(--g400);font-style:italic;margin-top:1px;}
+.demo-val{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--g800);white-space:nowrap;min-width:100px;}
+.demo-sec td{background:rgba(196,147,63,.12);font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gold);padding:4px 12px!important;border-bottom:1px solid rgba(196,147,63,.2)!important;}
+.demo-sub .demo-lbl{padding-left:14px;font-size:11.5px;}
+.demo-subtot td{background:var(--g200);}
+.demo-subtot .demo-lbl{font-weight:600;color:var(--navy);}
+.demo-subtot .demo-val{font-weight:700;color:var(--navy);}
+.demo-zero .demo-val{color:var(--g400);}
+.demo-grand td{background:var(--navy);padding:10px 12px!important;}
+.demo-grand .demo-lbl{color:var(--gold-lt);font-weight:700;font-size:12.5px;}
+.demo-grand .demo-val{color:#fff;font-weight:700;font-size:15px;}
+.demo-enc-note{font-size:10px;color:var(--g400);font-style:italic;}
+
+/* list breakdown row */
+.bkd-row{display:none;}
+.bkd-row.open{display:table-row;}
+.bkd-row td{padding:0!important;border-bottom:1px solid var(--g200);}
+.bkd-inner{padding:14px 16px;background:#fafaf8;display:flex;gap:20px;flex-wrap:wrap;}
+.bkd-col{flex:1;min-width:200px;}
+.bkd-col-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--navy);margin-bottom:6px;}
+.bkd-line{display:flex;justify-content:space-between;font-size:11.5px;padding:2px 0;border-bottom:1px solid var(--g100);}
+.bkd-line:last-child{border:none;}
+.bkd-line .bl{color:var(--g600);}
+.bkd-line .bv{font-family:'IBM Plex Mono',monospace;color:var(--g800);}
+.bkd-line.total-line{margin-top:4px;padding-top:5px;border-top:2px solid var(--navy)!important;border-bottom:none;}
+.bkd-line.total-line .bl{font-weight:700;color:var(--navy);}
+.bkd-line.total-line .bv{font-weight:700;color:var(--navy);font-size:13px;}
+
+/* ── SORTABLE HEADERS ────────────────────────────────── */
+th.sortable{cursor:pointer;user-select:none;transition:background .12s;}
+th.sortable:hover{background:var(--navy-light);}
+th.sortable .sort-arrow{display:inline-block;margin-left:4px;opacity:.35;font-size:9px;}
+th.sortable.asc .sort-arrow::after{content:'▲';opacity:1;}
+th.sortable.desc .sort-arrow::after{content:'▼';opacity:1;}
+th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
+
+/* ── GRADE SELECTOR ──────────────────────────────────── */
+.grade-selector{display:flex;align-items:center;gap:10px;padding:14px 18px;background:var(--gold-pale);border-bottom:1px solid #f0e0c0;position:relative;}
+.grade-selector label{font-size:10px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;}
+.grade-selector select{max-width:340px;font-size:13px;font-weight:500;padding:7px 12px;border:1.5px solid var(--gold);border-radius:5px;background:var(--white);color:var(--navy);}
+.grade-combo{position:relative;width:100%;max-width:340px;}
+.grade-combo input{width:100%;font-size:13px;font-weight:500;padding:7px 32px 7px 12px;border:1.5px solid var(--gold);border-radius:5px;background:var(--white);color:var(--navy);box-sizing:border-box;}
+.grade-combo input::placeholder{color:var(--g400);font-weight:400;}
+.grade-combo .gc-icon{position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--g400);font-size:13px;}
+.grade-combo .gc-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--g400);font-size:15px;cursor:pointer;background:none;border:none;padding:2px 4px;display:none;}
+.grade-func-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;width:100%;max-height:260px;overflow-y:auto;background:var(--white);border:1px solid var(--g200);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.14);z-index:40;}
+.grade-func-dropdown.open{display:block;}
+.grade-func-opt{padding:8px 12px;font-size:12.5px;cursor:pointer;color:var(--g800);border-bottom:1px solid var(--g100);}
+.grade-func-opt:last-child{border-bottom:none;}
+.grade-func-opt:hover,.grade-func-opt.hl{background:var(--gold-pale);}
+.grade-func-opt .gfo-id{color:var(--g400);font-size:10px;font-family:'IBM Plex Mono',monospace;margin-right:6px;}
+.grade-func-empty{padding:14px 12px;font-size:12px;color:var(--g400);text-align:center;}
+.grade-func-info{display:flex;align-items:center;gap:12px;padding:10px 18px 0;flex-wrap:wrap;}
+.grade-func-badge{background:var(--navy);color:var(--gold-lt);font-size:11px;font-weight:700;padding:3px 11px;border-radius:12px;letter-spacing:.3px;}
+.grade-func-stat{font-size:12px;color:var(--g600);}
+.grade-func-stat strong{color:var(--navy);}
+
+/* ── GRADE 5-COL GRID ────────────────────────────────── */
+.grade-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:16px 18px;}
+.grade-cell{background:var(--white);border:1px solid var(--g200);border-radius:6px;overflow:hidden;transition:border-color .14s,box-shadow .14s;}
+.grade-cell:hover{border-color:var(--gold);box-shadow:0 2px 8px rgba(196,147,63,.15);}
+.grade-cell.has-hours{border-color:var(--navy);background:rgba(24,38,64,.03);}
+.grade-cell-hdr{padding:7px 10px;background:var(--g100);border-bottom:1px solid var(--g200);font-size:10.5px;font-weight:700;color:var(--navy);line-height:1.3;}
+.grade-cell.has-hours .grade-cell-hdr{background:var(--navy);color:var(--gold-lt);}
+.grade-cell-id{font-size:9px;font-weight:400;color:var(--g400);display:block;font-family:'IBM Plex Mono',monospace;}
+.grade-cell.has-hours .grade-cell-id{color:rgba(255,255,255,.5);}
+.grade-cell-body{padding:8px 10px;display:flex;align-items:center;gap:6px;}
+.grade-cell-body label{font-size:10px;color:var(--g600);white-space:nowrap;}
+.grade-num-in{width:100%;padding:6px 8px;border:1px solid var(--g200);border-radius:4px;font-size:14px;font-family:'IBM Plex Mono',monospace;font-weight:600;text-align:center;color:var(--navy);background:var(--white);transition:border-color .14s;}
+.grade-num-in:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(196,147,63,.2);}
+.grade-num-in:not([value=""]):not([value="0"]){color:var(--navy);}
+.saldo-resumo{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;}
+.saldo-resumo-card{background:#fff;border-radius:10px;border:1px solid var(--g200);padding:16px 20px;position:relative;overflow:hidden;}
+.saldo-resumo-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;}
+.saldo-resumo-card.aplic::before{background:var(--gold);}
+.saldo-resumo-card.cc::before{background:var(--navy-light);}
+.saldo-resumo-card.total::before{background:#16a34a;}
+.sr-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--g400);margin-bottom:6px;}
+.sr-val{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;color:var(--navy);line-height:1.2;}
+.sr-var{display:flex;align-items:center;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid var(--g100);font-size:11.5px;font-weight:600;}
+.sr-var.pos{color:#16a34a;}
+.sr-var.neg{color:#dc2626;}
+.sr-var.zero{color:var(--g400);}
+.sr-var-icon{font-size:14px;}
+.sr-prev{font-size:10.5px;color:var(--g400);font-weight:400;margin-top:3px;}
+.saldo-sec-hdr{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--navy);background:var(--gold-pale);padding:8px 14px;border-top:2px solid var(--gold);border-bottom:1px solid #f0e0c0;margin-top:18px;}
+.saldo-sec-hdr:first-child{margin-top:0;}
+.saldo-tbl th.empresa{min-width:160px;}
+.saldo-tbl th.aplic{min-width:90px;}
+.saldo-tbl td.rend{color:var(--g400);font-size:11px;}
+.saldo-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.saldo-chip{padding:4px 11px;border-radius:14px;font-size:11.5px;font-weight:600;background:var(--g100);border:1px solid var(--g200);color:var(--navy);cursor:pointer;transition:all .13s;white-space:nowrap;}
+.saldo-chip.active{background:var(--navy);color:var(--gold-lt);border-color:var(--navy);}
+.saldo-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+.var-pos{color:#16a34a;font-weight:600;}
+.var-neg{color:#dc2626;font-weight:600;}
+.grade-hra-tag{font-size:9px;color:var(--g400);padding:1px 6px;background:var(--g100);border-radius:8px;white-space:nowrap;}
+.grade-cell.has-hours .grade-hra-tag{background:rgba(24,38,64,.1);color:var(--navy);}
+.grade-total-bar{margin:14px 18px;padding:10px 14px;background:var(--navy);border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.grade-total-bar span{font-size:11px;color:rgba(255,255,255,.7);}
+.grade-total-val{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;color:var(--gold-lt);}
+.grade-no-sel{padding:60px 20px;text-align:center;color:var(--g400);font-size:13px;}
+
+/* ── LOGIN ────────────────────────────────────────────── */
+.login-overlay{display:none;position:fixed;inset:0;background:var(--navy);z-index:999;align-items:center;justify-content:center;}
+.login-box{background:var(--white);border-radius:12px;padding:36px 34px 30px;width:100%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.35);}
+.login-logo{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--navy);text-align:center;}
+.login-sub{font-size:11.5px;color:var(--g400);text-align:center;margin-bottom:22px;}
+.login-label{display:block;font-size:11px;font-weight:600;color:var(--g600);margin:12px 0 5px;}
+.login-input{width:100%;padding:9px 11px;border:1px solid var(--g200);border-radius:6px;font-size:13.5px;font-family:'IBM Plex Sans',sans-serif;}
+.login-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(196,147,63,.2);}
+.login-error{color:var(--red);font-size:11.5px;min-height:16px;margin-top:8px;}
+.login-btn{width:100%;margin-top:8px;padding:10px;background:var(--navy);color:var(--gold-lt);border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s;}
+.login-btn:hover{background:var(--navy-light);}
+.login-btn:disabled{opacity:.6;cursor:default;}
+.sb-user-box{padding:10px 14px;border-top:1px solid rgba(255,255,255,.1);}
+.sb-user-name{font-size:11.5px;color:#fff;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-user-role{font-size:10px;color:var(--gold-lt);margin-bottom:6px;}
+.sb-cloud-status{font-size:9.5px;color:rgba(255,255,255,.55);margin-bottom:6px;}
+
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="login-overlay" class="login-overlay">
+  <form class="login-box" onsubmit="doLogin(event)">
+    <div class="login-logo">Custo por Turma</div>
+    <div class="login-sub">Gestão Pedagógica · Mensal</div>
+    <label class="login-label">E-mail</label>
+    <input type="email" id="login-email" class="login-input" autocomplete="username" required>
+    <label class="login-label">Senha</label>
+    <input type="password" id="login-senha" class="login-input" autocomplete="current-password" required>
+    <div class="login-error" id="login-error"></div>
+    <button type="submit" class="login-btn" id="login-btn">Entrar</button>
+  </form>
+</div>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<nav class="sidebar" style="display:none">
+  <div class="sb-header">
+    <div class="sb-logo">Custo por Turma</div>
+    <div class="sb-sub">Gestão Pedagógica · Mensal</div>
+  </div>
+  <div class="sb-nav">
+    <div class="nav-group-label">Cadastros</div>
+    <div class="nav-item active" data-tab="funcionarios" onclick="goTab('funcionarios',this)">
+      <span class="nav-icon">👥</span><span>Funcionários</span>
+    </div>
+    <div class="nav-item" data-tab="grade" onclick="goTab('grade',this)">
+      <span class="nav-icon">📅</span><span>Grade Horária</span>
+    </div>
+    <div class="nav-item" data-tab="turmas" onclick="goTab('turmas',this)">
+      <span class="nav-icon">🏫</span><span>Turmas</span>
+    </div>
+    <div class="nav-group-label" style="margin-top:6px">Análise</div>
+    <div class="nav-item" data-tab="custo" onclick="goTab('custo',this)">
+      <span class="nav-icon">💰</span><span>Custo por Turma</span>
+    </div>
+    <div class="nav-item" data-tab="despesas" onclick="goTab('despesas',this)">
+      <span class="nav-icon">📋</span><span>Rateio de Despesas</span>
+    </div>
+    <div class="nav-item" data-tab="resultado" onclick="goTab('resultado',this)">
+      <span class="nav-icon">📊</span><span>Resultado</span>
+    </div>
+    <div class="nav-item" data-tab="historico" onclick="goTab('historico',this)">
+      <span class="nav-icon">📅</span><span>Histórico Mensal</span>
+    </div>
+    <div class="nav-item" data-tab="saldos" onclick="goTab('saldos',this)">
+      <span class="nav-icon">🏦</span><span>Saldos Bancários</span>
+    </div>
+  </div>
+  <div class="sb-comp">
+    <div class="sb-footer-label">Competência</div>
+    <input type="month" id="comp-input-sb" onchange="trocarCompetencia(this.value)" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:4px;padding:5px 9px;font-size:12.5px;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;margin-bottom:8px;">
+    <div style="font-size:11px;font-weight:700;color:var(--gold-lt);text-align:center;background:rgba(196,147,63,.15);border-radius:4px;padding:4px 0;margin-bottom:8px;letter-spacing:.3px;" id="comp-badge-sb">—</div>
+    <div style="display:flex;flex-direction:column;gap:5px;">
+      <button class="btn-tiny" onclick="salvarCompetencia()">💾 Salvar mês</button>
+      <button class="btn-tiny" onclick="abrirCopyModal()">📋 Copiar mês anterior</button>
+      <button class="btn-tiny" style="background:rgba(191,51,39,.18);color:#ffb4ac" onclick="zerarEReimportarMesAnterior()" title="Apaga tudo do mês atual e traz novamente todos os dados do mês anterior (funcionários, grade, turmas e despesas)">♻️ Zerar e reimportar mês anterior</button>
+    </div>
+  </div>
+  <div class="sb-footer">
+    <div class="sb-footer-label">Backup</div>
+    <div class="btn-pair">
+      <button class="btn-tiny" onclick="exportarJSON()">⬇️ Exportar</button>
+      <button class="btn-tiny" onclick="document.getElementById('fi').click()">⬆️ Importar</button>
+    </div>
+    <input type="file" id="fi" accept=".json" style="display:none" onchange="importarJSON(event)">
+    <button class="btn-tiny" id="btn-migrar-nuvem" style="display:none;margin-top:6px" onclick="migrarDadosDoNavegador()" title="Envia uma única vez os dados salvos neste navegador para a nuvem">☁️ Importar dados deste navegador</button>
+  </div>
+  <div class="sb-user-box">
+    <div class="sb-cloud-status" id="cloud-status">—</div>
+    <div class="sb-user-name" id="user-badge">—</div>
+    <div class="sb-user-role" id="role-badge">—</div>
+    <button class="btn-tiny" style="width:100%" onclick="doLogout()">🚪 Sair</button>
+  </div>
+</nav>
+
+<!-- ═══════════════ COPY MODAL ═══════════════ -->
+<div class="copy-modal" id="copy-modal">
+  <div class="copy-box">
+    <h3>📋 Copiar dados de outro mês</h3>
+    <p>Selecione o mês de origem. Os dados serão copiados para <strong id="copy-dest-label"></strong>.</p>
+    <div class="copy-check">
+      <label><input type="checkbox" id="chk-func" checked> Funcionários e seus custos</label>
+      <label><input type="checkbox" id="chk-grade" checked> Grade horária</label>
+      <label><input type="checkbox" id="chk-turmas" checked> Turmas (nomes e nº alunos) — receitas <em>não</em> serão copiadas</label>
+      <label><input type="checkbox" id="chk-desp" checked> Despesas operacionais</label>
+    </div>
+    <div class="copy-month-list" id="copy-month-list"></div>
+    <div style="display:flex;gap:9px;justify-content:flex-end">
+      <button class="btn btn-ghost btn-sm" onclick="fecharCopyModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MAIN ═══════════════════ -->
+<main class="main" style="display:none">
+
+<!-- ╔══════════════════════════════════════╗
+     ║  FUNCIONÁRIOS                        ║
+     ╚══════════════════════════════════════╝ -->
+<div id="tab-funcionarios" class="tab-section active">
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">Funcionários</div>
+      <div class="page-desc">Cadastro de custo real mensal por colaborador</div>
+    </div>
+    <button class="btn btn-primary" onclick="abrirFormFunc()">+ Novo Funcionário</button>
+  </div>
+  <div class="content">
+    <!-- Form -->
+    <div class="card" id="form-func" style="display:none">
+      <div class="card-hdr">
+        <span class="card-title" id="form-func-tit">Novo Funcionário</span>
+        <button class="btn-icon" onclick="fecharFormFunc()">✕</button>
+      </div>
+      <div class="card-body">
+        <div class="form-demo-grid">
+          <!-- LEFT: fields -->
+          <div>
+            <div class="form-row">
+              <div class="form-group span2"><label>Nome Completo</label>
+                <input type="text" id="f-nome" placeholder="Ex: Maria da Silva"></div>
+              <div class="form-group"><label>Disciplina / Cargo</label>
+                <input type="text" id="f-disc" placeholder="Ex: Professor Ed. Infantil"></div>
+              <div class="form-group"><label>Regime</label>
+                <select id="f-regime" onchange="previewCusto()">
+                  <option value="MENSALISTA">Mensalista</option>
+                  <option value="HORISTA">Horista</option>
+                  <option value="ADM">Administrativo</option>
+                  <option value="ESTAGIARIO">Estagiário (sem 13º)</option>
+                </select>
+              </div>
+            </div>
+            <div class="sub-hdr">💰 Remuneração</div>
+            <div class="form-row">
+              <div class="form-group"><label>Salário Bruto (R$)</label>
+                <input type="number" id="f-sal" min="0" step="0.01" placeholder="0,00" oninput="previewCusto()"></div>
+              <div class="form-group"><label>Horas Extras no Mês (R$)</label>
+                <input type="number" id="f-he" min="0" step="0.01" placeholder="0,00" oninput="previewCusto()" title="Valor das horas extras pagas no mês — integra a base de encargos"></div>
+              <div class="form-group"><label>H/Aula Contratadas/Mês</label>
+                <input type="number" id="f-hc" min="0" value="220"></div>
+              <div class="form-group"><label>Outras Gratificações (R$)</label>
+                <input type="number" id="f-grat" min="0" step="0.01" placeholder="0,00" oninput="previewCusto()"></div>
+              <div class="form-group"><label>% Encargos (INSS+FGTS+RAT+S)</label>
+                <input type="number" id="f-enc" min="0" max="100" step="0.01" value="35" oninput="previewCusto()"></div>
+            </div>
+            <div class="sub-hdr">🎁 Benefícios</div>
+            <div class="form-row">
+              <div class="form-group"><label>Vale Transporte (R$)</label>
+                <input type="number" id="f-vt" min="0" step="0.01" placeholder="0,00" oninput="previewCusto()"></div>
+              <div class="form-group"><label>Vale Refeição (R$)</label>
+                <input type="number" id="f-vr" min="0" step="0.01" placeholder="0,00" oninput="previewCusto()"></div>
+              <div class="form-group"><label>Plano de Saúde (R$)</label>
+                <input type="number" id="f-ps" min="0" step="0.01" placeholder="0,00" oninput="previewCusto()"></div>
+              <div class="form-group"><label>Outros Benefícios (R$)</label>
+                <input type="number" id="f-out" min="0" step="0.01" placeholder="0,00" oninput="previewCusto()"></div>
+            </div>
+            <div style="margin-top:10px;display:flex;gap:9px;justify-content:flex-end">
+              <button class="btn btn-ghost" onclick="fecharFormFunc()">Cancelar</button>
+              <button class="btn btn-primary" onclick="salvarFunc()">Salvar Funcionário</button>
+            </div>
+          </div>
+
+          <!-- RIGHT: demonstrativo live -->
+          <div class="demo-col">
+            <div class="demo-box">
+              <div class="demo-box-hdr">
+                <span>📊 Demonstrativo do Custo Mensal</span>
+              </div>
+              <table class="demo-tbl" id="demo-tbl">
+                <!-- rendered by previewCusto() -->
+              </table>
+            </div>
+            <div class="demo-box" id="demo-alocacao" style="display:none;margin-top:14px">
+              <div class="demo-box-hdr">
+                <span>📐 Alocação por Turma</span>
+              </div>
+              <table class="demo-tbl" id="demo-alocacao-tbl">
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Table -->
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">Lista — <span id="cnt-func">0</span> funcionários <span style="font-weight:400;color:var(--g400);font-size:10px;text-transform:none;letter-spacing:0">— clique em qualquer linha para ver o demonstrativo</span></span>
+        <input type="text" id="busca-f" placeholder="🔍 Buscar nome ou cargo..." style="width:220px;padding:5px 10px;font-size:12px" oninput="renderFunc()">
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="sortable" onclick="sortTable('func','id')">ID<span class="sort-arrow"></span></th>
+              <th class="sortable" onclick="sortTable('func','nome')">Nome<span class="sort-arrow"></span></th>
+              <th class="sortable" onclick="sortTable('func','disc')">Cargo / Disciplina<span class="sort-arrow"></span></th>
+              <th class="sortable" onclick="sortTable('func','regime')">Regime<span class="sort-arrow"></span></th>
+              <th class="sortable tr" onclick="sortTable('func','sal')">Salário Bruto<span class="sort-arrow"></span></th>
+              <th class="sortable tr" onclick="sortTable('func','he')">H. Extras<span class="sort-arrow"></span></th>
+              <th class="sortable tr" onclick="sortTable('func','enc')">Encargos<span class="sort-arrow"></span></th>
+              <th class="sortable tr" onclick="sortTable('func','p13')">Prov. 13º<span class="sort-arrow"></span></th>
+              <th class="sortable tr" onclick="sortTable('func','pFer')">Prov. Férias<span class="sort-arrow"></span></th>
+              <th class="sortable tr" style="background:var(--navy-mid)" onclick="sortTable('func','total')">Custo Total<span class="sort-arrow"></span></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tb-func">
+            <tr><td colspan="10" class="tc" style="padding:40px;color:var(--g400)">Nenhum funcionário cadastrado.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════╗
+     ║  GRADE HORÁRIA                       ║
+     ╚══════════════════════════════════════╝ -->
+<div id="tab-grade" class="tab-section">
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">Grade Horária</div>
+      <div class="page-desc">Horas/aula por funcionário em cada turma — base do rateio de custo de pessoal</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="alert alert-info">
+      💡 Selecione o funcionário e preencha as horas em cada turma. O rateio é ponderado pelo <strong>Valor Hr/Aula</strong> da turma — se não informado, usa somente horas. Funcionários sem nenhuma hora alocada são sugeridos como despesa na aba Rateio de Despesas.
+    </div>
+    <div class="card">
+      <div class="grade-selector">
+        <label>👤 Funcionário</label>
+        <div class="grade-combo">
+          <input type="text" id="grade-func-search" placeholder="Digite o nome do funcionário..." autocomplete="off"
+            oninput="gcFilter(this.value)" onfocus="this.select();gcFilter('')" onkeydown="gcKeydown(event)">
+          <span class="gc-icon" id="gc-icon">🔍</span>
+          <button type="button" class="gc-clear" id="gc-clear" onclick="gcClear()" title="Limpar seleção">✕</button>
+          <div class="grade-func-dropdown" id="grade-func-list"></div>
+        </div>
+      </div>
+      <div id="grade-content">
+        <div class="grade-no-sel">Selecione um funcionário acima para preencher suas horas por turma.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════╗
+     ║  TURMAS                              ║
+     ╚══════════════════════════════════════╝ -->
+<div id="tab-turmas" class="tab-section">
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">Turmas</div>
+      <div class="page-desc">Cadastro com número de alunos e receita mensal</div>
+    </div>
+    <button class="btn btn-primary" onclick="abrirFormTurma()">+ Nova Turma</button>
+  </div>
+  <div class="content">
+    <div class="card" id="form-turma" style="display:none">
+      <div class="card-hdr">
+        <span class="card-title" id="form-turma-tit">Nova Turma</span>
+        <button class="btn-icon" onclick="fecharFormTurma()">✕</button>
+      </div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group span2"><label>Nome da Turma</label>
+            <input type="text" id="t-nome" placeholder="Ex: Infantil II A"></div>
+          <div class="form-group"><label>Nº de Alunos</label>
+            <input type="number" id="t-alunos" min="0" placeholder="0"></div>
+          <div class="form-group"><label>Receita Mensal (R$)</label>
+            <input type="number" id="t-rec" min="0" step="0.01" placeholder="0,00"></div>
+          <div class="form-group"><label>Valor Hora/Aula (R$)</label>
+            <input type="number" id="t-hra" min="0" step="0.01" placeholder="0,00" title="Valor da hora-aula desta turma — usado como peso no rateio de custo do professor"></div>
+        </div>
+        <div style="display:flex;gap:9px;justify-content:flex-end;margin-top:4px">
+          <button class="btn btn-ghost" onclick="fecharFormTurma()">Cancelar</button>
+          <button class="btn btn-primary" onclick="salvarTurma()">Salvar Turma</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">Turmas Cadastradas — <span id="cnt-turmas">0</span></span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="sortable" onclick="sortTable('turmas','id')">ID<span class="sort-arrow"></span></th>
+              <th class="sortable" onclick="sortTable('turmas','nome')">Turma<span class="sort-arrow"></span></th>
+              <th class="sortable tr" onclick="sortTable('turmas','alunos')">Nº Alunos<span class="sort-arrow"></span></th>
+              <th class="sortable tr" onclick="sortTable('turmas','rec')">Receita Mensal<span class="sort-arrow"></span></th>
+              <th class="tr">Receita / Aluno</th>
+              <th class="sortable tr" onclick="sortTable('turmas','hra')">Vl. Hr/Aula<span class="sort-arrow"></span></th>
+              <th class="sortable tr" onclick="sortTable('turmas','rec')">% Receita Total<span class="sort-arrow"></span></th><th></th>
+            </tr>
+          </thead>
+          <tbody id="tb-turmas">
+            <tr><td colspan="7" class="tc" style="padding:40px;color:var(--g400)">Nenhuma turma cadastrada.</td></tr>
+          </tbody>
+          <tfoot id="tf-turmas"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════╗
+     ║  CUSTO POR TURMA                     ║
+     ╚══════════════════════════════════════╝ -->
+<div id="tab-custo" class="tab-section">
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">Custo com Pessoal por Turma</div>
+      <div class="page-desc">Rateio automático baseado na Grade Horária</div>
+    </div>
+    <button class="btn btn-gold btn-sm" onclick="renderCusto()">🔄 Recalcular</button>
+  </div>
+  <div class="content">
+    <div class="kpi-grid" id="kpi-custo"></div>
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">Custo de Pessoal por Turma</span></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="sortable" onclick="sortTable('custo','id')">ID<span class="sort-arrow"></span></th>
+              <th class="sortable" onclick="sortTable('custo','nome')">Turma<span class="sort-arrow"></span></th>
+              <th class="sortable tr" onclick="sortTable('custo','custo')">Custo Pessoal (R$)<span class="sort-arrow"></span></th>
+              <th class="tr">Custo / Aluno</th>
+              <th class="sortable tr" onclick="sortTable('custo','pct')">% do Total Pessoal<span class="sort-arrow"></span></th>
+            </tr>
+          </thead>
+          <tbody id="tb-custo">
+            <tr><td colspan="5" class="tc" style="padding:40px;color:var(--g400)">Preencha a Grade Horária primeiro.</td></tr>
+          </tbody>
+          <tfoot id="tf-custo"></tfoot>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">⚠️ Funcionários sem Alocação na Grade</span></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Nome</th><th>Regime</th><th class="tr">Custo Mensal</th><th>Recomendação</th></tr>
+          </thead>
+          <tbody id="tb-nao-aloc">
+            <tr><td colspan="5" class="tc" style="padding:22px;color:var(--green)">✅ Todos os funcionários têm horas alocadas.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════╗
+     ║  RATEIO DE DESPESAS                  ║
+     ╚══════════════════════════════════════╝ -->
+<div id="tab-despesas" class="tab-section">
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">Rateio de Despesas</div>
+      <div class="page-desc">Custos operacionais do mês e como distribuí-los entre as turmas</div>
+    </div>
+    <div style="display:flex;gap:9px">
+      <button class="btn btn-ghost" onclick="restaurarContasPadrao()" title="Adiciona as contas do plano padrão (balancete) que ainda não estiverem cadastradas neste mês">🔄 Restaurar Contas Padrão</button>
+      <button class="btn btn-primary" onclick="addDespesa()">+ Nova Despesa</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">Despesas do Mês</span>
+        <span style="font-size:12px;color:var(--g600)">Total: <strong id="lbl-total-desp">R$ 0,00</strong></span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:120px">Cód. Conta</th>
+              <th>Descrição da Conta</th>
+              <th style="width:150px" class="tr">Valor (R$)</th>
+              <th style="width:260px">Critério de Rateio</th>
+              <th style="width:44px"></th>
+            </tr>
+          </thead>
+          <tbody id="tb-desp">
+            <tr><td colspan="4" class="tc" style="padding:40px;color:var(--g400)">Nenhuma despesa cadastrada. Clique em "+ Nova Despesa".</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">Despesas Distribuídas por Turma</span>
+        <button class="btn btn-gold btn-sm" onclick="renderDespTurma()">🔄 Recalcular</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="sortable" onclick="sortTable('desp-turma','nome')">Turma<span class="sort-arrow"></span></th>
+              <th class="sortable tr" onclick="sortTable('desp-turma','rec')">Receita<span class="sort-arrow"></span></th>
+              <th class="tr">% Receita</th>
+              <th class="tr" style="background:rgba(196,147,63,.25)">📊 Faturamento</th>
+              <th class="tr" style="background:rgba(38,61,114,.35)">🔢 Nº Turmas</th>
+              <th class="tr" style="background:rgba(28,122,82,.35)">🎯 Turma Direta</th>
+              <th class="sortable tr" style="background:var(--navy-mid)" onclick="sortTable('desp-turma','total')">Total Despesas<span class="sort-arrow"></span></th>
+            </tr>
+          </thead>
+          <tbody id="tb-desp-turma">
+            <tr><td colspan="7" class="tc" style="padding:40px;color:var(--g400)">Cadastre turmas e despesas.</td></tr>
+          </tbody>
+          <tfoot id="tf-desp-turma"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════╗
+     ║  RESULTADO                           ║
+     ╚══════════════════════════════════════╝ -->
+<div id="tab-resultado" class="tab-section">
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">Resultado por Turma</div>
+      <div class="page-desc">Análise consolidada de rentabilidade — receita, custos, lucro e representatividade</div>
+    </div>
+    <button class="btn btn-gold" onclick="renderResultado()">🔄 Recalcular Tudo</button>
+  </div>
+  <div class="content">
+    <div class="kpi-grid" id="kpi-res"></div>
+    <div class="card">
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="sortable" onclick="sortTable('resultado','nome')">Turma<span class="sort-arrow"></span></th>
+              <th class="sortable tr" onclick="sortTable('resultado','alunos')">Alunos<span class="sort-arrow"></span></th>
+              <th class="sortable tr" onclick="sortTable('resultado','rec')">Receita Mensal<span class="sort-arrow"></span></th>
+              <th class="tr">Rec./Aluno</th>
+              <th class="sortable tr" onclick="sortTable('resultado','cPes')">Custo Pessoal<span class="sort-arrow"></span></th>
+              <th class="sortable tr" onclick="sortTable('resultado','cDes')">Desp. Operac.<span class="sort-arrow"></span></th>
+              <th class="sortable tr" onclick="sortTable('resultado','cTot')">Custo Total<span class="sort-arrow"></span></th>
+              <th class="sortable tr" style="min-width:130px" onclick="sortTable('resultado','luc')">Lucro / Prejuízo<span class="sort-arrow"></span></th>
+              <th class="sortable tr" onclick="sortTable('resultado','marg')">Margem<span class="sort-arrow"></span></th>
+              <th class="tr">Represent.</th>
+            </tr>
+          </thead>
+          <tbody id="tb-res">
+            <tr><td colspan="10" class="tc" style="padding:50px;color:var(--g400)">Preencha todos os dados e clique em "Recalcular Tudo".</td></tr>
+          </tbody>
+          <tfoot id="tf-res"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ╔══════════════════════════════════════╗
+     ║  HISTÓRICO MENSAL                    ║
+     ╚══════════════════════════════════════╝ -->
+<div id="tab-historico" class="tab-section">
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">Histórico Mensal</div>
+      <div class="page-desc">Comparativo de resultado por competência salva</div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="renderHistorico()">🔄 Atualizar</button>
+  </div>
+  <div class="content">
+    <div class="hist-months" id="hist-months"></div>
+    <div class="kpi-grid" id="kpi-hist"></div>
+    <div class="card" id="hist-card" style="display:none">
+      <div class="card-hdr"><span class="card-title" id="hist-card-title">—</span></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Turma</th>
+              <th class="tr">Alunos</th>
+              <th class="tr">Receita</th>
+              <th class="tr">Rec./Aluno</th>
+              <th class="tr">Custo Pessoal</th>
+              <th class="tr">Desp. Operac.</th>
+              <th class="tr">Custo Total</th>
+              <th class="tr" style="min-width:120px">Resultado</th>
+              <th class="tr">Margem</th>
+            </tr>
+          </thead>
+          <tbody id="tb-hist"></tbody>
+          <tfoot id="tf-hist"></tfoot>
+        </table>
+      </div>
+    </div>
+    <div id="hist-empty" style="padding:60px;text-align:center;color:var(--g400)">
+      <div style="font-size:36px;margin-bottom:12px">📅</div>
+      <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:6px">Nenhum mês salvo ainda</div>
+      <div style="font-size:12.5px">Use o botão <strong>💾 Salvar mês atual</strong> na barra de competência para registrar o resultado de cada mês.</div>
+    </div>
+  </div>
+</div>
+
+<div id="tab-saldos" class="tab-section">
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">Saldos Bancários</div>
+      <div class="page-desc">Evolução mensal de aplicações financeiras e contas correntes</div>
+    </div>
+    <div style="display:flex;gap:9px;align-items:center">
+      <label style="font-size:11.5px;color:var(--g600);font-weight:600;display:flex;align-items:center;gap:6px">📅 Ano
+        <select id="saldo-ano-sel" onchange="mudarAnoSaldo(this.value)" style="padding:6px 10px;font-size:13px;border-radius:6px;border:1px solid var(--g200)"></select>
+      </label>
+      <button class="btn btn-primary btn-sm" onclick="abrirFormSaldo()">+ Novo Mês</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="alert alert-info">
+      💡 Cadastre os saldos de cada mês. Selecione um mês nos chips abaixo para visualizar o extrato. O total e a variação são calculados automaticamente a partir do saldo do mês anterior (inclusive de dezembro do ano anterior, quando disponível).
+    </div>
+
+    <!-- Modal de lançamento -->
+    <div id="modal-saldo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;display:none;align-items:flex-start;justify-content:center;padding-top:40px;">
+      <div style="background:#fff;border-radius:10px;width:min(700px,96vw);max-height:88vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.22);">
+        <div class="demo-box-hdr" style="border-radius:10px 10px 0 0;justify-content:space-between;">
+          <span style="color:#fff;font-weight:600;font-size:13.5px" id="modal-saldo-title">Novo Mês — Saldos Bancários</span>
+          <button class="btn-icon" style="color:rgba(255,255,255,.7)" onclick="fecharModalSaldo()">✕</button>
+        </div>
+        <div style="padding:18px 20px">
+          <div class="sub-hdr">📅 Competência</div>
+          <div class="form-row">
+            <div class="form-group"><label>Mês/Ano</label>
+              <input type="month" id="sb-comp" style="max-width:180px"></div>
+          </div>
+
+          <div class="sub-hdr" style="margin-top:10px">💰 Aplicações Financeiras</div>
+          <div id="sb-aplicacoes-list"></div>
+          <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addSaldoAplicRow()">+ Linha</button>
+
+          <div class="sub-hdr" style="margin-top:16px">🏧 Contas Correntes</div>
+          <div id="sb-contas-list"></div>
+          <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="addSaldoContaRow()">+ Linha</button>
+
+          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:14px;border-top:1px solid var(--g200)">
+            <button class="btn btn-ghost" onclick="fecharModalSaldo()">Cancelar</button>
+            <button class="btn btn-primary" onclick="salvarSaldo()">💾 Salvar Mês</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seletor de mês -->
+    <div class="saldo-chips" id="saldo-chips">
+      <span style="color:var(--g400);font-size:12.5px;padding:4px 0">Nenhum mês cadastrado ainda. Clique em <strong>+ Novo Mês</strong>.</span>
+    </div>
+
+    <!-- Painel resumo geral -->
+    <div id="saldo-resumo-panel" style="display:none">
+      <div class="saldo-resumo">
+        <div class="saldo-resumo-card aplic">
+          <div class="sr-label">💰 Total Aplicações</div>
+          <div class="sr-val" id="sr-aplic-val">—</div>
+          <div class="sr-prev" id="sr-aplic-prev"></div>
+          <div class="sr-var" id="sr-aplic-var"></div>
+        </div>
+        <div class="saldo-resumo-card cc">
+          <div class="sr-label">🏧 Total Contas Correntes</div>
+          <div class="sr-val" id="sr-cc-val">—</div>
+          <div class="sr-prev" id="sr-cc-prev"></div>
+          <div class="sr-var" id="sr-cc-var"></div>
+        </div>
+        <div class="saldo-resumo-card total">
+          <div class="sr-label">🏦 Total Geral</div>
+          <div class="sr-val" id="sr-total-val">—</div>
+          <div class="sr-prev" id="sr-total-prev"></div>
+          <div class="sr-var" id="sr-total-var"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela de Aplicações -->
+    <div id="saldo-aplicacoes-card" style="display:none">
+      <div class="card">
+        <div class="card-hdr">
+          <span class="card-title">💰 Aplicações Financeiras</span>
+          <span id="saldo-mes-label" style="font-size:11px;color:var(--g400)"></span>
+        </div>
+        <div class="tbl-wrap">
+          <table class="saldo-tbl">
+            <thead id="th-aplicacoes"></thead>
+            <tbody id="tb-aplicacoes"></tbody>
+            <tfoot id="tf-aplicacoes"></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela de Contas Correntes -->
+    <div id="saldo-contas-card" style="display:none">
+      <div class="card" style="margin-top:20px">
+        <div class="card-hdr">
+          <span class="card-title">🏧 Contas Correntes</span>
+        </div>
+        <div class="tbl-wrap">
+          <table class="saldo-tbl">
+            <thead id="th-contas"></thead>
+            <tbody id="tb-contas"></tbody>
+            <tfoot id="tf-contas"></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="saldo-empty" style="padding:60px;text-align:center;color:var(--g400)">
+      <div style="font-size:36px;margin-bottom:12px">🏦</div>
+      <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:6px">Nenhum mês cadastrado</div>
+      <div style="font-size:12.5px">Clique em <strong>+ Novo Mês</strong> para inserir os saldos do período.</div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ═══════════════════════════════════════════════════════
+   STATE — MENSAL
+═══════════════════════════════════════════════════════ */
+// allMonths: { "2026-01": { S, nF, nT, nD }, ... }
+let allMonths = {};
+// saldoBancario: { "YYYY-MM": { aplicacoes:[{id,empresa,aplicacao,saldo},...], contas:[{id,empresa,saldo},...] } }
+let saldoBancario = {};
+let saldoMeses = []; // sorted list of YYYY-MM keys
+let currentComp = '';   // "YYYY-MM"
+
+let S = { funcs:[], turmas:[], grade:{}, despesas:[], criterio:'faturamento' };
+let nF=1, nT=1, nD=1;
+// Sort state per table
+const sortState={};
+function mkSort(tblKey,col,dir){
+  sortState[tblKey]={col,dir};
+}
+function getSortDir(tblKey,col){
+  const s=sortState[tblKey];
+  if(!s||s.col!==col) return null;
+  return s.dir;
+}
+function nextDir(tblKey,col){
+  const s=sortState[tblKey];
+  if(!s||s.col!==col) return 'asc';
+  return s.dir==='asc'?'desc':'asc';
+}
+function sortedList(list,tblKey,cols){
+  const s=sortState[tblKey];
+  if(!s) return list;
+  const {col,dir}=s;
+  return [...list].sort((a,b)=>{
+    let av=cols[col]?cols[col](a):a[col]||0;
+    let bv=cols[col]?cols[col](b):b[col]||0;
+    if(typeof av==='string') return dir==='asc'?av.localeCompare(bv):bv.localeCompare(av);
+    return dir==='asc'?av-bv:bv-av;
+  });
+}
+function thSort(tblKey,col,label,extra=''){
+  const s=sortState[tblKey];
+  const isActive=s&&s.col===col;
+  const cls=isActive?(s.dir==='asc'?'asc':'desc'):'';
+  return `<th class="sortable ${cls}" ${extra} onclick="sortTable('${tblKey}','${col}')">${label}<span class="sort-arrow"></span></th>`;
+}
+let editFId=null, editTId=null;
+
+/* ═══════════════════════════════════════════════════════
+   SUPABASE — LOGIN, PAPÉIS E SINCRONIZAÇÃO EM NUVEM
+═══════════════════════════════════════════════════════ */
+const SUPABASE_URL = 'https://hoqgxwswtxsbhmkgdzyo.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_iIqZW7PL9Bb-aBqdJDLyfw_4dzzaZh9';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const TABS_SOMENTE_COORDENACAO = ['custo','despesas','resultado','historico','saldos'];
+
+let currentUser = null;
+let currentRole = 'funcionario';
+let cloudReady = false;
+
+function setCloudStatus(msg, isError){
+  const el = g('cloud-status');
+  if(!el) return;
+  el.textContent = msg;
+  el.style.color = isError ? '#ff9d90' : 'rgba(255,255,255,.55)';
+}
+
+function applyRoleGate(role){
+  document.querySelectorAll('.nav-item').forEach(el=>{
+    const tab = el.dataset.tab;
+    el.style.display = (role!=='coordenacao' && TABS_SOMENTE_COORDENACAO.includes(tab)) ? 'none' : '';
+  });
+  const migBtn = g('btn-migrar-nuvem');
+  if(migBtn) migBtn.style.display = (role==='coordenacao') ? '' : 'none';
+}
+
+async function doLogin(ev){
+  if(ev) ev.preventDefault();
+  const email = gS('login-email');
+  const senha = g('login-senha').value;
+  const errEl = g('login-error');
+  errEl.textContent = '';
+  if(!email || !senha){ errEl.textContent = 'Preencha e-mail e senha.'; return; }
+  const btn = g('login-btn');
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: senha });
+  btn.disabled = false; btn.textContent = 'Entrar';
+  if(error){ errEl.textContent = 'E-mail ou senha inválidos.'; return; }
+  await onAuthReady(data.session);
+}
+
+async function doLogout(){
+  if(!confirm('Sair do sistema?')) return;
+  await sb.auth.signOut();
+  location.reload();
+}
+
+async function onAuthReady(session){
+  currentUser = session.user;
+  let role = 'funcionario', nome = currentUser.email;
+  try{
+    const { data: profile } = await sb.from('profiles').select('role,nome').eq('id', currentUser.id).single();
+    if(profile){ role = profile.role || role; nome = profile.nome || nome; }
+  }catch(e){ console.warn('Não foi possível carregar o perfil:', e); }
+  currentRole = role;
+  g('login-overlay').style.display = 'none';
+  document.querySelector('.sidebar').style.display = '';
+  document.querySelector('.main').style.display = '';
+  g('user-badge').textContent = nome;
+  g('role-badge').textContent = currentRole==='coordenacao' ? 'Coordenação' : 'Funcionário';
+  applyRoleGate(currentRole);
+  await bootApp();
+}
+
+async function cloudLoadAll(){
+  try{
+    setCloudStatus('☁️ Sincronizando...');
+    const { data: meses, error: e1 } = await sb.from('meses').select('*');
+    if(e1) throw e1;
+    if(meses && meses.length){
+      allMonths = {};
+      meses.forEach(m=>{
+        allMonths[m.competencia] = {
+          S:{ funcs:m.funcs||[], turmas:m.turmas||[], grade:m.grade||{}, despesas:m.despesas||[], criterio:m.criterio||'faturamento' },
+          nF:m.n_f||1, nT:m.n_t||1, nD:m.n_d||1
+        };
+      });
+    }
+    const { data: saldos, error: e2 } = await sb.from('saldo_bancario').select('*');
+    if(e2) throw e2;
+    if(saldos && saldos.length){
+      saldoBancario = {};
+      saldos.forEach(s=>{ saldoBancario[s.mes] = s.payload; });
+    }
+    cloudReady = true;
+    setCloudStatus('☁️ Sincronizado com a nuvem');
+    return true;
+  }catch(err){
+    console.error('Falha ao carregar da nuvem:', err);
+    setCloudStatus('⚠️ Sem conexão — usando dados locais', true);
+    return false;
+  }
+}
+
+async function cloudSyncAllMeses(){
+  if(!cloudReady) return;
+  const rows = Object.keys(allMonths).map(comp=>{
+    const d = allMonths[comp];
+    return {
+      competencia: comp,
+      funcs: d.S.funcs||[], turmas: d.S.turmas||[], grade: d.S.grade||{},
+      despesas: d.S.despesas||[], criterio: d.S.criterio||'faturamento',
+      n_f: d.nF||1, n_t: d.nT||1, n_d: d.nD||1,
+      updated_by: currentUser ? currentUser.id : null
+    };
+  });
+  if(!rows.length) return;
+  const { error } = await sb.from('meses').upsert(rows, { onConflict:'competencia' });
+  if(error){ console.error(error); setCloudStatus('⚠️ Falha ao salvar na nuvem', true); }
+  else setCloudStatus('☁️ Salvo na nuvem');
+}
+
+async function cloudSyncSaldos(){
+  if(!cloudReady) return;
+  const rows = Object.keys(saldoBancario).map(mes=>({
+    mes, payload: saldoBancario[mes], updated_by: currentUser ? currentUser.id : null
+  }));
+  if(!rows.length) return;
+  const { error } = await sb.from('saldo_bancario').upsert(rows, { onConflict:'mes' });
+  if(error){ console.error(error); setCloudStatus('⚠️ Falha ao salvar saldos na nuvem', true); }
+  else setCloudStatus('☁️ Saldos salvos na nuvem');
+}
+
+async function migrarDadosDoNavegador(){
+  if(!confirm('Isso vai enviar todos os dados salvos NESTE NAVEGADOR para o banco de dados online (mesclando com o que já existir na nuvem). Use apenas uma vez, no navegador onde os dados originais foram preenchidos. Deseja continuar?')) return;
+  let raw=null, rawSaldo=null;
+  try{ raw = JSON.parse(localStorage.getItem('cpt_mensal_v1')); }catch(e){}
+  try{ rawSaldo = JSON.parse(localStorage.getItem('saldoBancario')); }catch(e){}
+  if(!raw && !rawSaldo){ alert('Nenhum dado local encontrado neste navegador.'); return; }
+  if(raw && raw.allMonths) Object.assign(allMonths, raw.allMonths);
+  if(rawSaldo) Object.assign(saldoBancario, rawSaldo);
+  await cloudSyncAllMeses();
+  await cloudSyncSaldos();
+  showToast('✅ Dados deste navegador migrados para a nuvem!');
+  setTimeout(()=>location.reload(), 1200);
+}
+
+/* ═══════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════ */
+const R$ = v => 'R$\u00a0' + (+(v||0)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const N$ = v => (+(v||0)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const PC = v => (+(v||0)).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
+const g  = id => document.getElementById(id);
+const gN = id => parseFloat(g(id)?.value)||0;
+const gS = id => (g(id)?.value||'').trim();
+const pad= n => String(n).padStart(3,'0');
+
+function compLabel(comp){
+  if(!comp) return '—';
+  const [y,m]=comp.split('-');
+  const names=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  return `${names[+m-1]} ${y}`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   COMPETÊNCIA
+═══════════════════════════════════════════════════════ */
+function initComp(){
+  const now=new Date();
+  const def=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  currentComp=def;
+  g('comp-input-sb').value=def;
+  g('comp-input-sb').value=def;
+  g('comp-badge-sb').textContent=compLabel(def);
+  g('comp-badge-sb').textContent=compLabel(def);
+  // Load current month if exists
+  if(allMonths[def]){
+    const p=allMonths[def];
+    S=JSON.parse(JSON.stringify(p.S));
+    nF=p.nF||1; nT=p.nT||1; nD=p.nD||1;
+  }
+}
+
+function trocarCompetencia(val){
+  if(!val) return;
+  // Auto-save current before switching
+  allMonths[currentComp]={S:JSON.parse(JSON.stringify(S)),nF,nT,nD};
+  saveAll();
+  currentComp=val;
+  g('comp-badge-sb').textContent=compLabel(val);
+  g('comp-input-sb').value=val;
+  g('comp-input-sb').value=val;
+  g('comp-badge-sb').textContent=compLabel(val);
+  if(allMonths[val]){
+    const p=allMonths[val];
+    S=JSON.parse(JSON.stringify(p.S));
+    nF=p.nF||1; nT=p.nT||1; nD=p.nD||1;
+  } else {
+    const despPadrao=gerarDespesasPadrao(1);
+    S={funcs:[],turmas:[],grade:{},despesas:despPadrao,criterio:'faturamento'};
+    nF=1;nT=1;nD=despPadrao.length+1;
+  }
+  renderFunc(); renderTurmas(); renderDespTabela(); populateGradeSel();
+  refreshActiveTab();
+}
+
+function salvarCompetencia(){
+  allMonths[currentComp]={S:JSON.parse(JSON.stringify(S)),nF,nT,nD};
+  saveAll();
+  showToast(`✅ ${compLabel(currentComp)} salvo com sucesso!`);
+}
+
+function limparMesAtual(){
+  if(!confirm(`Limpar todos os dados de ${compLabel(currentComp)}? Esta ação não pode ser desfeita.`)) return;
+  S={funcs:[],turmas:[],grade:{},despesas:[],criterio:'faturamento'};
+  nF=1;nT=1;nD=1;
+  delete allMonths[currentComp];
+  saveAll();
+  renderFunc(); renderTurmas(); renderDespTabela();
+  showToast('🗑️ Mês limpo.');
+}
+
+function showToast(msg){
+  let t=document.getElementById('toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='toast';
+    t.style.cssText='position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:11px 20px;border-radius:6px;font-size:13px;font-weight:500;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,.3);transition:opacity .3s;';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg; t.style.opacity='1';
+  clearTimeout(t._to);
+  t._to=setTimeout(()=>t.style.opacity='0',2800);
+}
+
+/* ═══════════════════════════════════════════════════════
+   COPY MODAL
+═══════════════════════════════════════════════════════ */
+function abrirCopyModal(){
+  const outros=Object.keys(allMonths).filter(k=>k!==currentComp).sort().reverse();
+  g('copy-dest-label').textContent=compLabel(currentComp);
+  const list=g('copy-month-list');
+  if(!outros.length){
+    list.innerHTML='<div style="padding:24px;text-align:center;color:var(--g400);font-size:12.5px">Nenhum outro mês salvo ainda.</div>';
+  } else {
+    list.innerHTML=outros.map(k=>{
+      const d=allMonths[k];
+      const nF2=d.S.funcs.length, nT2=d.S.turmas.length, nD2=d.S.despesas.length;
+      return `<div class="copy-month-item" onclick="executarCopia('${k}')">
+        <div>
+          <div class="cm-label">${compLabel(k)}</div>
+          <div class="cm-info">${nF2} funcionários · ${nT2} turmas · ${nD2} despesas</div>
+        </div>
+        <span style="color:var(--gold);font-size:18px">→</span>
+      </div>`;
+    }).join('');
+  }
+  g('copy-modal').classList.add('open');
+}
+
+function fecharCopyModal(){ g('copy-modal').classList.remove('open'); }
+
+function executarCopia(origem){
+  const d=allMonths[origem];
+  if(!d){ fecharCopyModal(); return; }
+  const copyFunc=g('chk-func').checked;
+  const copyGrade=g('chk-grade').checked;
+  const copyTurmas=g('chk-turmas').checked;
+  const copyDesp=g('chk-desp').checked;
+
+  const src=JSON.parse(JSON.stringify(d.S));
+
+  if(copyFunc){
+    S.funcs=src.funcs;
+    nF=d.nF||1;
+  }
+  if(copyGrade) S.grade=src.grade;
+  if(copyTurmas){
+    // Copy turma structure but NOT receita (financial value)
+    const existingRec={};
+    S.turmas.forEach(t=>existingRec[t.id]=t.rec);
+    S.turmas=src.turmas.map(t=>({...t, rec: existingRec[t.id]||0}));
+    nT=d.nT||1;
+  }
+  if(copyDesp){
+    S.despesas=src.despesas;
+    nD=d.nD||1;
+  }
+
+  fecharCopyModal();
+  renderFunc(); renderTurmas(); renderDespTabela(); populateGradeSel(); renderGrade();
+  refreshActiveTab();
+  showToast(`✅ Dados copiados de ${compLabel(origem)}!`);
+  save();
+}
+
+// Retorna a chave YYYY-MM do mês imediatamente anterior à competência informada
+function mesAnteriorKey(comp){
+  const [y,m]=comp.split('-').map(Number);
+  const d=new Date(y, m-2, 1); // m-1 é o mês atual (0-index), -1 novamente = mês anterior
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+// Re-renderiza a aba atualmente ativa (usado após copiar/zerar dados)
+function refreshActiveTab(){
+  const active=document.querySelector('.tab-section.active');
+  if(!active) return;
+  const tab=active.id.replace('tab-','');
+  if(tab==='grade') renderGrade();
+  if(tab==='custo') renderCusto();
+  if(tab==='despesas') renderDespTurma();
+  if(tab==='resultado') renderResultado();
+  if(tab==='funcionarios') renderFunc();
+}
+
+// Zera o mês atual e reimporta TODOS os dados do mês anterior (funcionários,
+// grade horária, turmas e despesas) — útil quando uma importação anterior
+// ficou incompleta e o usuário quer refazer do zero.
+function zerarEReimportarMesAnterior(){
+  const origem=mesAnteriorKey(currentComp);
+  const d=allMonths[origem];
+  if(!d){
+    alert(`Não há dados salvos para o mês anterior (${compLabel(origem)}) para reimportar.`);
+    return;
+  }
+  if(!confirm(`Isso vai APAGAR todos os dados de ${compLabel(currentComp)} e trazer novamente TUDO de ${compLabel(origem)} (funcionários, grade horária, turmas e despesas). Deseja continuar?`)) return;
+
+  const src=JSON.parse(JSON.stringify(d.S));
+  // Turmas: mantém a estrutura (nome, alunos, hr/aula) mas zera a receita, já que é um mês novo
+  const turmasZeradas=src.turmas.map(t=>({...t, rec:0}));
+
+  S={
+    funcs: src.funcs,
+    turmas: turmasZeradas,
+    grade: src.grade,
+    despesas: src.despesas,
+    criterio: src.criterio || 'faturamento'
+  };
+  nF=d.nF||1; nT=d.nT||1; nD=d.nD||1;
+
+  renderFunc(); renderTurmas(); renderDespTabela(); populateGradeSel(); renderGrade();
+  refreshActiveTab();
+  save();
+  showToast(`✅ ${compLabel(currentComp)} zerado e reimportado de ${compLabel(origem)}!`);
+}
+
+/* ═══════════════════════════════════════════════════════
+   HISTÓRICO
+═══════════════════════════════════════════════════════ */
+let histViewComp='';
+
+function renderHistorico(){
+  const keys=Object.keys(allMonths).sort();
+  const months=g('hist-months');
+  const empty=g('hist-empty');
+  const card=g('hist-card');
+
+  if(!keys.length){
+    months.innerHTML='';
+    empty.style.display='block';
+    card.style.display='none';
+    g('kpi-hist').innerHTML='';
+    return;
+  }
+  empty.style.display='none';
+  card.style.display='block';
+
+  months.innerHTML=keys.map(k=>`
+    <div class="hist-chip${histViewComp===k?' active':''}" onclick="viewHistMes('${k}')">${compLabel(k)}</div>
+  `).join('');
+
+  if(!histViewComp || !allMonths[histViewComp]) histViewComp=keys[keys.length-1];
+  viewHistMes(histViewComp);
+}
+
+function viewHistMes(comp){
+  histViewComp=comp;
+  // Update chips
+  document.querySelectorAll('.hist-chip').forEach(c=>{
+    c.classList.toggle('active', c.textContent===compLabel(comp));
+  });
+
+  const d=allMonths[comp];
+  if(!d){return;}
+  const HS=d.S;
+
+  // Recompute using stored state
+  const cp=custoPessoalPorTurmaOf(HS);
+  const cd=custoDespPorTurmaOf(HS);
+
+  let totRec=0,totCP=0,totCD=0;
+  HS.turmas.forEach(t=>{ totRec+=(+(t.rec||0)); totCP+=(cp[t.id]||0); totCD+=(cd[t.id]||0); });
+  const totLuc=totRec-totCP-totCD;
+
+  g('kpi-hist').innerHTML=`
+    <div class="kpi gold"><div class="kpi-lbl">Receita — ${compLabel(comp)}</div><div class="kpi-val">${R$(totRec)}</div></div>
+    <div class="kpi navy"><div class="kpi-lbl">Custo Pessoal</div><div class="kpi-val">${R$(totCP)}</div></div>
+    <div class="kpi navy"><div class="kpi-lbl">Despesas Operacionais</div><div class="kpi-val">${R$(totCD)}</div></div>
+    <div class="kpi ${totLuc>=0?'pos':'neg'}"><div class="kpi-lbl">Resultado</div><div class="kpi-val ${totLuc>=0?'pos':'neg'}">${R$(totLuc)}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Margem</div><div class="kpi-val ${totLuc>=0?'pos':'neg'}">${totRec>0?PC(totLuc/totRec*100):'—'}</div></div>`;
+
+  g('hist-card-title').textContent=`Resultado por Turma — ${compLabel(comp)}`;
+  const totAl=HS.turmas.reduce((a,t)=>a+(+(t.alunos||0)),0);
+  const totCusto=totCP+totCD;
+  const margG=totRec>0?totLuc/totRec*100:0;
+
+  g('tb-hist').innerHTML=HS.turmas.map(t=>{
+    const rec=+(t.rec||0), al=+(t.alunos||0);
+    const cPes=cp[t.id]||0, cDes=cd[t.id]||0;
+    const cTot=cPes+cDes, luc=rec-cTot;
+    const marg=rec>0?luc/rec*100:0;
+    const isPos=luc>=0;
+    return`<tr>
+      <td style="font-weight:500">${t.nome}</td>
+      <td class="mono tr">${al}</td>
+      <td class="mono tr">${N$(rec)}</td>
+      <td class="mono tr">${al>0?N$(rec/al):'—'}</td>
+      <td class="mono tr">${N$(cPes)}</td>
+      <td class="mono tr">${N$(cDes)}</td>
+      <td class="mono tr" style="font-weight:600">${N$(cTot)}</td>
+      <td class="mono tr ${isPos?'res-pos':'res-neg'}">${N$(luc)}</td>
+      <td class="tr ${isPos?'pos':'neg'}">${PC(marg)}</td>
+    </tr>`;
+  }).join('');
+
+  g('tf-hist').innerHTML=`<tr>
+    <td style="color:var(--gold-lt);font-size:10.5px;text-transform:uppercase">TOTAL GERAL</td>
+    <td class="mono tr">${totAl}</td>
+    <td class="mono tr">${N$(totRec)}</td>
+    <td class="mono tr">${totAl>0?N$(totRec/totAl):'—'}</td>
+    <td class="mono tr">${N$(totCP)}</td>
+    <td class="mono tr">${N$(totCD)}</td>
+    <td class="mono tr">${N$(totCusto)}</td>
+    <td class="mono tr" style="color:${totLuc>=0?'#86efac':'#fca5a5'};font-size:15px;font-weight:700">${N$(totLuc)}</td>
+    <td class="tr" style="color:${totLuc>=0?'#86efac':'#fca5a5'}">${PC(margG)}</td>
+  </tr>`;
+}
+
+// Generic calculation functions that accept a state object
+function custoPessoalPorTurmaOf(hs){
+  const r={};
+  hs.turmas.forEach(t=>r[t.id]=0);
+  hs.funcs.filter(f=>f.ativo!==false).forEach(f=>{
+    const ct=custoFunc(f);
+    const gh=hs.grade[f.id]||{};
+    // Horistas: peso = horas × valor_hr_aula (custo real por turma)
+    // Não-horistas: peso = apenas horas (salário fixo rateado proporcional às horas)
+    const isHorista=(f.regime==='HORISTA');
+    const pesoPorTurma={};
+    let totPeso=0;
+    hs.turmas.forEach(t=>{
+      const h=+(gh[t.id]||0);
+      const hra=+(t.hra||0);
+      const peso = isHorista && hra>0 ? h*hra : h;
+      pesoPorTurma[t.id]=peso;
+      totPeso+=peso;
+    });
+    if(totPeso===0) return;
+    hs.turmas.forEach(t=>{
+      const peso=pesoPorTurma[t.id];
+      if(peso>0) r[t.id]=(r[t.id]||0)+(peso/totPeso)*ct;
+    });
+  });
+  return r;
+}
+
+function custoDespPorTurmaOf(hs){
+  const r={};
+  hs.turmas.forEach(t=>r[t.id]=0);
+  if(!hs.turmas.length) return r;
+  const totRec=hs.turmas.reduce((a,t)=>a+(+(t.rec||0)),0)||1;
+  const nTurmas=hs.turmas.length||1;
+  hs.despesas.forEach(d=>{
+    const val=+(d.val||0);
+    if(val===0) return;
+    const cr=d.criterio||'faturamento';
+    if(cr.startsWith('turma:')){
+      // Direct allocation to specific turma
+      const tId=cr.split(':')[1];
+      if(r[tId]!==undefined) r[tId]+=val;
+    } else {
+      hs.turmas.forEach(t=>{
+        if(cr==='turmas') r[t.id]+=val/nTurmas;
+        else r[t.id]+=(+(t.rec||0))/totRec*val;
+      });
+    }
+  });
+  return r;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SALDOS BANCÁRIOS
+═══════════════════════════════════════════════════════ */
+const EMPRESAS_APLIC = ['CANTINA','TS','TMS','SOCIEDADE INFANTIL','SOCIEDADE FUND'];
+const APLICACOES     = ['GIRO','PLENO','SIGMA','CDB','MEGA','EQUIL','CDB2'];
+const EMPRESAS_CC    = ['CANTINA','SOCIEDADE INFANTIL','SOCIEDADE FUND','SOCIEDADE MEDIO','SISPRIME','TS','TMS'];
+
+let currentSaldoMes = null; // "YYYY-MM"
+let currentSaldoYear = null; // "YYYY"
+let sbAplicRows = [];  // [{id,empresa,aplicacao}]
+let sbContaRows = [];  // [{id,empresa}]
+let sbEditMes   = null; // null = new, else "YYYY-MM"
+
+function saldoMesLabel(m){
+  if(!m) return '—';
+  const [y,mo]=m.split('-');
+  const names=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  return `${names[+mo-1]}/${y}`;
+}
+
+function saldoMesLabelLong(m){
+  if(!m) return '—';
+  const [y,mo]=m.split('-');
+  const names=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  return `${names[+mo-1]} ${y}`;
+}
+
+function saveSaldoState(){
+  try{ localStorage.setItem('saldoBancario', JSON.stringify(saldoBancario)); }catch(e){}
+  cloudSyncSaldos();
+}
+function loadSaldoState(){
+  try{
+    const raw=localStorage.getItem('saldoBancario');
+    if(raw) saldoBancario=JSON.parse(raw);
+  }catch(e){}
+}
+
+// ── MODAL ─────────────────────────────────────────────
+function abrirFormSaldo(mes=null){
+  sbEditMes=mes;
+  sbAplicRows=[];
+  sbContaRows=[];
+  const modal=g('modal-saldo');
+  modal.style.display='flex';
+
+  if(mes){
+    g('sb-comp').value=mes;
+    g('modal-saldo-title').textContent=`Editar — ${saldoMesLabelLong(mes)}`;
+    const d=saldoBancario[mes]||{};
+    (d.aplicacoes||[]).forEach(r=>{ sbAplicRows.push({id:r.id,empresa:r.empresa,aplicacao:r.aplicacao}); });
+    (d.contas||[]).forEach(r=>{ sbContaRows.push({id:r.id,empresa:r.empresa}); });
+  } else {
+    g('sb-comp').value='';
+    g('modal-saldo-title').textContent='Novo Mês — Saldos Bancários';
+    // Linhas exatas da planilha
+    const linhasAplic=[
+      ['CANTINA','GIRO'],['CANTINA','PLENO'],['CANTINA','SIGMA'],['CANTINA','CDB'],
+      ['TS','GIRO'],['TS','MEGA'],['TS','SIGMA'],['TS','CDB'],
+      ['TMS','GIRO'],['TMS','MEGA'],['TMS','SIGMA'],['TMS','CDB'],
+      ['SOCIEDADE INFANTIL','GIRO'],['SOCIEDADE INFANTIL','CDB'],
+      ['SOCIEDADE FUND','GIRO'],['SOCIEDADE FUND','EQUIL'],['SOCIEDADE FUND','CDB'],['SOCIEDADE FUND','CDB2'],
+    ];
+    linhasAplic.forEach(([emp,aplic])=>{
+      sbAplicRows.push({id:`A-${emp}-${aplic}`,empresa:emp,aplicacao:aplic});
+    });
+    EMPRESAS_CC.forEach(emp=>{
+      sbContaRows.push({id:`C-${emp}`,empresa:emp});
+    });
+  }
+  renderSbAplicRows();
+  renderSbContaRows();
+}
+
+function fecharModalSaldo(){
+  g('modal-saldo').style.display='none';
+}
+
+function addSaldoAplicRow(){
+  sbAplicRows.push({id:`A${Date.now()}`,empresa:'',aplicacao:''});
+  renderSbAplicRows();
+}
+function addSaldoContaRow(){
+  sbContaRows.push({id:`C${Date.now()}`,empresa:''});
+  renderSbContaRows();
+}
+function removeSbRow(arr, id, renderFn){
+  const idx=arr.findIndex(r=>r.id===id);
+  if(idx>=0) arr.splice(idx,1);
+  renderFn();
+}
+
+function renderSbAplicRows(){
+  const cont=g('sb-aplicacoes-list');
+  if(!sbAplicRows.length){ cont.innerHTML='<div style="color:var(--g400);font-size:12px;padding:8px 0">Nenhuma linha. Clique em + Linha.</div>'; return; }
+  cont.innerHTML=`
+  <div style="overflow-x:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr>
+      <th style="background:var(--navy);color:#fff;padding:7px 10px;text-align:left">Empresa</th>
+      <th style="background:var(--navy);color:#fff;padding:7px 10px;text-align:left">Aplicação</th>
+      <th style="background:var(--navy);color:#fff;padding:7px 10px;text-align:right">Saldo (R$)</th>
+
+      <th style="background:var(--navy);color:#fff;padding:7px 4px;width:28px"></th>
+    </tr></thead>
+    <tbody>
+    ${sbAplicRows.map((r,i)=>`<tr style="background:${i%2===0?'#fff':'#f9fafb'}">
+      <td style="padding:4px 6px">
+        <input list="dl-empresas-aplic" id="sb-ae-emp-${r.id}" value="${r.empresa}" placeholder="Empresa" style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:4px;padding:4px 7px">
+        <datalist id="dl-empresas-aplic">${EMPRESAS_APLIC.map(e=>`<option value="${e}">`).join('')}</datalist>
+      </td>
+      <td style="padding:4px 6px">
+        <input list="dl-aplicacoes" id="sb-ae-apl-${r.id}" value="${r.aplicacao}" placeholder="Aplicação" style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:4px;padding:4px 7px">
+        <datalist id="dl-aplicacoes">${APLICACOES.map(a=>`<option value="${a}">`).join('')}</datalist>
+      </td>
+      <td style="padding:4px 6px">
+        <input type="number" id="sb-ae-sal-${r.id}" step="0.01" placeholder="0,00"
+          value="${sbEditMes?(saldoBancario[sbEditMes]?.aplicacoes?.find(x=>x.id===r.id)?.saldo||''):''}"
+          style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:4px;padding:4px 7px;text-align:right">
+      </td>
+      <td style="padding:4px 2px;text-align:center">
+        <button onclick="removeSbRow(sbAplicRows,'${r.id}',renderSbAplicRows)" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;padding:2px 4px">✕</button>
+      </td>
+    </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function renderSbContaRows(){
+  const cont=g('sb-contas-list');
+  if(!sbContaRows.length){ cont.innerHTML='<div style="color:var(--g400);font-size:12px;padding:8px 0">Nenhuma linha. Clique em + Linha.</div>'; return; }
+  cont.innerHTML=`
+  <div style="overflow-x:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr>
+      <th style="background:var(--navy);color:#fff;padding:7px 10px;text-align:left">Empresa</th>
+      <th style="background:var(--navy);color:#fff;padding:7px 10px;text-align:right">Saldo (R$)</th>
+      <th style="background:var(--navy);color:#fff;padding:7px 4px;width:28px"></th>
+    </tr></thead>
+    <tbody>
+    ${sbContaRows.map((r,i)=>`<tr style="background:${i%2===0?'#fff':'#f9fafb'}">
+      <td style="padding:4px 6px">
+        <input list="dl-empresas-cc" id="sb-cc-emp-${r.id}" value="${r.empresa}" placeholder="Empresa" style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:4px;padding:4px 7px">
+        <datalist id="dl-empresas-cc">${EMPRESAS_CC.map(e=>`<option value="${e}">`).join('')}</datalist>
+      </td>
+      <td style="padding:4px 6px">
+        <input type="number" id="sb-cc-sal-${r.id}" step="0.01" placeholder="0,00"
+          value="${sbEditMes?(saldoBancario[sbEditMes]?.contas?.find(x=>x.id===r.id)?.saldo||''):''}"
+          style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:4px;padding:4px 7px;text-align:right">
+      </td>
+      <td style="padding:4px 2px;text-align:center">
+        <button onclick="removeSbRow(sbContaRows,'${r.id}',renderSbContaRows)" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;padding:2px 4px">✕</button>
+      </td>
+    </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function salvarSaldo(){
+  const comp=g('sb-comp').value;
+  if(!comp){ alert('Selecione o mês/ano.'); return; }
+
+  const aplicacoes=sbAplicRows.map(r=>({
+    id:r.id,
+    empresa:(g(`sb-ae-emp-${r.id}`)?.value||'').trim(),
+    aplicacao:(g(`sb-ae-apl-${r.id}`)?.value||'').trim(),
+    saldo:parseFloat(g(`sb-ae-sal-${r.id}`)?.value)||0,
+  })).filter(r=>r.empresa||r.saldo);
+
+  const contas=sbContaRows.map(r=>({
+    id:r.id,
+    empresa:(g(`sb-cc-emp-${r.id}`)?.value||'').trim(),
+    saldo:parseFloat(g(`sb-cc-sal-${r.id}`)?.value)||0
+  })).filter(r=>r.empresa||r.saldo);
+
+  saldoBancario[comp]={aplicacoes,contas};
+  saveSaldoState();
+  fecharModalSaldo();
+  currentSaldoMes=comp;
+  renderSaldos();
+}
+
+function deleteSaldoMes(mes){
+  if(!confirm(`Excluir os saldos de ${saldoMesLabelLong(mes)}?`)) return;
+  delete saldoBancario[mes];
+  if(currentSaldoMes===mes) currentSaldoMes=null;
+  saveSaldoState();
+  renderSaldos();
+}
+
+// ── RENDER ────────────────────────────────────────────
+function renderSaldos(){
+  const todosMeses=Object.keys(saldoBancario).sort();
+  if(!todosMeses.length){
+    g('saldo-chips').innerHTML='<span style="color:var(--g400);font-size:12.5px;padding:4px 0">Nenhum mês cadastrado ainda. Clique em <strong>+ Novo Mês</strong>.</span>';
+    g('saldo-resumo-panel').style.display='none';
+    g('saldo-aplicacoes-card').style.display='none';
+    g('saldo-contas-card').style.display='none';
+    g('saldo-empty').style.display='block';
+    const selEmpty=g('saldo-ano-sel'); if(selEmpty) selEmpty.innerHTML='';
+    return;
+  }
+
+  // ── Seletor de ano ──────────────────────────────────
+  const anos=[...new Set(todosMeses.map(m=>m.slice(0,4)))].sort();
+  if(!currentSaldoYear || !anos.includes(currentSaldoYear)) currentSaldoYear=anos[anos.length-1];
+  const anoSel=g('saldo-ano-sel');
+  if(anoSel){
+    anoSel.innerHTML=anos.map(a=>`<option value="${a}" ${a===currentSaldoYear?'selected':''}>${a}</option>`).join('');
+  }
+
+  const meses=todosMeses.filter(m=>m.startsWith(currentSaldoYear));
+  const chipsEl=g('saldo-chips');
+
+  if(!meses.length){
+    chipsEl.innerHTML=`<span style="color:var(--g400);font-size:12.5px;padding:4px 0">Nenhum mês cadastrado em ${currentSaldoYear}. Clique em <strong>+ Novo Mês</strong>.</span>`;
+    g('saldo-resumo-panel').style.display='none';
+    g('saldo-aplicacoes-card').style.display='none';
+    g('saldo-contas-card').style.display='none';
+    g('saldo-empty').style.display='block';
+    return;
+  }
+  g('saldo-empty').style.display='none';
+
+  if(!currentSaldoMes || !meses.includes(currentSaldoMes)) currentSaldoMes=meses[meses.length-1];
+
+  // ── Saldo anterior: último mês salvo do ano anterior (ex.: Dez/2025) ──
+  const anoAnterior=String(+currentSaldoYear-1);
+  const mesesAnoAnterior=todosMeses.filter(m=>m.startsWith(anoAnterior));
+  const mesAnterior=mesesAnoAnterior.length?mesesAnoAnterior[mesesAnoAnterior.length-1]:null;
+  const mesesTabela=mesAnterior?[mesAnterior,...meses]:meses;
+
+  // Chips (apenas meses do ano selecionado — editáveis/apagáveis)
+  chipsEl.innerHTML=meses.map(m=>`
+    <span class="saldo-chip${m===currentSaldoMes?' active':''}" onclick="currentSaldoMes='${m}';renderSaldos()">
+      ${saldoMesLabel(m)}
+    </span>`).join('')+
+    `<button class="btn btn-ghost btn-sm" style="margin-left:6px" onclick="abrirFormSaldo(currentSaldoMes)">✏️ Editar</button>
+     <button class="btn btn-ghost btn-sm" style="color:#dc2626" onclick="deleteSaldoMes(currentSaldoMes)">🗑️</button>`;
+
+  const mes=currentSaldoMes;
+  const d=saldoBancario[mes]||{};
+  g('saldo-mes-label').textContent=saldoMesLabelLong(mes);
+
+  const totAplic=renderSaldosAplic(d.aplicacoes||[], mesesTabela, mes, mesAnterior);
+  const totCC=renderSaldosCC(d.contas||[], mesesTabela, mes, mesAnterior);
+  renderSaldoResumo(totAplic, totCC, mesesTabela, mes, mesAnterior);
+
+  g('saldo-resumo-panel').style.display='block';
+  g('saldo-aplicacoes-card').style.display='block';
+  g('saldo-contas-card').style.display='block';
+}
+
+function mudarAnoSaldo(ano){
+  currentSaldoYear=ano;
+  currentSaldoMes=null;
+  renderSaldos();
+}
+
+function getValMes(meses, arr, mes, field='saldo'){
+  const idx=meses.indexOf(mes);
+  if(idx<=0) return null;
+  const prevMes=meses[idx-1];
+  const prev=saldoBancario[prevMes];
+  if(!prev) return null;
+  return arr.find ? null : null; // handled inline
+}
+
+
+function renderSaldosAplic(aplicacoes, meses, mes, mesAnterior){
+  // Group rows by empresa
+  const empresas=[...new Set(aplicacoes.map(r=>r.empresa))].filter(Boolean);
+
+  // Build column headers: fixed + all months (mesAnterior, se houver, é a 1ª coluna)
+  const thEl=g('th-aplicacoes');
+  const tbEl=g('tb-aplicacoes');
+  const tfEl=g('tf-aplicacoes');
+
+  thEl.innerHTML=`<tr>
+    <th class="empresa">Empresa</th>
+    <th class="aplic">Aplicação</th>
+    ${meses.map(m=>m===mesAnterior
+      ?`<th class="tr" style="min-width:120px;background:rgba(0,0,0,.15)">Saldo Anterior<br><small style="font-weight:400;opacity:.8">${saldoMesLabel(m)}</small></th>`
+      :`<th class="tr" style="min-width:115px">${saldoMesLabel(m)}</th>`).join('')}
+  </tr>`;
+
+  let rows='';
+  const totPorMes={};
+  meses.forEach(m=>totPorMes[m]=0);
+
+  empresas.forEach(emp=>{
+    const linhas=aplicacoes.filter(r=>r.empresa===emp);
+    const aplics=[...new Set(linhas.map(r=>r.aplicacao))].filter(Boolean);
+
+    aplics.forEach((aplic,ai)=>{
+      // For other months, look up saved data
+      const salRow=meses.map(m=>{
+        const md=saldoBancario[m];
+        if(!md) return 0;
+        const r=(md.aplicacoes||[]).find(x=>x.empresa===emp&&x.aplicacao===aplic);
+        return r?+(r.saldo||0):0;
+      });
+      salRow.forEach((v,i)=>totPorMes[meses[i]]=(totPorMes[meses[i]]||0)+v);
+
+      rows+=`<tr>
+        ${ai===0?`<td rowspan="${aplics.length}" style="font-weight:600;vertical-align:top;padding-top:10px">${emp}</td>`:''}
+        <td style="color:var(--g400);font-size:11.5px">${aplic}</td>
+        ${salRow.map((v,si)=>{
+          const isCur=meses[si]===mes;
+          const isAnt=meses[si]===mesAnterior;
+          return `<td class="mono tr" style="${isCur?'font-weight:600;color:var(--navy)':''}${isAnt?'background:rgba(0,0,0,.04)':''}">${v?R$(v):'—'}</td>`;
+        }).join('')}
+      </tr>`;
+    });
+  });
+
+  tbEl.innerHTML=rows||'<tr><td colspan="20" style="padding:20px;text-align:center;color:var(--g400)">Nenhum dado para exibir.</td></tr>';
+
+  const baseTot=totPorMes[meses[0]]||0;
+  const baseLbl=mesAnterior?'VAR. ACUMULADA (DESDE SALDO ANTERIOR)':'VAR. DESDE JAN';
+  tfEl.innerHTML=`<tr>
+    <td colspan="2" style="font-weight:700">TOTAL</td>
+    ${meses.map(m=>`<td class="mono tr">${R$(totPorMes[m]||0)}</td>`).join('')}
+  </tr>
+  <tr>
+    <td colspan="2" style="font-size:11px;opacity:.8">VAR. MÊS</td>
+    ${meses.map((m,i)=>{
+      if(i===0) return `<td class="mono tr" style="color:var(--g400);font-size:10.5px">base</td>`;
+      const v=(totPorMes[m]||0)-(totPorMes[meses[i-1]]||0);
+      const cls=v>=0?'var-pos':'var-neg';
+      return `<td class="mono tr ${cls}">${v>=0?'+':''}${R$(v)}</td>`;
+    }).join('')}
+  </tr>
+  <tr>
+    <td colspan="2" style="font-size:11px;opacity:.8">${baseLbl}</td>
+    ${meses.map((m,i)=>{
+      if(i===0) return `<td class="mono tr" style="color:var(--g400);font-size:10.5px">—</td>`;
+      const v=(totPorMes[m]||0)-baseTot;
+      const cls=v>=0?'var-pos':'var-neg';
+      return `<td class="mono tr ${cls}">${v>=0?'+':''}${R$(v)}</td>`;
+    }).join('')}
+  </tr>`;
+  return totPorMes;
+}
+
+function renderSaldosCC(contas, meses, mes, mesAnterior){
+  const empresas=[...new Set(contas.map(r=>r.empresa))].filter(Boolean);
+  const thEl=g('th-contas');
+  const tbEl=g('tb-contas');
+  const tfEl=g('tf-contas');
+
+  thEl.innerHTML=`<tr>
+    <th class="empresa">Empresa</th>
+    ${meses.map(m=>m===mesAnterior
+      ?`<th class="tr" style="min-width:120px;background:rgba(0,0,0,.15)">Saldo Anterior<br><small style="font-weight:400;opacity:.8">${saldoMesLabel(m)}</small></th>`
+      :`<th class="tr" style="min-width:115px">${saldoMesLabel(m)}</th>`).join('')}
+  </tr>`;
+
+  const totPorMes={};
+  meses.forEach(m=>totPorMes[m]=0);
+
+  let rows='';
+  empresas.forEach(emp=>{
+    const salRow=meses.map(m=>{
+      const md=saldoBancario[m];
+      if(!md) return 0;
+      const r=(md.contas||[]).find(x=>x.empresa===emp);
+      return r?+(r.saldo||0):0;
+    });
+    salRow.forEach((v,i)=>totPorMes[meses[i]]=(totPorMes[meses[i]]||0)+v);
+
+    rows+=`<tr>
+      <td style="font-weight:600">${emp}</td>
+      ${salRow.map((v,si)=>{
+        const isCur=meses[si]===mes;
+        const isAnt=meses[si]===mesAnterior;
+        return `<td class="mono tr" style="${isCur?'font-weight:600;color:var(--navy)':''}${isAnt?'background:rgba(0,0,0,.04)':''}">${v?R$(v):'—'}</td>`;
+      }).join('')}
+    </tr>`;
+  });
+
+  tbEl.innerHTML=rows||'<tr><td colspan="20" style="padding:20px;text-align:center;color:var(--g400)">Nenhum dado para exibir.</td></tr>';
+
+  const baseTotCC=totPorMes[meses[0]]||0;
+  const baseLblCC=mesAnterior?'VAR. ACUMULADA (DESDE SALDO ANTERIOR)':'VAR. DESDE JAN';
+  tfEl.innerHTML=`<tr>
+    <td style="font-weight:700">TOTAL</td>
+    ${meses.map(m=>`<td class="mono tr">${R$(totPorMes[m]||0)}</td>`).join('')}
+  </tr>
+  <tr>
+    <td style="font-size:11px;opacity:.8">VAR. MÊS</td>
+    ${meses.map((m,i)=>{
+      if(i===0) return `<td class="mono tr" style="color:var(--g400);font-size:10.5px">base</td>`;
+      const v=(totPorMes[m]||0)-(totPorMes[meses[i-1]]||0);
+      const cls=v>=0?'var-pos':'var-neg';
+      return `<td class="mono tr ${cls}">${v>=0?'+':''}${R$(v)}</td>`;
+    }).join('')}
+  </tr>
+  <tr>
+    <td style="font-size:11px;opacity:.8">${baseLblCC}</td>
+    ${meses.map((m,i)=>{
+      if(i===0) return `<td class="mono tr" style="color:var(--g400);font-size:10.5px">—</td>`;
+      const v=(totPorMes[m]||0)-baseTotCC;
+      const cls=v>=0?'var-pos':'var-neg';
+      return `<td class="mono tr ${cls}">${v>=0?'+':''}${R$(v)}</td>`;
+    }).join('')}
+  </tr>`;
+  return totPorMes;
+}
+
+function renderSaldoResumo(totAplic, totCC, meses, mes, mesAnterior){
+  const curIdx=meses.indexOf(mes);
+  const prevMes=curIdx>0?meses[curIdx-1]:null;
+
+  const janMes=meses[0];
+  const baseLabel=mesAnterior?'Acumulado:':'vs Jan:';
+
+  function varHtml(diff, base){
+    if(base===null) return '<span>Sem comparativo</span>';
+    const pct=base!==0?Math.abs(diff/base*100):0;
+    const cls=diff>0?'pos':diff<0?'neg':'zero';
+    const icon=diff>0?'▲':diff<0?'▼':'●';
+    const sign=diff>=0?'+':'';
+    return '<span class="sr-var-icon">'+icon+'</span><span>'+sign+'R\u0024\u00a0'+Math.abs(diff).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+' ('+pct.toFixed(1)+'%)</span>';
+  }
+
+  function fillCard(elVal, elPrev, elVar, curVal, prevVal, janVal){
+    elVal.textContent='R\u0024\u00a0'+curVal.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    // Linha mês anterior
+    const diffPrev=prevVal!==null?curVal-prevVal:null;
+    const prevLabel=prevVal!==null?(mes===mesesAntFirstReal(meses,mesAnterior)?`Saldo anterior (${saldoMesLabel(prevMes)}): `:'Mês anterior: ')+'R\u0024\u00a0'+prevVal.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'Primeiro mês';
+    elPrev.textContent=prevLabel;
+    // Var mês + var acumulada juntas no elVar
+    const clsPrev=diffPrev!==null?(diffPrev>0?'pos':diffPrev<0?'neg':'zero'):'zero';
+    const htmlPrev=diffPrev!==null?varHtml(diffPrev,prevVal):'<span>—</span>';
+    const diffJan=mes!==janMes?curVal-janVal:null;
+    const htmlJan=diffJan!==null?varHtml(diffJan,janVal):'<span style="color:var(--g400)">Saldo base</span>';
+    elVar.className='sr-var '+clsPrev;
+    elVar.innerHTML=
+      '<div style="display:flex;align-items:center;gap:4px">'+htmlPrev+'</div>'+
+      '<div style="display:flex;align-items:center;gap:4px;margin-top:4px;font-size:10.5px;opacity:.85;border-top:1px dashed var(--g200);padding-top:4px">'+
+        '<span style="color:var(--g400);margin-right:2px">'+baseLabel+'</span>'+htmlJan+
+      '</div>';
+  }
+
+  const aplCur=totAplic[mes]||0;
+  const aplPrev=prevMes!==null?(totAplic[prevMes]||0):null;
+  const aplJan=totAplic[janMes]||0;
+  fillCard(g('sr-aplic-val'),g('sr-aplic-prev'),g('sr-aplic-var'),aplCur,aplPrev,aplJan);
+
+  const ccCur=totCC[mes]||0;
+  const ccPrev=prevMes!==null?(totCC[prevMes]||0):null;
+  const ccJan=totCC[janMes]||0;
+  fillCard(g('sr-cc-val'),g('sr-cc-prev'),g('sr-cc-var'),ccCur,ccPrev,ccJan);
+
+  const totCur=aplCur+ccCur;
+  const totPrev=prevMes!==null?(aplPrev+ccPrev):null;
+  const totJan=aplJan+ccJan;
+  fillCard(g('sr-total-val'),g('sr-total-prev'),g('sr-total-var'),totCur,totPrev,totJan);
+}
+
+// Retorna o primeiro mês "real" (não o saldo anterior) da lista, usado só para
+// decidir o texto do rótulo do card de resumo.
+function mesesAntFirstReal(meses,mesAnterior){
+  return mesAnterior?meses[1]:meses[0];
+}
+
+/* ═══════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════ */
+
+/* Fórmula de custo:
+   Base        = sal + horas_extras + gratif
+   Encargos    = Base × %enc
+   Prov. 13º   = Base ÷ 12  (0 para estagiários — sem direito ao 13º)
+   Prov. Férias = Base × 2,775%  (= 1/3 adicional constitucional / 12)
+   Enc. s/ Prov = (prov13 + provFer) × %enc
+   Desconto VT = mín(sal × 6%, vtPago)  — somente se VT preenchido
+   Total = Base + Encargos + Prov13 + ProvFer + Enc.Prov + Benefícios − DescontoVT */
+function calcBreakdown(f){
+  const sal   = +(f.sal||0);
+  const he    = +(f.he||0);      // horas extras — integram a base de encargos
+  const grat  = +(f.grat||0);
+  const pct   = (+(f.pctEnc||0))/100;
+  const isEst = (f.regime==='ESTAGIARIO');
+  const base  = sal + he + grat; // horas extras somam à base
+  const enc   = base * pct;
+  const p13   = isEst ? 0 : base/12;  // provisão 13º sobre base completa (sal+he+grat)
+  const pFer  = base * 0.02775;       // férias sobre base completa
+  const encP  = (p13 + pFer) * pct;
+  const vt=+(f.vt||0), vr=+(f.vr||0), ps=+(f.ps||0), out=+(f.out||0);
+  // Desconto do VT: 6% do salário base (sem he/grat), limitado ao valor do VT
+  const descontoVT = vt > 0 ? Math.min(sal * 0.06, vt) : 0;
+  const ben   = vt + vr + ps + out - descontoVT;
+  const total = base + enc + p13 + pFer + encP + ben;
+  return {sal,he,grat,base,enc,p13,pFer,encP,vt,vr,ps,out,descontoVT,ben,total,pct,isEst};
+}
+
+function custoFunc(f){ return calcBreakdown(f).total; }
+
+function horasFunc(fId){
+  return Object.values(S.grade[fId]||{}).reduce((a,h)=>a+(+h||0),0);
+}
+
+function custoPessoalPorTurma(){
+  const r={};
+  S.turmas.forEach(t=>r[t.id]=0);
+  S.funcs.filter(f=>f.ativo!==false).forEach(f=>{
+    const ct=custoFunc(f);
+    const gh=S.grade[f.id]||{};
+    // Horistas: peso = horas × valor_hr_aula (custo real por turma)
+    // Não-horistas: peso = apenas horas (salário fixo rateado proporcional às horas)
+    const isHorista=(f.regime==='HORISTA');
+    const pesoPorTurma={};
+    let totPeso=0;
+    S.turmas.forEach(t=>{
+      const h=+(gh[t.id]||0);
+      const hra=+(t.hra||0);
+      const peso = isHorista && hra>0 ? h*hra : h;
+      pesoPorTurma[t.id]=peso;
+      totPeso+=peso;
+    });
+    if(totPeso===0) return;
+    S.turmas.forEach(t=>{
+      const peso=pesoPorTurma[t.id];
+      if(peso>0) r[t.id]=(r[t.id]||0)+(peso/totPeso)*ct;
+    });
+  });
+  return r;
+}
+
+function custoDespPorTurma(){
+  // Each expense has its own criterio: 'faturamento' | 'turmas'
+  // Returns { turmaId: totalAllocated } summing each expense by its own rule
+  const r={};
+  S.turmas.forEach(t=>r[t.id]=0);
+  if(!S.turmas.length) return r;
+
+  const totRec=S.turmas.reduce((a,t)=>a+(+(t.rec||0)),0)||1;
+  const nTurmas=S.turmas.length||1;
+
+  S.despesas.forEach(d=>{
+    const val=+(d.val||0);
+    if(val===0) return;
+    const cr=d.criterio||'faturamento';
+    if(cr.startsWith('turma:')){
+      const tId=cr.split(':')[1];
+      if(r[tId]!==undefined) r[tId]+=val;
+    } else {
+      S.turmas.forEach(t=>{
+        if(cr==='turmas') r[t.id]+=val/nTurmas;
+        else r[t.id]+=(+(t.rec||0))/totRec*val;
+      });
+    }
+  });
+  return r;
+}
+
+/* ═══════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════ */
+function goTab(tab,el){
+  if(currentRole!=='coordenacao' && TABS_SOMENTE_COORDENACAO.includes(tab)) return;
+  document.querySelectorAll('.tab-section').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  g('tab-'+tab).classList.add('active');
+  el.classList.add('active');
+  if(tab==='grade')      renderGrade();
+  if(tab==='turmas')     renderTurmas();
+  if(tab==='custo')      renderCusto();
+  if(tab==='despesas')   renderDespTurma();
+  if(tab==='resultado')  renderResultado();
+  if(tab==='funcionarios') renderFunc();
+  if(tab==='saldos')       renderSaldos();
+  if(tab==='historico')    renderHistorico();
+}
+
+/* ═══════════════════════════════════════════════════════
+   FUNCIONÁRIOS
+═══════════════════════════════════════════════════════ */
+function abrirFormFunc(id=null){
+  editFId=id;
+  const f=id?S.funcs.find(x=>x.id===id):null;
+  g('form-func-tit').textContent=f?'Editar Funcionário':'Novo Funcionário';
+  g('f-nome').value=f?.nome||'';
+  g('f-disc').value=f?.disc||'';
+  g('f-regime').value=f?.regime||'MENSALISTA';
+  g('f-sal').value=f?.sal||'';
+  g('f-hc').value=f?.hc||220;
+  g('f-grat').value=f?.grat||'';
+  g('f-enc').value=f?.pctEnc!==undefined?f.pctEnc:35;
+  g('f-he').value=f?.he||'';
+  g('f-vt').value=f?.vt||'';
+  g('f-vr').value=f?.vr||'';
+  g('f-ps').value=f?.ps||'';
+  g('f-out').value=f?.out||'';
+  g('form-func').style.display='block';
+  previewCusto();
+  g('f-nome').focus();
+}
+
+function fecharFormFunc(){g('form-func').style.display='none';editFId=null;}
+
+function previewCusto(){
+  const tmp={
+    sal:gN('f-sal'), grat:gN('f-grat'), pctEnc:gN('f-enc'), he:gN('f-he'),
+    regime:gS('f-regime'), vt:gN('f-vt'), vr:gN('f-vr'), ps:gN('f-ps'), out:gN('f-out')
+  };
+  const b=calcBreakdown(tmp);
+  const pctLabel=`${(b.pct*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}%`;
+  const row=(lbl,val,cls='',sub='')=>`<tr class="${cls}">
+    <td class="demo-lbl">${lbl}${sub?`<small>${sub}</small>`:''}</td>
+    <td class="demo-val">${R$(val)}</td></tr>`;
+  const sec=(lbl)=>`<tr class="demo-sec"><td colspan="2">${lbl}</td></tr>`;
+  const zeroRow=(lbl,val,sub='')=>row(lbl,val,val===0?'demo-zero':'',sub);
+  const est=b.isEst?'<small style="color:#b45309">★ Estagiário: sem 13º salário</small>':'';
+
+  renderAlocacao();
+  g('demo-tbl').innerHTML=`
+    ${sec('💼 Remuneração')}
+    ${row('Salário Bruto',b.sal)}
+    ${zeroRow('(+) Outras Gratificações',b.grat)}
+    <tr class="demo-subtot"><td class="demo-lbl">(=) Base de Cálculo</td><td class="demo-val">${R$(b.base)}</td></tr>
+    ${sec('⚙️ Encargos Trabalhistas')}
+    ${row(`(+) Encargos s/ Base (${pctLabel})`,b.enc,'',`INSS + FGTS + RAT + SENAR/SESC — sobre R$ ${N$(b.base)}`)}
+    ${b.isEst
+      ? `<tr class="demo-zero"><td class="demo-lbl">(+) Prov. 13º Salário<small>Estagiário não tem direito ao 13º</small></td><td class="demo-val" style="color:var(--g400)">—</td></tr>`
+      : row(`(+) Prov. 13º Salário`,b.p13,'',`salário ÷ 12  =  ${R$(b.sal)} ÷ 12`)
+    }
+    ${row('(+) Prov. Férias',b.pFer,'',`salário × 2,775%  (adicional 1/3 constitucional / 12)`)}
+    ${zeroRow(`(+) Encargos s/ Provisões (${pctLabel})`,b.encP,'',`(Prov.13º + Prov.Férias) × ${pctLabel}`)}
+    ${sec('🎁 Benefícios')}
+    ${zeroRow('(+) Vale Transporte',b.vt)}
+    ${zeroRow('(+) Vale Refeição',b.vr)}
+    ${zeroRow('(+) Plano de Saúde',b.ps)}
+    ${zeroRow('(+) Outros',b.out)}
+    <tr class="demo-grand">
+      <td class="demo-lbl">= CUSTO TOTAL MENSAL</td>
+      <td class="demo-val">${R$(b.total)}</td>
+    </tr>`;
+}
+
+function renderAlocacao(){
+  const panel=g('demo-alocacao');
+  const tbl=g('demo-alocacao-tbl');
+  if(!editFId || !S.turmas.length){
+    panel.style.display='none';
+    return;
+  }
+  const f=S.funcs.find(x=>x.id===editFId);
+  if(!f){ panel.style.display='none'; return; }
+
+  // Calcula custo total deste funcionário
+  const ct=custoFunc(f);
+  if(!ct){ panel.style.display='none'; return; }
+
+  // Calcula o rateio usando a mesma lógica de custoPessoalPorTurma
+  const gh=S.grade[f.id]||{};
+  const isHorista=(f.regime==='HORISTA');
+  const pesoPorTurma={};
+  let totPeso=0;
+  S.turmas.forEach(t=>{
+    const h=+(gh[t.id]||0);
+    const hra=+(t.hra||0);
+    const peso = isHorista && hra>0 ? h*hra : h;
+    pesoPorTurma[t.id]=peso;
+    totPeso+=peso;
+  });
+
+  // Se sem horas na grade, mostra aviso
+  if(totPeso===0){
+    panel.style.display='block';
+    tbl.innerHTML=`<tr><td colspan="2" style="padding:14px 16px;color:var(--g400);font-size:12px">
+      ⚠️ Funcionário sem horas na grade de turmas.<br>
+      <small>Cadastre as horas na aba <strong>Grade de Horários</strong> para ver o rateio.</small>
+    </td></tr>`;
+    return;
+  }
+
+  const sec=(lbl)=>`<tr class="demo-sec"><td colspan="2">${lbl}</td></tr>`;
+  let rows='';
+  let totalAlocado=0;
+
+  S.turmas.forEach(t=>{
+    const peso=pesoPorTurma[t.id]||0;
+    if(peso===0) return;
+    const pct=peso/totPeso;
+    const valor=pct*ct;
+    totalAlocado+=valor;
+    const horas=+(gh[t.id]||0);
+    const pctFmt=(pct*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+    const barW=Math.round(pct*100);
+    rows+=`<tr>
+      <td class="demo-lbl">
+        <span class="demo-aloc-turma">${t.nome||t.id}</span>
+        <small class="demo-aloc-pct">${horas}h × ${isHorista?'R$'+(+(t.hra||0)).toLocaleString('pt-BR',{minimumFractionDigits:2})+'  →  ':''}${pctFmt}%</small>
+        <div class="demo-aloc-bar-wrap"><div class="demo-aloc-bar" style="width:${barW}%"></div></div>
+      </td>
+      <td class="demo-val">${R$(valor)}</td>
+    </tr>`;
+  });
+
+  // Turmas sem horas
+  const semHoras=S.turmas.filter(t=>!(pesoPorTurma[t.id]>0));
+  if(semHoras.length){
+    rows+=`<tr class="demo-zero"><td class="demo-lbl" colspan="2" style="font-size:11px;color:var(--g400)">
+      Sem horas: ${semHoras.map(t=>t.nome||t.id).join(', ')}
+    </td></tr>`;
+  }
+
+  panel.style.display='block';
+  tbl.innerHTML=
+    sec('🏫 Distribuição do Custo Total')+
+    rows+
+    `<tr class="demo-grand">
+      <td class="demo-lbl">= TOTAL ALOCADO</td>
+      <td class="demo-val">${R$(totalAlocado)}</td>
+    </tr>`;
+}
+
+function salvarFunc(){
+  const nome=gS('f-nome');
+  if(!nome){alert('Informe o nome do funcionário.');return;}
+  const d={nome,disc:gS('f-disc'),regime:gS('f-regime'),
+    sal:gN('f-sal'),hc:gN('f-hc'),grat:gN('f-grat'),pctEnc:gN('f-enc'),he:gN('f-he'),
+    vt:gN('f-vt'),vr:gN('f-vr'),ps:gN('f-ps'),out:gN('f-out')};
+  if(editFId){
+    const i=S.funcs.findIndex(x=>x.id===editFId);
+    S.funcs[i]={...S.funcs[i],...d};
+  } else {
+    S.funcs.push({id:'F'+pad(nF++), ativo:true, ...d});
+  }
+  fecharFormFunc(); renderFunc(); populateGradeSel(); save();
+}
+
+function delFunc(id){
+  if(!confirm('Excluir este funcionário?'))return;
+  S.funcs=S.funcs.filter(f=>f.id!==id);
+  delete S.grade[id];
+  renderFunc(); populateGradeSel(); save();
+}
+
+function toggleAtivo(id, checked){
+  const f=S.funcs.find(x=>x.id===id);
+  if(!f) return;
+  f.ativo=checked;
+  save();
+  renderFunc(); populateGradeSel(); renderGrade();
+  refreshActiveTab();
+  showToast(checked?`✅ ${f.nome} marcado como ATIVO.`:`⏸️ ${f.nome} marcado como INATIVO — não entrará no rateio de custos.`);
+}
+
+function toggleBkd(id){
+  const el=document.getElementById('bkd-'+id);
+  if(!el)return;
+  const isOpen=el.classList.contains('open');
+  document.querySelectorAll('.bkd-row').forEach(r=>r.classList.remove('open'));
+  if(!isOpen) el.classList.add('open');
+}
+
+function sortTable(tblKey,col){
+  const s=sortState[tblKey];
+  const dir=(s&&s.col===col&&s.dir==='asc')?'desc':'asc';
+  sortState[tblKey]={col,dir};
+  if(tblKey==='func') renderFunc();
+  else if(tblKey==='turmas') renderTurmas();
+  else if(tblKey==='desp-turma') renderDespTurma();
+  else if(tblKey==='custo') renderCusto();
+  else if(tblKey==='resultado') renderResultado();
+}
+
+const regimeBadge={
+  'MENSALISTA':'<span class="badge b-navy">MEN</span>',
+  'HORISTA':'<span class="badge b-gold">HOR</span>',
+  'ADM':'<span class="badge b-blue">ADM</span>',
+  'ESTAGIARIO':'<span class="badge b-yellow">EST</span>'
+};
+
+function renderFunc(){
+  const busca=(g('busca-f')?.value||'').toLowerCase();
+  const lista=S.funcs.filter(f=>(f.nome||'').toLowerCase().includes(busca)||(f.disc||'').toLowerCase().includes(busca));
+  g('cnt-func').textContent=S.funcs.length;
+  const tb=g('tb-func');
+  if(!lista.length){
+    tb.innerHTML=`<tr><td colspan="11" class="tc" style="padding:40px;color:var(--g400)">Nenhum funcionário encontrado.</td></tr>`;
+    return;
+  }
+  // Apply sort
+  const fCols={
+    id:f=>f.id, nome:f=>f.nome||'', disc:f=>f.disc||'', regime:f=>f.regime||'',
+    sal:f=>calcBreakdown(f).sal, he:f=>calcBreakdown(f).he||0,
+    enc:f=>calcBreakdown(f).enc, p13:f=>calcBreakdown(f).p13||0,
+    pFer:f=>calcBreakdown(f).pFer, total:f=>calcBreakdown(f).total
+  };
+  const sortedLista=sortedList(lista,'func',fCols);
+  tb.innerHTML=sortedLista.map(f=>{
+    const b=calcBreakdown(f);
+    const pctLabel=`${(+(f.pctEnc||0)).toLocaleString('pt-BR',{maximumFractionDigits:1})}%`;
+    // Breakdown HTML for expandable row
+    const bkd=`<tr class="bkd-row" id="bkd-${f.id}">
+      <td colspan="11">
+        <div class="bkd-inner">
+          <div class="bkd-col">
+            <div class="bkd-col-title">💼 Remuneração</div>
+            <div class="bkd-line"><span class="bl">Salário Bruto</span><span class="bv">${R$(b.sal)}</span></div>
+            ${b.he>0?`<div class="bkd-line"><span class="bl">Horas Extras</span><span class="bv">${R$(b.he)}</span></div>`:''}
+            <div class="bkd-line"><span class="bl">Outras Gratificações</span><span class="bv">${R$(b.grat)}</span></div>
+            <div class="bkd-line" style="font-weight:600"><span class="bl">Base de Cálculo</span><span class="bv">${R$(b.base)}</span></div>
+          </div>
+          <div class="bkd-col">
+            <div class="bkd-col-title">⚙️ Encargos (${pctLabel})</div>
+            <div class="bkd-line"><span class="bl">Encargos s/ Base</span><span class="bv">${R$(b.enc)}</span></div>
+            <div class="bkd-line"><span class="bl">Prov. 13º (base÷12)${b.isEst?' ★':''}</span><span class="bv" style="${b.isEst?'color:var(--g400)':''}">${b.isEst?'—':R$(b.p13)}</span></div>
+            <div class="bkd-line"><span class="bl">Prov. Férias (base×2,775%)</span><span class="bv">${R$(b.pFer)}</span></div>
+            <div class="bkd-line"><span class="bl">Encargos s/ Provisões</span><span class="bv">${R$(b.encP)}</span></div>
+          </div>
+          <div class="bkd-col">
+            <div class="bkd-col-title">🎁 Benefícios</div>
+            <div class="bkd-line"><span class="bl">Vale Transporte</span><span class="bv">${R$(b.vt)}</span></div>
+            ${b.descontoVT>0?`<div class="bkd-line" style="color:var(--green)"><span class="bl">Desconto VT (6% sal.base)</span><span class="bv">- ${R$(b.descontoVT)}</span></div>`:''}
+            <div class="bkd-line"><span class="bl">Vale Refeição</span><span class="bv">${R$(b.vr)}</span></div>
+            <div class="bkd-line"><span class="bl">Plano de Saúde</span><span class="bv">${R$(b.ps)}</span></div>
+            <div class="bkd-line"><span class="bl">Outros</span><span class="bv">${R$(b.out)}</span></div>
+            <div class="bkd-line total-line"><span class="bl">= CUSTO TOTAL</span><span class="bv">${R$(b.total)}</span></div>
+          </div>
+        </div>
+      </td></tr>`;
+    const isAtivo=f.ativo!==false;
+    const mainRow=`<tr style="cursor:pointer${isAtivo?'':';opacity:.5'}" onclick="toggleBkd('${f.id}')">
+      <td class="mono" style="color:var(--g400);font-size:10.5px">${f.id}</td>
+      <td style="font-weight:500">${f.nome}${isAtivo?'':' <span style="font-size:9.5px;font-weight:700;color:var(--red);border:1px solid var(--red);border-radius:8px;padding:1px 6px;margin-left:4px">INATIVO</span>'}</td>
+      <td style="color:var(--g600);max-width:160px;overflow:hidden;text-overflow:ellipsis">${f.disc||'—'}</td>
+      <td>${regimeBadge[f.regime]||f.regime}</td>
+      <td class="mono tr">${N$(b.sal)}</td>
+      <td class="mono tr" style="color:${b.he>0?'var(--navy)':'var(--g400)'}">${b.he>0?N$(b.he):'—'}</td>
+      <td class="mono tr">${N$(b.enc)}</td>
+      <td class="mono tr">${b.isEst?'—':N$(b.p13)}</td>
+      <td class="mono tr">${N$(b.pFer)}</td>
+      <td class="mono tr" style="font-weight:700;color:var(--navy)">${N$(b.total)}</td>
+      <td onclick="event.stopPropagation()" style="white-space:nowrap">
+        <button class="btn-icon" onclick="abrirFormFunc('${f.id}')" title="Editar">✏️</button>
+        <button class="btn-icon" onclick="delFunc('${f.id}')" title="Excluir">🗑️</button>
+        <label style="display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--g600);cursor:pointer;margin-left:6px" title="Ativo? Se desmarcado, este funcionário deixa de entrar no rateio de custos das outras abas.">
+          <input type="checkbox" ${isAtivo?'checked':''} onchange="toggleAtivo('${f.id}',this.checked)" style="cursor:pointer">Ativo
+        </label>
+      </td></tr>`;
+    return mainRow+bkd;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   TURMAS
+═══════════════════════════════════════════════════════ */
+function abrirFormTurma(id=null){
+  editTId=id;
+  const t=id?S.turmas.find(x=>x.id===id):null;
+  g('form-turma-tit').textContent=t?'Editar Turma':'Nova Turma';
+  g('t-nome').value=t?.nome||'';
+  g('t-alunos').value=t?.alunos||'';
+  g('t-rec').value=t?.rec||'';
+  g('t-hra').value=t?.hra||'';
+  g('form-turma').style.display='block';
+  g('t-nome').focus();
+}
+
+function fecharFormTurma(){g('form-turma').style.display='none';editTId=null;}
+
+function salvarTurma(){
+  const nome=gS('t-nome');
+  if(!nome){alert('Informe o nome da turma.');return;}
+  const d={nome, alunos:gN('t-alunos'), rec:gN('t-rec'), hra:gN('t-hra')};
+  if(editTId){
+    const i=S.turmas.findIndex(x=>x.id===editTId);
+    S.turmas[i]={...S.turmas[i],...d};
+  } else {
+    S.turmas.push({id:'T'+pad(nT++), ...d});
+  }
+  fecharFormTurma(); renderTurmas(); save();
+}
+
+function delTurma(id){
+  if(!confirm('Excluir esta turma?'))return;
+  S.turmas=S.turmas.filter(t=>t.id!==id);
+  Object.keys(S.grade).forEach(fId=>{ delete S.grade[fId][id]; });
+  renderTurmas(); save();
+}
+
+function renderTurmas(){
+  const totRec=S.turmas.reduce((a,t)=>a+(+(t.rec||0)),0);
+  g('cnt-turmas').textContent=S.turmas.length;
+  const tb=g('tb-turmas'), tf=g('tf-turmas');
+  if(!S.turmas.length){
+    tb.innerHTML=`<tr><td colspan="7" class="tc" style="padding:40px;color:var(--g400)">Nenhuma turma cadastrada.</td></tr>`;
+    tf.innerHTML=''; return;
+  }
+  const tCols={
+    id:t=>t.id, nome:t=>t.nome||'', alunos:t=>+(t.alunos||0),
+    rec:t=>+(t.rec||0), hra:t=>+(t.hra||0)
+  };
+  const sortedTurmas=sortedList(S.turmas,'turmas',tCols);
+  tb.innerHTML=sortedTurmas.map(t=>{
+    const rec=+(t.rec||0), al=+(t.alunos||0);
+    const pR=totRec>0?rec/totRec*100:0;
+    const hra=+(t.hra||0);
+    return`<tr>
+      <td class="mono" style="color:var(--g400);font-size:10.5px">${t.id}</td>
+      <td style="font-weight:500">${t.nome}</td>
+      <td class="mono tr">${al}</td>
+      <td class="mono tr">${N$(rec)}</td>
+      <td class="mono tr">${al>0?N$(rec/al):'—'}</td>
+      <td class="mono tr" style="color:${hra>0?'var(--navy)':'var(--g400)'}">${hra>0?N$(hra):'—'}</td>
+      <td class="tr">${PC(pR)}<div class="bar-bg"><div class="bar-fill" style="width:${Math.min(pR,100)}%"></div></div></td>
+      <td>
+        <button class="btn-icon" onclick="abrirFormTurma('${t.id}')" title="Editar">✏️</button>
+        <button class="btn-icon" onclick="delTurma('${t.id}')" title="Excluir">🗑️</button>
+      </td></tr>`;
+  }).join('');
+  const totAl=S.turmas.reduce((a,t)=>a+(+(t.alunos||0)),0);
+  tf.innerHTML=`<tr>
+    <td colspan="2" style="color:var(--gold-lt);font-size:10.5px;text-transform:uppercase;letter-spacing:.5px">Total Geral</td>
+    <td class="mono tr">${totAl}</td>
+    <td class="mono tr">${N$(totRec)}</td>
+    <td class="mono tr">${totAl>0?N$(totRec/totAl):'—'}</td>
+    <td></td>
+    <td class="tr" style="color:var(--gold-lt)">100%</td><td></td></tr>`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   GRADE HORÁRIA
+═══════════════════════════════════════════════════════ */
+let currentGradeFuncId=''; // funcionário selecionado na Grade Horária
+let gradeFuncOptions=[];   // cache dos funcionários ativos disponíveis para busca
+let gcHlIdx=-1;            // índice destacado via teclado no dropdown
+
+function populateGradeSel(){
+  gradeFuncOptions=S.funcs.filter(f=>f.ativo!==false);
+  if(currentGradeFuncId && !gradeFuncOptions.find(f=>f.id===currentGradeFuncId)){
+    currentGradeFuncId='';
+  }
+  const inp=g('grade-func-search');
+  if(inp && document.activeElement!==inp){
+    const sel=gradeFuncOptions.find(f=>f.id===currentGradeFuncId);
+    inp.value=sel?`${sel.id} — ${sel.nome}`:'';
+  }
+  const clearBtn=g('gc-clear'), icon=g('gc-icon');
+  if(clearBtn) clearBtn.style.display=currentGradeFuncId?'block':'none';
+  if(icon) icon.style.display=currentGradeFuncId?'none':'block';
+}
+
+function gcNorm(s){
+  return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+}
+
+function gcFilter(query){
+  const q=gcNorm(query);
+  const list=g('grade-func-list');
+  if(!list) return;
+  const matches=gradeFuncOptions.filter(f=>gcNorm(f.nome).includes(q)||gcNorm(f.disc).includes(q)||gcNorm(f.id).includes(q));
+  gcHlIdx=-1;
+  if(!matches.length){
+    list.innerHTML=`<div class="grade-func-empty">${gradeFuncOptions.length?'Nenhum funcionário encontrado.':'Nenhum funcionário ativo cadastrado.'}</div>`;
+  } else {
+    list.innerHTML=matches.map((f,i)=>`
+      <div class="grade-func-opt" data-id="${f.id}" onmousedown="event.preventDefault();gcSelect('${f.id}')">
+        <span class="gfo-id">${f.id}</span>${f.nome}${f.disc?` <span style="color:var(--g400);font-size:11px">— ${f.disc}</span>`:''}
+      </div>`).join('');
+  }
+  list.classList.add('open');
+}
+
+function gcKeydown(ev){
+  const list=g('grade-func-list');
+  if(!list) return;
+  const opts=list.querySelectorAll('.grade-func-opt');
+  if(ev.key==='ArrowDown'){
+    ev.preventDefault();
+    if(!list.classList.contains('open')){ gcFilter(g('grade-func-search').value); return; }
+    gcHlIdx=Math.min(gcHlIdx+1,opts.length-1);
+    gcHighlight(opts);
+  } else if(ev.key==='ArrowUp'){
+    ev.preventDefault();
+    gcHlIdx=Math.max(gcHlIdx-1,0);
+    gcHighlight(opts);
+  } else if(ev.key==='Enter'){
+    ev.preventDefault();
+    const target=gcHlIdx>=0?opts[gcHlIdx]:opts[0];
+    if(target) gcSelect(target.dataset.id);
+  } else if(ev.key==='Escape'){
+    list.classList.remove('open');
+    g('grade-func-search').blur();
+  }
+}
+
+function gcHighlight(opts){
+  opts.forEach((o,i)=>o.classList.toggle('hl',i===gcHlIdx));
+  if(opts[gcHlIdx]) opts[gcHlIdx].scrollIntoView({block:'nearest'});
+}
+
+function gcSelect(id){
+  currentGradeFuncId=id;
+  const f=gradeFuncOptions.find(x=>x.id===id);
+  const inp=g('grade-func-search');
+  if(inp) inp.value=f?`${f.id} — ${f.nome}`:'';
+  g('grade-func-list').classList.remove('open');
+  renderGrade();
+  if(inp) inp.blur();
+}
+
+function gcClear(){
+  currentGradeFuncId='';
+  const inp=g('grade-func-search');
+  inp.value='';
+  renderGrade();
+  inp.focus();
+}
+
+// Fecha o dropdown ao clicar fora
+document.addEventListener('click',(ev)=>{
+  const combo=document.querySelector('.grade-combo');
+  const list=g('grade-func-list');
+  if(combo && list && !combo.contains(ev.target)) list.classList.remove('open');
+});
+
+function renderGrade(){
+  populateGradeSel();
+  const fId=currentGradeFuncId;
+  const gc=g('grade-content');
+  if(!gc) return;
+
+  if(!S.funcs.length||!S.turmas.length){
+    gc.innerHTML='<div class="grade-no-sel">Cadastre funcionários e turmas para preencher a grade.</div>';
+    return;
+  }
+  if(!fId){
+    gc.innerHTML='<div class="grade-no-sel">Selecione um funcionário acima para preencher suas horas por turma.</div>';
+    return;
+  }
+
+  const f=S.funcs.find(x=>x.id===fId);
+  if(!f){ gc.innerHTML=''; return; }
+
+  const gh=S.grade[fId]||{};
+  const totH=Object.values(gh).reduce((a,h)=>a+(+h||0),0);
+  const filled=Object.keys(gh).filter(k=>+(gh[k]||0)>0).length;
+
+  let html=`
+    <div class="grade-func-info">
+      <span class="grade-func-badge">${f.id}</span>
+      <span style="font-weight:600;font-size:13px;color:var(--navy)">${f.nome}</span>
+      <span class="grade-func-stat">${regimeBadge[f.regime]||f.regime}</span>
+      <span class="grade-func-stat">Turmas preenchidas: <strong id="grade-filled">${filled} / ${S.turmas.length}</strong></span>
+      <span class="grade-func-stat">Total horas: <strong id="grade-toth">${totH} h</strong></span>
+    </div>
+    <div class="grade-grid">`;
+
+  S.turmas.forEach(t=>{
+    const h=+(gh[t.id]||0);
+    const hra=+(t.hra||0);
+    html+=`
+      <div class="grade-cell${h>0?' has-hours':''}" id="gcell-${t.id}">
+        <div class="grade-cell-hdr">
+          <span class="grade-cell-id">${t.id}</span>
+          ${t.nome}
+        </div>
+        <div class="grade-cell-body">
+          <input class="grade-num-in" type="number" min="0" step="1"
+            value="${h||''}" placeholder="0"
+            data-fid="${fId}" data-tid="${t.id}"
+            onchange="setGradeRefresh(this)"
+            onfocus="this.select()">
+          ${hra>0?`<span class="grade-hra-tag">R$${hra.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}/h</span>`:''}
+        </div>
+      </div>`;
+  });
+
+  html+=`</div>
+    <div class="grade-total-bar">
+      <span>⏱ Total de horas alocadas para <strong style="color:#fff">${f.nome}</strong></span>
+      <span class="grade-total-val" id="grade-total-val">${totH} h</span>
+    </div>`;
+
+  gc.innerHTML=html;
+}
+
+function setGradeRefresh(inp){
+  const fId=inp.dataset.fid, tId=inp.dataset.tid;
+  setGrade(fId,tId,inp.value);
+  const gh=S.grade[fId]||{};
+  const totH=Object.values(gh).reduce((a,h)=>a+(+h||0),0);
+  const filled=Object.keys(gh).filter(k=>+(gh[k]||0)>0).length;
+  const tv=g('grade-total-val'); if(tv) tv.textContent=totH+' h';
+  const tf=g('grade-toth'); if(tf) tf.textContent=totH+' h';
+  const ff=g('grade-filled'); if(ff) ff.textContent=filled+' / '+S.turmas.length;
+  const cell=g('gcell-'+tId);
+  if(cell){ (parseFloat(inp.value)||0)>0?cell.classList.add('has-hours'):cell.classList.remove('has-hours'); }
+}
+function setGrade(fId,tId,val){
+  if(!S.grade[fId]) S.grade[fId]={};
+  const h=parseFloat(val)||0;
+  if(h===0) delete S.grade[fId][tId];
+  else S.grade[fId][tId]=h;
+  save();
+}
+
+/* ═══════════════════════════════════════════════════════
+   CUSTO POR TURMA
+═══════════════════════════════════════════════════════ */
+function renderCusto(){
+  const cp=custoPessoalPorTurma();
+  const ativos=S.funcs.filter(f=>f.ativo!==false);
+  const totPessoal=ativos.reduce((a,f)=>a+custoFunc(f),0);
+  const totAlocado=Object.values(cp).reduce((a,v)=>a+v,0);
+  const naoAlocCusto=ativos.filter(f=>horasFunc(f.id)===0).reduce((a,f)=>a+custoFunc(f),0);
+
+  g('kpi-custo').innerHTML=`
+    <div class="kpi gold"><div class="kpi-lbl">Total Folha de Pagamento</div><div class="kpi-val">${R$(totPessoal)}</div></div>
+    <div class="kpi pos"><div class="kpi-lbl">Custo Alocado nas Turmas</div><div class="kpi-val">${R$(totAlocado)}</div></div>
+    <div class="kpi neg"><div class="kpi-lbl">Custo Não Alocado (ADM)</div><div class="kpi-val">${R$(naoAlocCusto)}</div></div>
+    <div class="kpi navy"><div class="kpi-lbl">Funcionários sem Grade</div><div class="kpi-val">${ativos.filter(f=>horasFunc(f.id)===0).length}</div></div>`;
+
+  const tb=g('tb-custo'), tf=g('tf-custo');
+  if(!S.turmas.length){
+    tb.innerHTML=`<tr><td colspan="5" class="tc" style="padding:40px;color:var(--g400)">Cadastre turmas primeiro.</td></tr>`;
+    tf.innerHTML=''; return;
+  }
+  const cpCols={
+    id:t=>t.id, nome:t=>t.nome||'',
+    custo:t=>cp[t.id]||0, alunos:t=>+(t.alunos||0),
+    pct:t=>totAlocado>0?(cp[t.id]||0)/totAlocado*100:0
+  };
+  const sortedCusto=sortedList(S.turmas,'custo',cpCols);
+  // Update custo thead sortable state
+  document.querySelectorAll('#tb-custo').forEach(()=>{});
+  tb.innerHTML=sortedCusto.map(t=>{
+    const c=cp[t.id]||0, al=+(t.alunos||0);
+    const pct=totAlocado>0?c/totAlocado*100:0;
+    return`<tr>
+      <td class="mono" style="color:var(--g400);font-size:10.5px">${t.id}</td>
+      <td style="font-weight:500">${t.nome}</td>
+      <td class="mono tr">${N$(c)}</td>
+      <td class="mono tr">${al>0?N$(c/al):'—'}</td>
+      <td class="tr">${PC(pct)}<div class="bar-bg"><div class="bar-fill" style="width:${Math.min(pct,100)}%"></div></div></td>
+    </tr>`;
+  }).join('');
+  tf.innerHTML=`<tr>
+    <td colspan="2" style="color:var(--gold-lt);font-size:10.5px;text-transform:uppercase;letter-spacing:.5px">Total Alocado</td>
+    <td class="mono tr">${N$(totAlocado)}</td>
+    <td></td><td></td></tr>`;
+
+  // Não alocados (apenas funcionários ativos)
+  const na=ativos.filter(f=>horasFunc(f.id)===0);
+  g('tb-nao-aloc').innerHTML=na.length
+    ?na.map(f=>`<tr>
+        <td class="mono" style="font-size:10.5px;color:var(--g400)">${f.id}</td>
+        <td>${f.nome}</td>
+        <td>${regimeBadge[f.regime]||f.regime}</td>
+        <td class="mono tr neg">${R$(custoFunc(f))}</td>
+        <td style="color:var(--gold);font-size:11.5px">Lance na aba Rateio de Despesas</td>
+      </tr>`).join('')
+    :`<tr><td colspan="5" class="tc" style="padding:22px;color:var(--green)">✅ Todos os funcionários têm horas alocadas na grade.</td></tr>`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   DESPESAS
+═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   PLANO DE CONTAS PADRÃO (extraído do Balancete para Rateio
+   de Despesas) — grupo → subgrupo → conta, na ordem oficial.
+═══════════════════════════════════════════════════════ */
+const CONTAS_PADRAO=[
+  // 1. Pessoal e Encargos
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Remuneração e Rescisões',cod:'2.01.001',cat:'Salários e ordenados'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Remuneração e Rescisões',cod:'2.01.008',cat:'Férias indenizadas'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Remuneração e Rescisões',cod:'2.01.009',cat:'13º Salário'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Remuneração e Rescisões',cod:'2.01.010',cat:'FGTS indenizado (multa)'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Remuneração e Rescisões',cod:'2.01.011',cat:'Bolsa de estágio'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Remuneração e Rescisões',cod:'2.01.017',cat:'Gratificação'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Remuneração e Rescisões',cod:'2.01.020',cat:'Rescisão contratual'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Encargos e Benefícios',cod:'2.01.002',cat:'INSS'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Encargos e Benefícios',cod:'2.01.003',cat:'FGTS'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Encargos e Benefícios',cod:'2.01.004',cat:'Vale transporte'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Encargos e Benefícios',cod:'2.01.005',cat:'Vale refeição'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Encargos e Benefícios',cod:'2.01.006',cat:'Plano de saúde'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Encargos e Benefícios',cod:'2.01.016',cat:'Plano Odontológico'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Encargos e Benefícios',cod:'2.01.018',cat:'Convênio Farmácia'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Encargos e Benefícios',cod:'2.01.019',cat:'Auxílio transporte'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Encargos e Benefícios',cod:'2.01.021',cat:'Uniformes'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Outras Despesas de Pessoal',cod:'2.01.013',cat:'Treinamento/curso/capacitação de pessoal'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Outras Despesas de Pessoal',cod:'2.01.014',cat:'Exames Médicos'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Outras Despesas de Pessoal',cod:'2.01.015',cat:'Ajuda de custos'},
+  {grupo:'1. Pessoal e Encargos',subgrupo:'Outras Despesas de Pessoal',cod:'2.01.022',cat:'Segunda chamada de provas'},
+  // 2. Despesas Operacionais e Administrativas
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Utilidades (Água, Luz, Telefone e Internet)',cod:'2.02.001',cat:'Energia elétrica'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Utilidades (Água, Luz, Telefone e Internet)',cod:'2.02.002',cat:'Água e esgoto'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Utilidades (Água, Luz, Telefone e Internet)',cod:'2.02.003',cat:'Telefone fixo'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Utilidades (Água, Luz, Telefone e Internet)',cod:'2.02.004',cat:'Telefone celular'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Utilidades (Água, Luz, Telefone e Internet)',cod:'2.02.005',cat:'Internet'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Manutenção e Conservação',cod:'2.02.019',cat:'Jardinagem'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Manutenção e Conservação',cod:'2.02.021',cat:'Manutenção de equip. de informática'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Manutenção e Conservação',cod:'2.02.022',cat:'Manutenção de equipamentos'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Manutenção e Conservação',cod:'2.02.023',cat:'Manutenção de veículos'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Manutenção e Conservação',cod:'2.02.024.01',cat:'Elétrica'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Manutenção e Conservação',cod:'2.02.024.02',cat:'Hidráulica'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Manutenção e Conservação',cod:'2.02.024.03',cat:'Pintura'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Manutenção e Conservação',cod:'2.02.024.04',cat:'Piscina'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Manutenção e Conservação',cod:'2.02.024.05',cat:'Conservação e reparos'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Materiais e Suprimentos',cod:'2.02.025',cat:'Material de expediente'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Materiais e Suprimentos',cod:'2.02.026',cat:'Material de informática'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Materiais e Suprimentos',cod:'2.02.027',cat:'Material de limpeza'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Materiais e Suprimentos',cod:'2.02.028',cat:'Material de sinalização visual'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Materiais e Suprimentos',cod:'2.02.031',cat:'Medicamentos'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Materiais e Suprimentos',cod:'2.02.039',cat:'Móveis / Utensílios'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Materiais e Suprimentos',cod:'2.02.052',cat:'Material de uso e consumo'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Materiais e Suprimentos',cod:'2.02.053',cat:'Máquinas e equipamentos'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Alimentação, Cantina e Copa',cod:'2.02.007',cat:'Refeição de funcionários'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Alimentação, Cantina e Copa',cod:'2.02.038',cat:'Cantina Revenda'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Alimentação, Cantina e Copa',cod:'2.02.040.01',cat:'Açougue'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Alimentação, Cantina e Copa',cod:'2.02.040.02',cat:'Frutas e Verduras'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Alimentação, Cantina e Copa',cod:'2.02.040.03',cat:'Gás'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Alimentação, Cantina e Copa',cod:'2.02.040.04',cat:'Mercado'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Alimentação, Cantina e Copa',cod:'2.02.040.05',cat:'Material de copa e cozinha'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Alimentação, Cantina e Copa',cod:'2.02.040.06',cat:'Material cozinha experimental'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Alimentação, Cantina e Copa',cod:'2.02.054',cat:'Máquina Café Médio'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.013',cat:'Material didático'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.016',cat:'Festas/Brindes/Confraternizações'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.029',cat:'Material esportivo'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.030',cat:'Material pedagógico'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.048',cat:'Passeio'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.049.01',cat:'Festa Junina'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.049.02',cat:'Mostra de dança'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.049.03',cat:'Mostra de teatro'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.049.05',cat:'Formatura Fundamental II'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.049.07',cat:'Eventos - material uso geral'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.049.08',cat:'Eventos médio'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.049.09',cat:'Eventos gerais'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.049.10',cat:'Eventos/Competições'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.050.01',cat:'Dia das mães'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.050.02',cat:'Dia dos pais'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.050.05',cat:'Dia do Professor'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.050.06',cat:'Páscoa'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.055',cat:'Despesas com alunos'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.058',cat:'Projetos Educacionais'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Serviços Profissionais e Terceirizados',cod:'2.02.018',cat:'Honorários contábeis'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Serviços Profissionais e Terceirizados',cod:'2.02.033',cat:'Segurança e vigilância'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Serviços Profissionais e Terceirizados',cod:'2.02.056',cat:'Prestação de Serviços - Aulas extras'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Serviços Profissionais e Terceirizados',cod:'2.02.057',cat:'Honorários Assessoria'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.009',cat:'Combustíveis e lubrificantes'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.010',cat:'Condução/Taxi/Estacionamento/Frete'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.011',cat:'Cópias/Reproduções/Plastificações'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.012',cat:'Correios e malotes'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.014',cat:'Custas legais e cartoriais'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.032',cat:'Propaganda e publicidade'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.034',cat:'Seguro de Vida'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.035',cat:'Software (licença de uso ou aquisição)'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.036',cat:'Viagens'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.046',cat:'Mensalidades/Anuidades/Locação'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.059',cat:'Confecção de Crachás/Carteirinhas'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Outras Despesas Operacionais',cod:'2.02.037',cat:'Cartão de Crédito'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Outras Despesas Operacionais',cod:'2.02.041',cat:'Devolução / Reembolso'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Outras Despesas Operacionais',cod:'2.02.042',cat:'Empréstimo'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Outras Despesas Operacionais',cod:'2.02.043',cat:'Investimentos no Colégio'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Outras Despesas Operacionais',cod:'2.02.045',cat:'Ações Judiciais'},
+  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Outras Despesas Operacionais',cod:'2.02.051',cat:'Retirada de Lucro Distribuído'},
+  // 3. Impostos e Taxas
+  {grupo:'3. Impostos e Taxas',subgrupo:'Impostos e Taxas',cod:'2.03.001',cat:'SIMPLES Nacional'},
+  {grupo:'3. Impostos e Taxas',subgrupo:'Impostos e Taxas',cod:'2.03.002',cat:'ISS'},
+  {grupo:'3. Impostos e Taxas',subgrupo:'Impostos e Taxas',cod:'2.03.004',cat:'COFINS'},
+  {grupo:'3. Impostos e Taxas',subgrupo:'Impostos e Taxas',cod:'2.03.006',cat:'IPTU'},
+  {grupo:'3. Impostos e Taxas',subgrupo:'Impostos e Taxas',cod:'2.03.007',cat:'Sindicais'},
+  {grupo:'3. Impostos e Taxas',subgrupo:'Impostos e Taxas',cod:'2.03.011',cat:'Outros impostos ou taxas'},
+  {grupo:'3. Impostos e Taxas',subgrupo:'Impostos e Taxas',cod:'2.03.012',cat:'PIS'},
+  // 4. Despesas Bancárias
+  {grupo:'4. Despesas Bancárias',subgrupo:'Tarifas Bancárias',cod:'2.04.001',cat:'Tarifas bancárias'},
+  // 5. Empréstimos e Financiamentos
+  {grupo:'5. Empréstimos e Financiamentos',subgrupo:'Empréstimos e Financiamentos',cod:'2.05.01',cat:'EMPRÉSTIMOS MÚTUO'},
+  // 6. Investimentos e Obras
+  {grupo:'6. Investimentos e Obras',subgrupo:'Investimentos e Obras',cod:'2.06',cat:'DESPESAS OBRA TERRENO NOVO'},
+];
+const GRUPO_ORDEM=[...new Set(CONTAS_PADRAO.map(c=>c.grupo))];
+
+// Cria a lista de despesas zeradas seguindo o plano de contas padrão
+function gerarDespesasPadrao(startId){
+  let n=startId;
+  return CONTAS_PADRAO.map(c=>({
+    id:'D'+pad(n++), cod:c.cod, cat:c.cat, grupo:c.grupo, subgrupo:c.subgrupo,
+    val:0, criterio:'faturamento', fixo:true
+  }));
+}
+
+// Restaura/completa o plano de contas padrão no mês atual, sem apagar
+// despesas/valores já lançados (só adiciona as contas que ainda não existem).
+function restaurarContasPadrao(){
+  const existentes=new Set(S.despesas.filter(d=>d.fixo).map(d=>d.cod));
+  let adicionadas=0;
+  CONTAS_PADRAO.forEach(c=>{
+    if(!existentes.has(c.cod)){
+      S.despesas.push({id:'D'+pad(nD++), cod:c.cod, cat:c.cat, grupo:c.grupo, subgrupo:c.subgrupo, val:0, criterio:'faturamento', fixo:true});
+      adicionadas++;
+    }
+  });
+  renderDespTabela(); renderDespTurma(); save();
+  showToast(adicionadas>0?`✅ ${adicionadas} conta(s) do plano padrão adicionada(s).`:'ℹ️ Todas as contas do plano padrão já estão cadastradas.');
+}
+
+function addDespesa(){
+  S.despesas.push({id:'D'+pad(nD++), cod:'', cat:'', val:0, criterio:'faturamento', fixo:false});
+  renderDespTabela(); save();
+}
+
+function delDespesa(id){
+  S.despesas=S.despesas.filter(d=>d.id!==id);
+  renderDespTabela(); renderDespTurma(); save();
+}
+
+function updDesp(id,field,val){
+  const d=S.despesas.find(x=>x.id===id);
+  if(!d) return;
+  if(field==='val') d.val=parseFloat(val)||0;
+  else d[field]=val;
+  const tot=S.despesas.reduce((a,d)=>a+(+(d.val||0)),0);
+  g('lbl-total-desp').textContent=R$(tot);
+  save();
+}
+
+const crLabel={
+  faturamento:'<span style="font-size:10px;background:rgba(196,147,63,.15);color:#7a5200;padding:1px 7px;border-radius:10px;font-weight:600">📊 Faturamento</span>',
+  turmas:     '<span style="font-size:10px;background:rgba(38,61,114,.12);color:var(--navy);padding:1px 7px;border-radius:10px;font-weight:600">🔢 Nº Turmas</span>'
+};
+
+function despRowHtml(d){
+  const tOpts=S.turmas.map(t=>`<option value="turma:${t.id}" ${d_isTurma(d,t.id)?'selected':''}>🎯 ${t.nome}</option>`).join('');
+  return`<tr>
+    <td style="width:120px">
+      <input type="text" value="${escHtml(d.cod||'')}" placeholder="2.02.001"
+        style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:12px"
+        oninput="updDesp('${d.id}','cod',this.value.trim())">
+    </td>
+    <td>
+      <input type="text" value="${escHtml(d.cat||'')}" placeholder="Ex: Energia elétrica, Aluguel..."
+        style="width:100%;min-width:160px"
+        oninput="updDesp('${d.id}','cat',this.value)">
+    </td>
+    <td style="width:150px">
+      <input type="number" value="${d.val||''}" min="0" step="0.01" placeholder="0,00"
+        style="width:100%;text-align:right;font-family:'IBM Plex Mono',monospace"
+        onchange="updDesp('${d.id}','val',this.value);renderDespTurma()">
+    </td>
+    <td style="width:260px">
+      <select style="width:100%;font-size:12px;padding:5px 8px"
+        onchange="updDesp('${d.id}','criterio',this.value);renderDespTurma()">
+        <option value="faturamento" ${(d.criterio||'faturamento')==='faturamento'?'selected':''}>📊 Por Faturamento Proporcional</option>
+        <option value="turmas" ${d.criterio==='turmas'?'selected':''}>🔢 Por Nº de Turmas (igualitário)</option>
+        ${tOpts}
+      </select>
+    </td>
+    <td class="tc" style="width:44px">
+      <button class="btn-icon" onclick="delDespesa('${d.id}')" title="Excluir">🗑️</button>
+    </td>
+  </tr>`;
+}
+
+function despGroupHeaderHtml(label){
+  return `<tr><td colspan="5" style="background:var(--navy);color:var(--gold-lt);font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;padding:8px 12px">${label}</td></tr>`;
+}
+function despSubtotalHtml(label,val){
+  return `<tr><td colspan="2" style="background:var(--g100);font-size:11px;color:var(--g600);padding:5px 12px;text-align:right;font-style:italic">Subtotal — ${label}</td>
+    <td style="background:var(--g100);font-weight:700;color:var(--navy)" class="mono tr">${N$(val)}</td><td style="background:var(--g100)"></td><td style="background:var(--g100)"></td></tr>`;
+}
+function despGroupTotalHtml(label,val){
+  return `<tr><td colspan="2" style="background:var(--navy-mid);color:#fff;font-weight:700;font-size:11.5px;padding:6px 12px;text-align:right">Total ${label}</td>
+    <td style="background:var(--navy-mid);color:var(--gold-lt);font-weight:700" class="mono tr">${N$(val)}</td><td style="background:var(--navy-mid)"></td><td style="background:var(--navy-mid)"></td></tr>`;
+}
+
+function renderDespTabela(){
+  const tot=S.despesas.reduce((a,d)=>a+(+(d.val||0)),0);
+  g('lbl-total-desp').textContent=R$(tot);
+  const tb=g('tb-desp');
+  if(!S.despesas.length){
+    tb.innerHTML=`<tr><td colspan="5" class="tc" style="padding:40px;color:var(--g400)">Nenhuma despesa cadastrada. Clique em "+ Nova Despesa" ou "🔄 Restaurar Contas Padrão".</td></tr>`;
+    return;
+  }
+
+  const fixas=S.despesas.filter(d=>d.fixo && d.grupo);
+  const manuais=S.despesas.filter(d=>!(d.fixo && d.grupo));
+
+  let html='';
+  // Contas fixas, agrupadas na ordem oficial do balancete
+  const gruposPresentes=GRUPO_ORDEM.filter(gr=>fixas.some(d=>d.grupo===gr));
+  gruposPresentes.forEach(grupo=>{
+    html+=despGroupHeaderHtml(grupo);
+    const doGrupo=fixas.filter(d=>d.grupo===grupo);
+    const subgrupos=[...new Set(doGrupo.map(d=>d.subgrupo))];
+    let totalGrupo=0;
+    subgrupos.forEach(sub=>{
+      const linhas=doGrupo.filter(d=>d.subgrupo===sub);
+      html+=linhas.map(despRowHtml).join('');
+      const totSub=linhas.reduce((a,d)=>a+(+(d.val||0)),0);
+      totalGrupo+=totSub;
+      html+=despSubtotalHtml(sub,totSub);
+    });
+    html+=despGroupTotalHtml(grupo,totalGrupo);
+  });
+  // Despesas criadas manualmente (fora do plano padrão)
+  if(manuais.length){
+    html+=despGroupHeaderHtml('Outras Despesas (lançamentos manuais)');
+    html+=manuais.map(despRowHtml).join('');
+    const totManual=manuais.reduce((a,d)=>a+(+(d.val||0)),0);
+    html+=despGroupTotalHtml('Outras Despesas',totManual);
+  }
+
+  tb.innerHTML=html;
+}
+
+function d_isTurma(d,tId){ return d.criterio==='turma:'+tId; }
+function renderDespTurma(){
+  renderDespTabela();
+  if(!S.turmas.length){
+    g('tb-desp-turma').innerHTML=`<tr><td colspan="7" class="tc" style="padding:40px;color:var(--g400)">Cadastre turmas primeiro.</td></tr>`;
+    g('tf-desp-turma').innerHTML=''; return;
+  }
+  const totRec=S.turmas.reduce((a,t)=>a+(+(t.rec||0)),0)||1;
+  const nT=S.turmas.length||1;
+  const totFat=S.despesas.filter(d=>(d.criterio||'faturamento')==='faturamento').reduce((a,d)=>a+(+(d.val||0)),0);
+  const totTur=S.despesas.filter(d=>d.criterio==='turmas').reduce((a,d)=>a+(+(d.val||0)),0);
+  const totDesp=S.despesas.reduce((a,d)=>a+(+(d.val||0)),0);
+
+  // Turma-direta: compute per-turma direct allocation
+  const totDir={};
+  S.turmas.forEach(t=>totDir[t.id]=0);
+  S.despesas.forEach(d=>{
+    if((d.criterio||'').startsWith('turma:')){
+      const tId=d.criterio.split(':')[1];
+      if(totDir[tId]!==undefined) totDir[tId]+=(+(d.val||0));
+    }
+  });
+  const hasDirect=Object.values(totDir).some(v=>v>0);
+
+  const despCols={
+    nome:t=>t.nome||'', rec:t=>+(t.rec||0),
+    total:t=>(+(t.rec||0)/totRec*totFat)+(totTur/nT)+(totDir[t.id]||0)
+  };
+  const sortedDesp=sortedList(S.turmas,'desp-turma',despCols);
+  g('tb-desp-turma').innerHTML=sortedDesp.map(t=>{
+    const rec=+(t.rec||0);
+    const pR=totRec>0?rec/totRec*100:0;
+    const parFat=rec/totRec*totFat;
+    const parTur=totTur/nT;
+    const parDir=totDir[t.id]||0;
+    const parTotal=parFat+parTur+parDir;
+    return`<tr>
+      <td style="font-weight:500">${t.nome}</td>
+      <td class="mono tr">${N$(rec)}</td>
+      <td class="tr">${PC(pR)}</td>
+      <td class="mono tr" style="color:${totFat>0?'var(--navy)':'var(--g400)'}">${totFat>0?N$(parFat):'—'}</td>
+      <td class="mono tr" style="color:${totTur>0?'var(--navy)':'var(--g400)'}">${totTur>0?N$(parTur):'—'}</td>
+      <td class="mono tr" style="color:${hasDirect?(parDir>0?'var(--navy)':'var(--g400)'):'var(--g400)'}">${hasDirect?(parDir>0?N$(parDir):'—'):'—'}</td>
+      <td class="mono tr" style="font-weight:700;color:var(--navy)">${N$(parTotal)}</td>
+    </tr>`;
+  }).join('');
+
+  const sumDir=Object.values(totDir).reduce((a,v)=>a+v,0);
+  g('tf-desp-turma').innerHTML=`<tr>
+    <td style="color:var(--gold-lt);font-size:10.5px;text-transform:uppercase;letter-spacing:.5px">Total</td>
+    <td class="mono tr">${N$(totRec)}</td>
+    <td class="tr" style="color:var(--gold-lt)">100%</td>
+    <td class="mono tr" style="color:var(--gold-lt)">${N$(totFat)}</td>
+    <td class="mono tr" style="color:var(--gold-lt)">${N$(totTur)}</td>
+    <td class="mono tr" style="color:var(--gold-lt)">${N$(sumDir)}</td>
+    <td class="mono tr" style="color:var(--gold-lt);font-weight:700">${N$(totDesp)}</td>
+  </tr>`;
+}
+/* ═══════════════════════════════════════════════════════
+   RESULTADO
+═══════════════════════════════════════════════════════ */
+function renderResultado(){
+  const cp=custoPessoalPorTurma();
+  const cd=custoDespPorTurma();
+  let totRec=0,totCP=0,totCD=0;
+  S.turmas.forEach(t=>{
+    totRec+=(+(t.rec||0));
+    totCP+=(cp[t.id]||0);
+    totCD+=(cd[t.id]||0);
+  });
+  const totLuc=totRec-totCP-totCD;
+  const totAl=S.turmas.reduce((a,t)=>a+(+(t.alunos||0)),0);
+
+  g('kpi-res').innerHTML=`
+    <div class="kpi gold"><div class="kpi-lbl">Receita Total</div><div class="kpi-val">${R$(totRec)}</div></div>
+    <div class="kpi navy"><div class="kpi-lbl">Custo com Pessoal</div><div class="kpi-val">${R$(totCP)}</div></div>
+    <div class="kpi navy"><div class="kpi-lbl">Despesas Operacionais</div><div class="kpi-val">${R$(totCD)}</div></div>
+    <div class="kpi ${totLuc>=0?'pos':'neg'}">
+      <div class="kpi-lbl">Resultado Total</div>
+      <div class="kpi-val ${totLuc>=0?'pos':'neg'}">${R$(totLuc)}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-lbl">Margem Geral</div>
+      <div class="kpi-val ${totLuc>=0?'pos':'neg'}">${totRec>0?PC(totLuc/totRec*100):'—'}</div>
+    </div>`;
+
+  const tb=g('tb-res'), tf=g('tf-res');
+  if(!S.turmas.length){
+    tb.innerHTML=`<tr><td colspan="10" class="tc" style="padding:50px;color:var(--g400)">Preencha todos os dados nas abas anteriores.</td></tr>`;
+    tf.innerHTML=''; return;
+  }
+
+  const resCols={
+    nome:t=>t.nome||'', alunos:t=>+(t.alunos||0),
+    rec:t=>+(t.rec||0), cPes:t=>cp[t.id]||0, cDes:t=>cd[t.id]||0,
+    cTot:t=>(cp[t.id]||0)+(cd[t.id]||0),
+    luc:t=>+(t.rec||0)-((cp[t.id]||0)+(cd[t.id]||0)),
+    marg:t=>+(t.rec||0)>0?(+(t.rec||0)-((cp[t.id]||0)+(cd[t.id]||0)))/+(t.rec||0)*100:0
+  };
+  const sortedRes=sortedList(S.turmas,'resultado',resCols);
+  tb.innerHTML=sortedRes.map(t=>{
+    const rec=+(t.rec||0), al=+(t.alunos||0);
+    const cPes=cp[t.id]||0, cDes=cd[t.id]||0;
+    const cTot=cPes+cDes, luc=rec-cTot;
+    const marg=rec>0?luc/rec*100:0;
+    const rep=totLuc!==0?luc/totLuc*100:0;
+    const isPos=luc>=0;
+    return`<tr>
+      <td style="font-weight:500">${t.nome}</td>
+      <td class="mono tr">${al}</td>
+      <td class="mono tr">${N$(rec)}</td>
+      <td class="mono tr">${al>0?N$(rec/al):'—'}</td>
+      <td class="mono tr">${N$(cPes)}</td>
+      <td class="mono tr">${N$(cDes)}</td>
+      <td class="mono tr" style="font-weight:600">${N$(cTot)}</td>
+      <td class="mono tr ${isPos?'res-pos':'res-neg'}">${N$(luc)}</td>
+      <td class="tr ${isPos?'pos':'neg'}">${PC(marg)}</td>
+      <td class="tr ${rep>=0?'pos':'neg'}">${PC(rep)}</td>
+    </tr>`;
+  }).join('');
+
+  const totCusto=totCP+totCD, margG=totRec>0?totLuc/totRec*100:0;
+  tf.innerHTML=`<tr>
+    <td style="color:var(--gold-lt);font-size:10.5px;text-transform:uppercase;letter-spacing:.5px">TOTAL GERAL</td>
+    <td class="mono tr">${totAl}</td>
+    <td class="mono tr">${N$(totRec)}</td>
+    <td class="mono tr">${totAl>0?N$(totRec/totAl):'—'}</td>
+    <td class="mono tr">${N$(totCP)}</td>
+    <td class="mono tr">${N$(totCD)}</td>
+    <td class="mono tr">${N$(totCusto)}</td>
+    <td class="mono tr" style="color:${totLuc>=0?'#86efac':'#fca5a5'};font-size:15px;font-weight:700">${N$(totLuc)}</td>
+    <td class="tr" style="color:${totLuc>=0?'#86efac':'#fca5a5'}">${PC(margG)}</td>
+    <td class="tr" style="color:var(--gold-lt)">100%</td>
+  </tr>`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   PERSISTÊNCIA MENSAL
+═══════════════════════════════════════════════════════ */
+function saveAll(){
+  try{ localStorage.setItem('cpt_mensal_v1', JSON.stringify({allMonths,currentComp,nF,nT,nD})); }catch(e){}
+  cloudSyncAllMeses();
+}
+
+function save(){
+  // Also sync current state into allMonths before saving
+  allMonths[currentComp]={S:JSON.parse(JSON.stringify(S)),nF,nT,nD};
+  saveAll();
+}
+
+function exportarJSON(){
+  const blob=new Blob([JSON.stringify({allMonths,currentComp,nF,nT,nD},null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='custo-por-turma-mensal-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+function importarJSON(ev){
+  const f=ev.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const p=JSON.parse(e.target.result);
+      // Support both old format (single month) and new (all months)
+      if(p.allMonths){
+        allMonths=p.allMonths;
+        currentComp=p.currentComp||currentComp;
+        nF=p.nF||1; nT=p.nT||1; nD=p.nD||1;
+        const cur=allMonths[currentComp];
+        if(cur){ S=JSON.parse(JSON.stringify(cur.S)); nF=cur.nF||1; nT=cur.nT||1; nD=cur.nD||1; }
+      } else if(p.S){
+        // Legacy single-month backup
+        allMonths[currentComp]={S:p.S,nF:p.nF||1,nT:p.nT||1,nD:p.nD||1};
+        S=p.S; nF=p.nF||1; nT=p.nT||1; nD=p.nD||1;
+      }
+      g('comp-input-sb').value=currentComp;
+      g('comp-badge-sb').textContent=compLabel(currentComp);
+      renderFunc(); renderTurmas(); renderDespTabela();
+      showToast('✅ Dados carregados com sucesso!');
+    }catch(err){ alert('❌ Arquivo inválido.'); }
+  };
+  r.readAsText(f); ev.target.value='';
+}
+
+function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+async function bootApp(){
+  const ok = await cloudLoadAll();
+  if(!ok){
+  try{
+    const p=JSON.parse(localStorage.getItem('cpt_mensal_v1'));
+    if(p && p.allMonths){
+      allMonths=p.allMonths;
+      if(p.currentComp) currentComp=p.currentComp;
+    } else if(p && p.S){
+      // Migrate legacy
+      const now=new Date();
+      const k=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      allMonths[k]={S:p.S,nF:p.nF||1,nT:p.nT||1,nD:p.nD||1};
+    }
+  }catch(e){}
+  }
+
+// Pré-carga das despesas de Maio/2025 da imagem enviada pelo usuário
+(function seedMaio(){
+  const COMP='2026-05';
+  if(allMonths[COMP]&&allMonths[COMP]&&allMonths[COMP].S&&allMonths[COMP].S.despesas.length>0) return;
+  const desp=[
+    {id:"D001",cod:"2.01.013",cat:"Treinamento/curso/capacitação de pessoal",val:200.0,criterio:"faturamento"},
+    {id:"D002",cod:"2.01.014",cat:"Exames Médicos",val:590.0,criterio:"faturamento"},
+    {id:"D003",cod:"2.01.019",cat:"Auxílio transporte",val:342.75,criterio:"faturamento"},
+    {id:"D004",cod:"2.01.020",cat:"Rescisão contratual",val:11055.58,criterio:"faturamento"},
+    {id:"D005",cod:"2.01.021",cat:"Uniformes",val:3400.0,criterio:"faturamento"},
+    {id:"D006",cod:"2.02.001",cat:"Energia elétrica",val:3081.97,criterio:"faturamento"},
+    {id:"D007",cod:"2.02.002",cat:"Água e esgoto",val:2053.43,criterio:"faturamento"},
+    {id:"D008",cod:"2.02.003",cat:"Telefone fixo",val:218.0,criterio:"faturamento"},
+    {id:"D009",cod:"2.02.004",cat:"Telefone celular",val:133.54,criterio:"faturamento"},
+    {id:"D010",cod:"2.02.009",cat:"Internet",val:638.95,criterio:"faturamento"},
+    {id:"D011",cod:"2.02.010",cat:"Condução/Taxi/Estacionamento/Frete",val:183.46,criterio:"faturamento"},
+    {id:"D012",cod:"2.02.016",cat:"Festas/Brindes/Confraternizações",val:364.63,criterio:"faturamento"},
+    {id:"D013",cod:"2.02.018",cat:"Honorários contábeis",val:4200.0,criterio:"faturamento"},
+    {id:"D014",cod:"2.02.022",cat:"Manutenção de equipamentos",val:13081.93,criterio:"faturamento"},
+    {id:"D015",cod:"2.02.024.01",cat:"Manutenção Elétrica",val:165.0,criterio:"faturamento"},
+    {id:"D016",cod:"2.02.024.02",cat:"Manutenção Hidráulica",val:330.0,criterio:"faturamento"},
+    {id:"D017",cod:"2.02.024.03",cat:"Manutenção Pintura",val:250.0,criterio:"faturamento"},
+    {id:"D018",cod:"2.02.024.04",cat:"Manutenção Piscina",val:1400.0,criterio:"faturamento"},
+    {id:"D019",cod:"2.02.024.05",cat:"Conservação e reparos",val:5454.0,criterio:"faturamento"},
+    {id:"D020",cod:"2.02.025",cat:"Material de expediente",val:6574.58,criterio:"faturamento"},
+    {id:"D021",cod:"2.02.027",cat:"Material de limpeza",val:10106.34,criterio:"faturamento"},
+    {id:"D022",cod:"2.02.028",cat:"Material de sinalização visual",val:9248.54,criterio:"faturamento"},
+    {id:"D023",cod:"2.02.030",cat:"Material pedagógico",val:91.48,criterio:"faturamento"},
+    {id:"D024",cod:"2.02.031",cat:"Medicamentos",val:179.0,criterio:"faturamento"},
+    {id:"D025",cod:"2.02.032",cat:"Propaganda e publicidade",val:4800.0,criterio:"faturamento"},
+    {id:"D026",cod:"2.02.033",cat:"Segurança e vigilância",val:950.0,criterio:"faturamento"},
+    {id:"D027",cod:"2.02.034",cat:"Seguro de Vida",val:2327.44,criterio:"faturamento"},
+    {id:"D028",cod:"2.02.035",cat:"Software (licença de uso ou aquisição)",val:153.0,criterio:"faturamento"},
+    {id:"D029",cod:"2.02.037",cat:"Cartão de Crédito",val:7803.89,criterio:"faturamento"},
+    {id:"D030",cod:"2.02.039",cat:"Móveis / Utensílios",val:1868.26,criterio:"faturamento"},
+    {id:"D031",cod:"2.02.041",cat:"Devolução / Reembolso",val:653.6,criterio:"faturamento"},
+    {id:"D032",cod:"2.02.042",cat:"Empréstimo",val:2726.22,criterio:"faturamento"},
+    {id:"D033",cod:"2.02.043",cat:"Investimentos no Colégio",val:20000.0,criterio:"faturamento"},
+    {id:"D034",cod:"2.02.045",cat:"Ações Judiciais",val:5000.0,criterio:"faturamento"},
+    {id:"D035",cod:"2.02.046",cat:"Mensalidades/Anuidades/Locação",val:6782.26,criterio:"faturamento"},
+    {id:"D036",cod:"2.02.049.10",cat:"Eventos/Competições",val:9.95,criterio:"faturamento"},
+    {id:"D037",cod:"2.02.051",cat:"Retirada de Lucro Distribuído",val:62243.3,criterio:"faturamento"},
+    {id:"D038",cod:"2.02.052",cat:"Material de uso e consumo",val:4508.17,criterio:"faturamento"},
+    {id:"D039",cod:"2.02.055",cat:"Máquinas e equipamentos",val:359.9,criterio:"faturamento"},
+    {id:"D040",cod:"2.02.058",cat:"Projetos Educacionais",val:315.0,criterio:"faturamento"},
+    {id:"D041",cod:"2.03.002",cat:"ISS",val:15417.98,criterio:"faturamento"},
+    {id:"D042",cod:"2.03.004",cat:"COFINS",val:23203.82,criterio:"faturamento"},
+    {id:"D043",cod:"2.03.007",cat:"Sindicais",val:145.75,criterio:"faturamento"},
+    {id:"D044",cod:"2.03.011",cat:"Outros impostos ou taxas",val:1212.7,criterio:"faturamento"},
+    {id:"D045",cod:"2.03.012",cat:"PIS",val:5027.48,criterio:"faturamento"},
+    {id:"D046",cod:"2.06",cat:"Despesas Obras Terreno Novo",val:1549.84,criterio:"faturamento"}
+  ];
+  const seedS={funcs:[],turmas:[],grade:{},despesas:desp,criterio:'faturamento'};
+  allMonths[COMP]={S:seedS,nF:1,nT:1,nD:47};
+  saveAll();
+})();
+
+  if(!ok) loadSaldoState();
+
+// Seed saldos bancários com dados históricos da planilha
+(function seedSaldosBancarios(){
+  const seed = {"2025-10": {"aplicacoes": [{"id": "A-CANTINA-GIRO", "empresa": "CANTINA", "aplicacao": "GIRO", "saldo": 9695.43, "rend": 0}, {"id": "A-CANTINA-PLENO", "empresa": "CANTINA", "aplicacao": "PLENO", "saldo": 52726.91, "rend": 0}, {"id": "A-CANTINA-SIGMA", "empresa": "CANTINA", "aplicacao": "SIGMA", "saldo": 907011.56, "rend": 0}, {"id": "A-CANTINA-CDB", "empresa": "CANTINA", "aplicacao": "CDB", "saldo": 0, "rend": 0}, {"id": "A-TS-GIRO", "empresa": "TS", "aplicacao": "GIRO", "saldo": 55841.48, "rend": 0}, {"id": "A-TS-MEGA", "empresa": "TS", "aplicacao": "MEGA", "saldo": 456644.86, "rend": 0}, {"id": "A-TS-SIGMA", "empresa": "TS", "aplicacao": "SIGMA", "saldo": 371819.85, "rend": 0}, {"id": "A-TS-CDB", "empresa": "TS", "aplicacao": "CDB", "saldo": 0, "rend": 0}, {"id": "A-TMS-GIRO", "empresa": "TMS", "aplicacao": "GIRO", "saldo": 47940.41, "rend": 0}, {"id": "A-TMS-MEGA", "empresa": "TMS", "aplicacao": "MEGA", "saldo": 542008.43, "rend": 0}, {"id": "A-TMS-SIGMA", "empresa": "TMS", "aplicacao": "SIGMA", "saldo": 169297.43, "rend": 0}, {"id": "A-TMS-CDB", "empresa": "TMS", "aplicacao": "CDB", "saldo": 116346.11, "rend": 0}, {"id": "A-SOCIEDADE INFANTIL-GIRO", "empresa": "SOCIEDADE INFANTIL", "aplicacao": "GIRO", "saldo": 0, "rend": 0}, {"id": "A-SOCIEDADE INFANTIL-CDB", "empresa": "SOCIEDADE INFANTIL", "aplicacao": "CDB", "saldo": 0, "rend": 0}, {"id": "A-SOCIEDADE FUND-GIRO", "empresa": "SOCIEDADE FUND", "aplicacao": "GIRO", "saldo": 177111.31, "rend": 0}, {"id": "A-SOCIEDADE FUND-EQUIL", "empresa": "SOCIEDADE FUND", "aplicacao": "EQUIL", "saldo": 14891.99, "rend": 0}, {"id": "A-SOCIEDADE FUND-CDB", "empresa": "SOCIEDADE FUND", "aplicacao": "CDB", "saldo": 391027.7, "rend": 0}, {"id": "A-SOCIEDADE FUND-CDB2", "empresa": "SOCIEDADE FUND", "aplicacao": "CDB2", "saldo": 0, "rend": 0}], "contas": [{"id": "C-CANTINA", "empresa": "CANTINA", "saldo": 1162.33}, {"id": "C-SOCIEDADE INFANTIL", "empresa": "SOCIEDADE INFANTIL", "saldo": 0}, {"id": "C-SOCIEDADE FUND", "empresa": "SOCIEDADE FUND", "saldo": 11669.6}, {"id": "C-SOCIEDADE MEDIO", "empresa": "SOCIEDADE MEDIO", "saldo": 40087.84}, {"id": "C-SISPRIME", "empresa": "SISPRIME", "saldo": 7379.95}, {"id": "C-TS", "empresa": "TS", "saldo": 1393.89}, {"id": "C-TMS", "empresa": "TMS", "saldo": 2754.79}]}, "2025-11": {"aplicacoes": [{"id": "A-CANTINA-GIRO", "empresa": "CANTINA", "aplicacao": "GIRO", "saldo": 45983.32, "rend": 0}, {"id": "A-CANTINA-PLENO", "empresa": "CANTINA", "aplicacao": "PLENO", "saldo": 60187.22, "rend": 0}, {"id": "A-CANTINA-SIGMA", "empresa": "CANTINA", "aplicacao": "SIGMA", "saldo": 1010276.5, "rend": 0}, {"id": "A-CANTINA-CDB", "empresa": "CANTINA", "aplicacao": "CDB", "saldo": 0, "rend": 0}, {"id": "A-TS-GIRO", "empresa": "TS", "aplicacao": "GIRO", "saldo": 31743.97, "rend": 0}, {"id": "A-TS-MEGA", "empresa": "TS", "aplicacao": "MEGA", "saldo": 456848.87, "rend": 0}, {"id": "A-TS-SIGMA", "empresa": "TS", "aplicacao": "SIGMA", "saldo": 336518.77, "rend": 0}, {"id": "A-TS-CDB", "empresa": "TS", "aplicacao": "CDB", "saldo": 0, "rend": 0}, {"id": "A-TMS-GIRO", "empresa": "TMS", "aplicacao": "GIRO", "saldo": 70159.76, "rend": 0}, {"id": "A-TMS-MEGA", "empresa": "TMS", "aplicacao": "MEGA", "saldo": 542730.11, "rend": 0}, {"id": "A-TMS-SIGMA", "empresa": "TMS", "aplicacao": "SIGMA", "saldo": 169325.83, "rend": 0}, {"id": "A-TMS-CDB", "empresa": "TMS", "aplicacao": "CDB", "saldo": 117293.9, "rend": 0}, {"id": "A-SOCIEDADE INFANTIL-GIRO", "empresa": "SOCIEDADE INFANTIL", "aplicacao": "GIRO", "saldo": 0, "rend": 0}, {"id": "A-SOCIEDADE INFANTIL-CDB", "empresa": "SOCIEDADE INFANTIL", "aplicacao": "CDB", "saldo": 41329.59, "rend": 0}, {"id": "A-SOCIEDADE FUND-GIRO", "empresa": "SOCIEDADE FUND", "aplicacao": "GIRO", "saldo": 58835.8, "rend": 0}, {"id": "A-SOCIEDADE FUND-EQUIL", "empresa": "SOCIEDADE FUND", "aplicacao": "EQUIL", "saldo": 16954.13, "rend": 0}, {"id": "A-SOCIEDADE FUND-CDB", "empresa": "SOCIEDADE FUND", "aplicacao": "CDB", "saldo": 0, "rend": 0}, {"id": "A-SOCIEDADE FUND-CDB2", "empresa": "SOCIEDADE FUND", "aplicacao": "CDB2", "saldo": 0, "rend": 0}], "contas": [{"id": "C-CANTINA", "empresa": "CANTINA", "saldo": 0}, {"id": "C-SOCIEDADE INFANTIL", "empresa": "SOCIEDADE INFANTIL", "saldo": 0}, {"id": "C-SOCIEDADE FUND", "empresa": "SOCIEDADE FUND", "saldo": 0}, {"id": "C-SOCIEDADE MEDIO", "empresa": "SOCIEDADE MEDIO", "saldo": 40979.84}, {"id": "C-SISPRIME", "empresa": "SISPRIME", "saldo": 31876.2}, {"id": "C-TS", "empresa": "TS", "saldo": 23939.5}, {"id": "C-TMS", "empresa": "TMS", "saldo": 0}]}, "2025-12": {"aplicacoes": [{"id": "A-CANTINA-GIRO", "empresa": "CANTINA", "aplicacao": "GIRO", "saldo": 11164.36, "rend": 0}, {"id": "A-CANTINA-PLENO", "empresa": "CANTINA", "aplicacao": "PLENO", "saldo": 65495.96, "rend": 0}, {"id": "A-CANTINA-SIGMA", "empresa": "CANTINA", "aplicacao": "SIGMA", "saldo": 1012137.14, "rend": 0}, {"id": "A-CANTINA-CDB", "empresa": "CANTINA", "aplicacao": "CDB", "saldo": 0, "rend": 0}, {"id": "A-TS-GIRO", "empresa": "TS", "aplicacao": "GIRO", "saldo": 54496.58, "rend": 0}, {"id": "A-TS-MEGA", "empresa": "TS", "aplicacao": "MEGA", "saldo": 601898.17, "rend": 0}, {"id": "A-TS-SIGMA", "empresa": "TS", "aplicacao": "SIGMA", "saldo": 340544.04, "rend": 0}, {"id": "A-TS-CDB", "empresa": "TS", "aplicacao": "CDB", "saldo": 0, "rend": 0}, {"id": "A-TMS-GIRO", "empresa": "TMS", "aplicacao": "GIRO", "saldo": 50380.15, "rend": 0}, {"id": "A-TMS-MEGA", "empresa": "TMS", "aplicacao": "MEGA", "saldo": 620004.16, "rend": 0}, {"id": "A-TMS-SIGMA", "empresa": "TMS", "aplicacao": "SIGMA", "saldo": 171351.22, "rend": 0}, {"id": "A-TMS-CDB", "empresa": "TMS", "aplicacao": "CDB", "saldo": 118403.22, "rend": 0}, {"id": "A-SOCIEDADE INFANTIL-GIRO", "empresa": "SOCIEDADE INFANTIL", "aplicacao": "GIRO", "saldo": 15044.25, "rend": 0}, {"id": "A-SOCIEDADE INFANTIL-CDB", "empresa": "SOCIEDADE INFANTIL", "aplicacao": "CDB", "saldo": 41746.06, "rend": 0}, {"id": "A-SOCIEDADE FUND-GIRO", "empresa": "SOCIEDADE FUND", "aplicacao": "GIRO", "saldo": 113954.21, "rend": 0}, {"id": "A-SOCIEDADE FUND-EQUIL", "empresa": "SOCIEDADE FUND", "aplicacao": "EQUIL", "saldo": 19169.64, "rend": 0}, {"id": "A-SOCIEDADE FUND-CDB", "empresa": "SOCIEDADE FUND", "aplicacao": "CDB", "saldo": 7558.78, "rend": 0}, {"id": "A-SOCIEDADE FUND-CDB2", "empresa": "SOCIEDADE FUND", "aplicacao": "CDB2", "saldo": 0, "rend": 0}], "contas": [{"id": "C-CANTINA", "empresa": "CANTINA", "saldo": 25164.6}, {"id": "C-SOCIEDADE INFANTIL", "empresa": "SOCIEDADE INFANTIL", "saldo": 19337.8}, {"id": "C-SOCIEDADE FUND", "empresa": "SOCIEDADE FUND", "saldo": 56053.37}, {"id": "C-SOCIEDADE MEDIO", "empresa": "SOCIEDADE MEDIO", "saldo": 31485.42}, {"id": "C-SISPRIME", "empresa": "SISPRIME", "saldo": 9551.12}, {"id": "C-TS", "empresa": "TS", "saldo": 39858.32}, {"id": "C-TMS", "empresa": "TMS", "saldo": 7012.53}]}, "2026-01": {"aplicacoes": [{"id": "A-CANTINA-GIRO", "empresa": "CANTINA", "aplicacao": "GIRO", "saldo": 11281.9, "rend": 0}, {"id": "A-CANTINA-PLENO", "empresa": "CANTINA", "aplicacao": "PLENO", "saldo": 66498.44, "rend": 0}, {"id": "A-CANTINA-SIGMA", "empresa": "CANTINA", "aplicacao": "SIGMA", "saldo": 1023751.89, "rend": 0}, {"id": "A-CANTINA-CDB", "empresa": "CANTINA", "aplicacao": "CDB", "saldo": 50000.0, "rend": 0}, {"id": "A-TS-GIRO", "empresa": "TS", "aplicacao": "GIRO", "saldo": 55070.35, "rend": 0}, {"id": "A-TS-MEGA", "empresa": "TS", "aplicacao": "MEGA", "saldo": 608865.63, "rend": 0}, {"id": "A-TS-SIGMA", "empresa": "TS", "aplicacao": "SIGMA", "saldo": 344451.94, "rend": 0}, {"id": "A-TS-CDB", "empresa": "TS", "aplicacao": "CDB", "saldo": 0, "rend": 0}, {"id": "A-TMS-GIRO", "empresa": "TMS", "aplicacao": "GIRO", "saldo": 50910.58, "rend": 0}, {"id": "A-TMS-MEGA", "empresa": "TMS", "aplicacao": "MEGA", "saldo": 627181.19, "rend": 0}, {"id": "A-TMS-SIGMA", "empresa": "TMS", "aplicacao": "SIGMA", "saldo": 173317.55, "rend": 0}, {"id": "A-TMS-CDB", "empresa": "TMS", "aplicacao": "CDB", "saldo": 119474.13, "rend": 0}, {"id": "A-SOCIEDADE INFANTIL-GIRO", "empresa": "SOCIEDADE INFANTIL", "aplicacao": "GIRO", "saldo": 15202.65, "rend": 0}, {"id": "A-SOCIEDADE INFANTIL-CDB", "empresa": "SOCIEDADE INFANTIL", "aplicacao": "CDB", "saldo": 0, "rend": 0}, {"id": "A-SOCIEDADE FUND-GIRO", "empresa": "SOCIEDADE FUND", "aplicacao": "GIRO", "saldo": 59699.41, "rend": 0}, {"id": "A-SOCIEDADE FUND-EQUIL", "empresa": "SOCIEDADE FUND", "aplicacao": "EQUIL", "saldo": 21397.92, "rend": 0}, {"id": "A-SOCIEDADE FUND-CDB", "empresa": "SOCIEDADE FUND", "aplicacao": "CDB", "saldo": 7624.37, "rend": 0}, {"id": "A-SOCIEDADE FUND-CDB2", "empresa": "SOCIEDADE FUND", "aplicacao": "CDB2", "saldo": 0, "rend": 0}], "contas": [{"id": "C-CANTINA", "empresa": "CANTINA", "saldo": 120490.4}, {"id": "C-SOCIEDADE INFANTIL", "empresa": "SOCIEDADE INFANTIL", "saldo": 165338.98}, {"id": "C-SOCIEDADE FUND", "empresa": "SOCIEDADE FUND", "saldo": 58073.26}, {"id": "C-SOCIEDADE MEDIO", "empresa": "SOCIEDADE MEDIO", "saldo": 98815.67}, {"id": "C-SISPRIME", "empresa": "SISPRIME", "saldo": 20310.87}, {"id": "C-TS", "empresa": "TS", "saldo": 79930.29}, {"id": "C-TMS", "empresa": "TMS", "saldo": 25166.15}]}, "2026-02": {"aplicacoes": [{"id": "A-CANTINA-GIRO", "empresa": "CANTINA", "aplicacao": "GIRO", "saldo": 50264.08, "rend": 0}, {"id": "A-CANTINA-PLENO", "empresa": "CANTINA", "aplicacao": "PLENO", "saldo": 67149.08, "rend": 0}, {"id": "A-CANTINA-SIGMA", "empresa": "CANTINA", "aplicacao": "SIGMA", "saldo": 1071483.13, "rend": 0}, {"id": "A-CANTINA-CDB", "empresa": "CANTINA", "aplicacao": "CDB", "saldo": 50696.03, "rend": 0}, {"id": "A-TS-GIRO", "empresa": "TS", "aplicacao": "GIRO", "saldo": 33863.72, "rend": 0}, {"id": "A-TS-MEGA", "empresa": "TS", "aplicacao": "MEGA", "saldo": 615012.51, "rend": 0}, {"id": "A-TS-SIGMA", "empresa": "TS", "aplicacao": "SIGMA", "saldo": 347817.49, "rend": 0}, {"id": "A-TS-CDB", "empresa": "TS", "aplicacao": "CDB", "saldo": 145000.0, "rend": 0}, {"id": "A-TMS-GIRO", "empresa": "TMS", "aplicacao": "GIRO", "saldo": 33257.84, "rend": 0}, {"id": "A-TMS-MEGA", "empresa": "TMS", "aplicacao": "MEGA", "saldo": 633512.99, "rend": 0}, {"id": "A-TMS-SIGMA", "empresa": "TMS", "aplicacao": "SIGMA", "saldo": 175010.99, "rend": 0}, {"id": "A-TMS-CDB", "empresa": "TMS", "aplicacao": "CDB", "saldo": 120401.5, "rend": 0}, {"id": "A-SOCIEDADE INFANTIL-GIRO", "empresa": "SOCIEDADE INFANTIL", "aplicacao": "GIRO", "saldo": 32736.95, "rend": 0}, {"id": "A-SOCIEDADE INFANTIL-CDB", "empresa": "SOCIEDADE INFANTIL", "aplicacao": "CDB", "saldo": 207046.88, "rend": 0}, {"id": "A-SOCIEDADE FUND-GIRO", "empresa": "SOCIEDADE FUND", "aplicacao": "GIRO", "saldo": 52825.79, "rend": 0}, {"id": "A-SOCIEDADE FUND-EQUIL", "empresa": "SOCIEDADE FUND", "aplicacao": "EQUIL", "saldo": 23603.59, "rend": 0}, {"id": "A-SOCIEDADE FUND-CDB", "empresa": "SOCIEDADE FUND", "aplicacao": "CDB", "saldo": 57681.16, "rend": 0}, {"id": "A-SOCIEDADE FUND-CDB2", "empresa": "SOCIEDADE FUND", "aplicacao": "CDB2", "saldo": 0, "rend": 0}], "contas": [{"id": "C-CANTINA", "empresa": "CANTINA", "saldo": 0}, {"id": "C-SOCIEDADE INFANTIL", "empresa": "SOCIEDADE INFANTIL", "saldo": 0}, {"id": "C-SOCIEDADE FUND", "empresa": "SOCIEDADE FUND", "saldo": 1203.88}, {"id": "C-SOCIEDADE MEDIO", "empresa": "SOCIEDADE MEDIO", "saldo": 32841.59}, {"id": "C-SISPRIME", "empresa": "SISPRIME", "saldo": 8093.51}, {"id": "C-TS", "empresa": "TS", "saldo": 0}, {"id": "C-TMS", "empresa": "TMS", "saldo": 0}]}, "2026-03": {"aplicacoes": [{"id": "A-CANTINA-GIRO", "empresa": "CANTINA", "aplicacao": "GIRO", "saldo": 50820.69, "rend": 0}, {"id": "A-CANTINA-PLENO", "empresa": "CANTINA", "aplicacao": "PLENO", "saldo": 74029.73, "rend": 0}, {"id": "A-CANTINA-SIGMA", "empresa": "CANTINA", "aplicacao": "SIGMA", "saldo": 1084422.68, "rend": 0}, {"id": "A-CANTINA-CDB", "empresa": "CANTINA", "aplicacao": "CDB", "saldo": 56195.07, "rend": 0}, {"id": "A-TS-GIRO", "empresa": "TS", "aplicacao": "GIRO", "saldo": 10824.97, "rend": 0}, {"id": "A-TS-MEGA", "empresa": "TS", "aplicacao": "MEGA", "saldo": 622273.73, "rend": 0}, {"id": "A-TS-SIGMA", "empresa": "TS", "aplicacao": "SIGMA", "saldo": 209361.77, "rend": 0}, {"id": "A-TS-CDB", "empresa": "TS", "aplicacao": "CDB", "saldo": 146294.51, "rend": 0}, {"id": "A-TMS-GIRO", "empresa": "TMS", "aplicacao": "GIRO", "saldo": 33626.12, "rend": 0}, {"id": "A-TMS-MEGA", "empresa": "TMS", "aplicacao": "MEGA", "saldo": 640992.63, "rend": 0}, {"id": "A-TMS-SIGMA", "empresa": "TMS", "aplicacao": "SIGMA", "saldo": 177124.48, "rend": 0}, {"id": "A-TMS-CDB", "empresa": "TMS", "aplicacao": "CDB", "saldo": 122771.99, "rend": 0}, {"id": "A-SOCIEDADE INFANTIL-GIRO", "empresa": "SOCIEDADE INFANTIL", "aplicacao": "GIRO", "saldo": 23578.89, "rend": 0}, {"id": "A-SOCIEDADE INFANTIL-CDB", "empresa": "SOCIEDADE INFANTIL", "aplicacao": "CDB", "saldo": 208889.27, "rend": 0}, {"id": "A-SOCIEDADE FUND-GIRO", "empresa": "SOCIEDADE FUND", "aplicacao": "GIRO", "saldo": 27876.41, "rend": 0}, {"id": "A-SOCIEDADE FUND-EQUIL", "empresa": "SOCIEDADE FUND", "aplicacao": "EQUIL", "saldo": 26865.56, "rend": 0}, {"id": "A-SOCIEDADE FUND-CDB", "empresa": "SOCIEDADE FUND", "aplicacao": "CDB", "saldo": 108221.31, "rend": 0}, {"id": "A-SOCIEDADE FUND-CDB2", "empresa": "SOCIEDADE FUND", "aplicacao": "CDB2", "saldo": 135000.0, "rend": 0}], "contas": [{"id": "C-CANTINA", "empresa": "CANTINA", "saldo": 31714.94}, {"id": "C-SOCIEDADE INFANTIL", "empresa": "SOCIEDADE INFANTIL", "saldo": 11998.65}, {"id": "C-SOCIEDADE FUND", "empresa": "SOCIEDADE FUND", "saldo": 25219.05}, {"id": "C-SOCIEDADE MEDIO", "empresa": "SOCIEDADE MEDIO", "saldo": 33472.21}, {"id": "C-SISPRIME", "empresa": "SISPRIME", "saldo": 9552.58}, {"id": "C-TS", "empresa": "TS", "saldo": 56028.72}, {"id": "C-TMS", "empresa": "TMS", "saldo": 66031.39}]}, "2026-04": {"aplicacoes": [{"id": "A-CANTINA-GIRO", "empresa": "CANTINA", "aplicacao": "GIRO", "saldo": 35073.86, "rend": 0}, {"id": "A-CANTINA-PLENO", "empresa": "CANTINA", "aplicacao": "PLENO", "saldo": 80220.65, "rend": 0}, {"id": "A-CANTINA-SIGMA", "empresa": "CANTINA", "aplicacao": "SIGMA", "saldo": 1196310.74, "rend": 0}, {"id": "A-CANTINA-CDB", "empresa": "CANTINA", "aplicacao": "CDB", "saldo": 56649.1, "rend": 0}, {"id": "A-TS-GIRO", "empresa": "TS", "aplicacao": "GIRO", "saldo": 6568.79, "rend": 0}, {"id": "A-TS-MEGA", "empresa": "TS", "aplicacao": "MEGA", "saldo": 629068.79, "rend": 0}, {"id": "A-TS-SIGMA", "empresa": "TS", "aplicacao": "SIGMA", "saldo": 124024.28, "rend": 0}, {"id": "A-TS-CDB", "empresa": "TS", "aplicacao": "CDB", "saldo": 147472.26, "rend": 0}, {"id": "A-TMS-GIRO", "empresa": "TMS", "aplicacao": "GIRO", "saldo": 33953.51, "rend": 0}, {"id": "A-TMS-MEGA", "empresa": "TMS", "aplicacao": "MEGA", "saldo": 647992.11, "rend": 0}, {"id": "A-TMS-SIGMA", "empresa": "TMS", "aplicacao": "SIGMA", "saldo": 179009.76, "rend": 0}, {"id": "A-TMS-CDB", "empresa": "TMS", "aplicacao": "CDB", "saldo": 318625.06, "rend": 0}, {"id": "A-SOCIEDADE INFANTIL-GIRO", "empresa": "SOCIEDADE INFANTIL", "aplicacao": "GIRO", "saldo": 19228.29, "rend": 0}, {"id": "A-SOCIEDADE INFANTIL-CDB", "empresa": "SOCIEDADE INFANTIL", "aplicacao": "CDB", "saldo": 286602.18, "rend": 0}, {"id": "A-SOCIEDADE FUND-GIRO", "empresa": "SOCIEDADE FUND", "aplicacao": "GIRO", "saldo": 24575.28, "rend": 0}, {"id": "A-SOCIEDADE FUND-EQUIL", "empresa": "SOCIEDADE FUND", "aplicacao": "EQUIL", "saldo": 1822.51, "rend": 0}, {"id": "A-SOCIEDADE FUND-CDB", "empresa": "SOCIEDADE FUND", "aplicacao": "CDB", "saldo": 169333.84, "rend": 0}, {"id": "A-SOCIEDADE FUND-CDB2", "empresa": "SOCIEDADE FUND", "aplicacao": "CDB2", "saldo": 136205.23, "rend": 0}], "contas": [{"id": "C-CANTINA", "empresa": "CANTINA", "saldo": 6008.4}, {"id": "C-SOCIEDADE INFANTIL", "empresa": "SOCIEDADE INFANTIL", "saldo": 5352.45}, {"id": "C-SOCIEDADE FUND", "empresa": "SOCIEDADE FUND", "saldo": 6086.98}, {"id": "C-SOCIEDADE MEDIO", "empresa": "SOCIEDADE MEDIO", "saldo": 17572.2}, {"id": "C-SISPRIME", "empresa": "SISPRIME", "saldo": 24134.42}, {"id": "C-TS", "empresa": "TS", "saldo": 32477.41}, {"id": "C-TMS", "empresa": "TMS", "saldo": 21613.13}]}, "2026-05": {"aplicacoes": [{"id": "A-CANTINA-GIRO", "empresa": "CANTINA", "aplicacao": "GIRO", "saldo": 35224.51, "rend": 337.88}, {"id": "A-CANTINA-PLENO", "empresa": "CANTINA", "aplicacao": "PLENO", "saldo": 84703.01, "rend": 877.97}, {"id": "A-CANTINA-SIGMA", "empresa": "CANTINA", "aplicacao": "SIGMA", "saldo": 1249476.56, "rend": 12916.89}, {"id": "A-CANTINA-CDB", "empresa": "CANTINA", "aplicacao": "CDB", "saldo": 57100.48, "rend": 451.38}, {"id": "A-TS-GIRO", "empresa": "TS", "aplicacao": "GIRO", "saldo": 6596.19, "rend": 63.28}, {"id": "A-TS-MEGA", "empresa": "TS", "aplicacao": "MEGA", "saldo": 629986.95, "rend": 6929.67}, {"id": "A-TS-SIGMA", "empresa": "TS", "aplicacao": "SIGMA", "saldo": 82659.91, "rend": 961.45}, {"id": "A-TS-CDB", "empresa": "TS", "aplicacao": "CDB", "saldo": 148643.13, "rend": 1510.8}, {"id": "A-TMS-GIRO", "empresa": "TMS", "aplicacao": "GIRO", "saldo": 34095.11, "rend": 327.08}, {"id": "A-TMS-MEGA", "empresa": "TMS", "aplicacao": "MEGA", "saldo": 648835.03, "rend": 7138.12}, {"id": "A-TMS-SIGMA", "empresa": "TMS", "aplicacao": "SIGMA", "saldo": 82118.39, "rend": 1845.27}, {"id": "A-TMS-CDB", "empresa": "TMS", "aplicacao": "CDB", "saldo": 321407.05, "rend": 3300.78}, {"id": "A-SOCIEDADE INFANTIL-GIRO", "empresa": "SOCIEDADE INFANTIL", "aplicacao": "GIRO", "saldo": 19311.89, "rend": 185.23}, {"id": "A-SOCIEDADE INFANTIL-CDB", "empresa": "SOCIEDADE INFANTIL", "aplicacao": "CDB", "saldo": 288991.7, "rend": 2933.04}, {"id": "A-SOCIEDADE FUND-GIRO", "empresa": "SOCIEDADE FUND", "aplicacao": "GIRO", "saldo": 24677.41, "rend": 236.75}, {"id": "A-SOCIEDADE FUND-EQUIL", "empresa": "SOCIEDADE FUND", "aplicacao": "EQUIL", "saldo": 9873.2, "rend": 58.96}, {"id": "A-SOCIEDADE FUND-CDB", "empresa": "SOCIEDADE FUND", "aplicacao": "CDB", "saldo": 170817.31, "rend": 1735.38}, {"id": "A-SOCIEDADE FUND-CDB2", "empresa": "SOCIEDADE FUND", "aplicacao": "CDB2", "saldo": 137301.76, "rend": 1090.13}], "contas": [{"id": "C-CANTINA", "empresa": "CANTINA", "saldo": 75379.91}, {"id": "C-SOCIEDADE INFANTIL", "empresa": "SOCIEDADE INFANTIL", "saldo": 35918.7}, {"id": "C-SOCIEDADE FUND", "empresa": "SOCIEDADE FUND", "saldo": 78264.24}, {"id": "C-SOCIEDADE MEDIO", "empresa": "SOCIEDADE MEDIO", "saldo": 45642.28}, {"id": "C-SISPRIME", "empresa": "SISPRIME", "saldo": 19987.78}, {"id": "C-TS", "empresa": "TS", "saldo": 37082.44}, {"id": "C-TMS", "empresa": "TMS", "saldo": 32129.2}]}};
+  let changed = false;
+  Object.keys(seed).forEach(mes => {
+    if(!saldoBancario[mes]) {
+      saldoBancario[mes] = seed[mes];
+      changed = true;
+    }
+  });
+  if(changed) saveSaldoState();
+})();
+
+  initComp();
+  // Load current comp data into S
+  if(allMonths[currentComp]){
+    const d=allMonths[currentComp];
+    S=JSON.parse(JSON.stringify(d.S));
+    nF=d.nF||1; nT=d.nT||1; nD=d.nD||1;
+  } else if(!S.despesas.length){
+    const despPadrao=gerarDespesasPadrao(1);
+    S.despesas=despPadrao;
+    nD=despPadrao.length+1;
+  }
+  renderFunc(); renderTurmas(); renderDespTabela();
+}
+
+/* ═══════════════════════════════════════════════════════
+   BOOT: verifica sessão de login antes de tudo
+═══════════════════════════════════════════════════════ */
+(async function initAuthFlow(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session){
+    await onAuthReady(session);
+  } else {
+    g('login-overlay').style.display = 'flex';
+  }
+  sb.auth.onAuthStateChange((event, session)=>{
+    if(event === 'SIGNED_OUT'){ location.reload(); }
+  });
+})();
+</script>
+</body>
+</html>
