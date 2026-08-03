@@ -372,6 +372,13 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
     <div class="nav-item" data-tab="saldos" onclick="goTab('saldos',this)">
       <span class="nav-icon">🏦</span><span>Saldos Bancários</span>
     </div>
+    <div class="nav-group-label" style="margin-top:6px">Grupo Econômico</div>
+    <div class="nav-item" data-tab="grupo" onclick="goTab('grupo',this)">
+      <span class="nav-icon">🏢</span><span>Resultado do Grupo</span>
+    </div>
+    <div class="nav-item" data-tab="dashboard" onclick="goTab('dashboard',this)">
+      <span class="nav-icon">📈</span><span>Dashboard</span>
+    </div>
   </div>
   <div class="sb-comp">
     <div class="sb-footer-label">Competência</div>
@@ -949,8 +956,130 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
   </div>
 </div>
 
+<!-- ╔══════════════════════════════════════╗
+     ║  RESULTADO DO GRUPO ECONÔMICO         ║
+     ╚══════════════════════════════════════╝ -->
+<div id="tab-grupo" class="tab-section">
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">Resultado do Grupo Econômico</div>
+      <div class="page-desc">Balancete gerencial mensal — Realizado x Orçado, por empresa</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-body" style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;padding:16px 18px">
+        <div>
+          <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">EMPRESA</label>
+          <select id="grupo-empresa-sel" onchange="mudarEmpresaGrupo(this.value)" style="padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px;min-width:180px">
+            <option value="cantina">Cantina</option>
+            <option value="tms">TMS</option>
+            <option value="ts">TS</option>
+            <option value="sociedade">Sociedade</option>
+            <option value="consolidado">🏢 Consolidado (4 empresas)</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">ANO</label>
+          <input type="number" id="grupo-ano-sel" value="2026" onchange="renderResultadoGrupo()" style="width:90px;padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px">
+        </div>
+        <div>
+          <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">DE</label>
+          <select id="grupo-mes-de" onchange="renderResultadoGrupo()" style="padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px"></select>
+        </div>
+        <div>
+          <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">ATÉ</label>
+          <select id="grupo-mes-ate" onchange="renderResultadoGrupo()" style="padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px"></select>
+        </div>
+        <button class="btn-tiny" onclick="preencherOrcadoMedia()" style="height:37px" title="Preenche o orçado de julho a dezembro com a média de janeiro a junho (só onde ainda está vazio)">🔄 Gerar orçado jul-dez (média jan-jun)</button>
+        <div id="grupo-hint" style="font-size:11px;color:var(--g400);margin-left:auto;align-self:center"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tbl-wrap">
+        <table id="tbl-grupo">
+          <thead>
+            <tr>
+              <th>Mês</th>
+              <th class="tr">Receita Realizado</th>
+              <th class="tr">Despesa Realizado</th>
+              <th class="tr">Resultado Realizado</th>
+              <th class="tr">Receita Orçado</th>
+              <th class="tr">Despesa Orçado</th>
+              <th class="tr">Resultado Orçado</th>
+              <th class="tr">% Receita Ating.</th>
+              <th class="tr">% Despesa Ating.</th>
+            </tr>
+          </thead>
+          <tbody id="tb-grupo"></tbody>
+          <tfoot id="tf-grupo"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════╗
+     ║  DASHBOARD                            ║
+     ╚══════════════════════════════════════╝ -->
+<div id="tab-dashboard" class="tab-section">
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">Dashboard</div>
+      <div class="page-desc">Indicadores gerenciais do grupo econômico</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-body" style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;padding:16px 18px">
+        <div>
+          <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">EMPRESA</label>
+          <select id="dash-empresa-sel" onchange="renderDashboard()" style="padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px;min-width:180px">
+            <option value="consolidado">🏢 Consolidado (4 empresas)</option>
+            <option value="cantina">Cantina</option>
+            <option value="tms">TMS</option>
+            <option value="ts">TS</option>
+            <option value="sociedade">Sociedade</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">ANO</label>
+          <input type="number" id="dash-ano-sel" value="2026" onchange="renderDashboard()" style="width:90px;padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px">
+        </div>
+      </div>
+    </div>
+    <div class="saldo-resumo" style="grid-template-columns:repeat(4,1fr)">
+      <div class="saldo-resumo-card aplic">
+        <div class="sr-label">💰 Receita Realizada (ano)</div>
+        <div class="sr-val" id="dash-receita-val">—</div>
+      </div>
+      <div class="saldo-resumo-card cc">
+        <div class="sr-label">📤 Despesa Realizada (ano)</div>
+        <div class="sr-val" id="dash-despesa-val">—</div>
+      </div>
+      <div class="saldo-resumo-card total">
+        <div class="sr-label">📊 Resultado Realizado (ano)</div>
+        <div class="sr-val" id="dash-resultado-val">—</div>
+      </div>
+      <div class="saldo-resumo-card aplic">
+        <div class="sr-label">🎯 % Médio do Orçado Atingido</div>
+        <div class="sr-val" id="dash-pct-val">—</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;padding:18px">
+      <div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:10px">Receita x Despesa — Realizado por mês</div>
+      <canvas id="chart-receita-despesa" height="90"></canvas>
+    </div>
+    <div class="card" style="margin-top:16px;padding:18px">
+      <div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:10px">Receita — Realizado x Orçado por mês</div>
+      <canvas id="chart-orcado-realizado" height="90"></canvas>
+    </div>
+  </div>
+</div>
+
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ═══════════════════════════════════════════════════════
@@ -1006,7 +1135,7 @@ const SUPABASE_URL = 'https://hoqgxwswtxsbhmkgdzyo.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_iIqZW7PL9Bb-aBqdJDLyfw_4dzzaZh9';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const TABS_SOMENTE_COORDENACAO = ['custo','despesas','resultado','historico','saldos'];
+const TABS_SOMENTE_COORDENACAO = ['custo','despesas','resultado','historico','saldos','grupo','dashboard'];
 
 let currentUser = null;
 let currentRole = 'funcionario';
@@ -1137,6 +1266,259 @@ async function migrarDadosDoNavegador(){
   await cloudSyncSaldos();
   showToast('✅ Dados deste navegador migrados para a nuvem!');
   setTimeout(()=>location.reload(), 1200);
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESULTADO DO GRUPO ECONÔMICO (4 empresas)
+═══════════════════════════════════════════════════════ */
+const EMPRESAS_GRUPO = [
+  {id:'cantina',   nome:'Cantina'},
+  {id:'tms',       nome:'TMS'},
+  {id:'ts',        nome:'TS'},
+  {id:'sociedade', nome:'Sociedade'}
+];
+const MESES_NOMES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+// resultadoGrupo: { cantina: { "2026-01": {receitaR,despesaR,receitaO,despesaO}, ... }, tms:{...}, ts:{...}, sociedade:{...} }
+let resultadoGrupo = {};
+EMPRESAS_GRUPO.forEach(e=>resultadoGrupo[e.id]={});
+
+function vazioResultadoGrupo(){
+  return EMPRESAS_GRUPO.every(e => Object.keys(resultadoGrupo[e.id]||{}).length===0);
+}
+
+async function cloudLoadResultadoGrupo(){
+  try{
+    const { data, error } = await sb.from('resultado_mensal').select('*');
+    if(error) throw error;
+    EMPRESAS_GRUPO.forEach(e=>resultadoGrupo[e.id]={});
+    (data||[]).forEach(r=>{
+      if(!resultadoGrupo[r.empresa]) resultadoGrupo[r.empresa]={};
+      resultadoGrupo[r.empresa][r.competencia] = {
+        receitaR: +r.receita_realizado||0, despesaR: +r.despesa_realizado||0,
+        receitaO: +r.receita_orcado||0,   despesaO: +r.despesa_orcado||0
+      };
+    });
+    return true;
+  }catch(err){ console.error('Falha ao carregar resultado do grupo:', err); return false; }
+}
+
+async function cloudSaveResultadoMes(empresa, comp){
+  const d = resultadoGrupo[empresa] && resultadoGrupo[empresa][comp]; if(!d) return;
+  const { error } = await sb.from('resultado_mensal').upsert({
+    empresa, competencia: comp,
+    receita_realizado: d.receitaR||0, despesa_realizado: d.despesaR||0,
+    receita_orcado: d.receitaO||0,   despesa_orcado: d.despesaO||0,
+    updated_by: currentUser ? currentUser.id : null
+  }, { onConflict:'empresa,competencia' });
+  if(error){ console.error(error); setCloudStatus('⚠️ Falha ao salvar resultado do grupo', true); }
+  else setCloudStatus('☁️ Salvo na nuvem');
+}
+
+async function cloudSyncResultadoGrupoAll(){
+  const rows=[];
+  EMPRESAS_GRUPO.forEach(e=>{
+    Object.keys(resultadoGrupo[e.id]||{}).forEach(comp=>{
+      const d=resultadoGrupo[e.id][comp];
+      rows.push({
+        empresa:e.id, competencia:comp,
+        receita_realizado:d.receitaR||0, despesa_realizado:d.despesaR||0,
+        receita_orcado:d.receitaO||0,   despesa_orcado:d.despesaO||0,
+        updated_by: currentUser ? currentUser.id : null
+      });
+    });
+  });
+  if(!rows.length) return;
+  const { error } = await sb.from('resultado_mensal').upsert(rows, { onConflict:'empresa,competencia' });
+  if(error) console.error(error);
+}
+
+// Dados reais de Jan-Jun/2026 extraídos das planilhas enviadas (Fechamento Semestral + Receitas do Semestre).
+// TMS e TS: despesa já vem da planilha; receita fica em branco (0) para preenchimento manual — o sistema de origem estava incorreto para essas duas empresas.
+function seedResultadoGrupo(){
+  if(!vazioResultadoGrupo()) return;
+  const despesa = {
+    cantina:  [50963.36, 63959.58, 86061.74, 79535.10, 71894.51, 83132.03],
+    tms:      [5540.84,  6508.70,  19430.88, 31949.79, 130273.16,44767.73],
+    ts:       [98619.53, 79736.06, 210254.94,196236.71,100694.39,152989.86],
+    sociedade:[648772.69,915607.41,880301.07,777958.93,764304.23,743096.27]
+  };
+  const receita = {
+    cantina:  [180506.30,189495.92,207779.88,192177.94,206432.57,195044.41],
+    tms:      [null,null,null,null,null,null],
+    ts:       [null,null,null,null,null,null],
+    sociedade:[801040.68,745556.28,800367.68,766133.40,797805.75,772734.63]
+  };
+  EMPRESAS_GRUPO.forEach(e=>{
+    for(let m=1;m<=6;m++){
+      const comp = `2026-${String(m).padStart(2,'0')}`;
+      resultadoGrupo[e.id][comp] = {
+        receitaR: receita[e.id][m-1] || 0,
+        despesaR: despesa[e.id][m-1] || 0,
+        receitaO: 0, despesaO: 0
+      };
+    }
+  });
+}
+
+function popularSelectMeses(){
+  ['grupo-mes-de','grupo-mes-ate'].forEach(id=>{
+    const sel=g(id); if(!sel || sel.options.length) return;
+    MESES_NOMES.forEach((nome,i)=>{
+      const opt=document.createElement('option');
+      opt.value=i+1; opt.textContent=nome;
+      sel.appendChild(opt);
+    });
+    sel.value = id==='grupo-mes-de' ? 1 : 12;
+  });
+}
+
+function mudarEmpresaGrupo(v){
+  renderResultadoGrupo();
+}
+
+function resultadoDaEmpresaMes(empresaId, comp){
+  if(empresaId!=='consolidado'){
+    return (resultadoGrupo[empresaId] && resultadoGrupo[empresaId][comp]) || {receitaR:0,despesaR:0,receitaO:0,despesaO:0};
+  }
+  const tot={receitaR:0,despesaR:0,receitaO:0,despesaO:0};
+  EMPRESAS_GRUPO.forEach(e=>{
+    const d=(resultadoGrupo[e.id] && resultadoGrupo[e.id][comp]) || {receitaR:0,despesaR:0,receitaO:0,despesaO:0};
+    tot.receitaR+=d.receitaR||0; tot.despesaR+=d.despesaR||0;
+    tot.receitaO+=d.receitaO||0; tot.despesaO+=d.despesaO||0;
+  });
+  return tot;
+}
+
+function setResultadoField(empresa, comp, field, val){
+  if(empresa==='consolidado') return; // consolidado é somente leitura
+  if(!resultadoGrupo[empresa]) resultadoGrupo[empresa]={};
+  if(!resultadoGrupo[empresa][comp]) resultadoGrupo[empresa][comp]={receitaR:0,despesaR:0,receitaO:0,despesaO:0};
+  resultadoGrupo[empresa][comp][field] = parseFloat(val)||0;
+  cloudSaveResultadoMes(empresa, comp);
+  renderResultadoGrupo();
+}
+
+function preencherOrcadoMedia(){
+  const emp = g('grupo-empresa-sel').value;
+  if(emp==='consolidado'){ alert('Selecione uma empresa específica (não o Consolidado) para gerar o orçado automático.'); return; }
+  const ano = parseInt(g('grupo-ano-sel').value)||2026;
+  if(!resultadoGrupo[emp]) resultadoGrupo[emp]={};
+  let sumR=0,sumD=0,count=0;
+  for(let m=1;m<=6;m++){
+    const comp=`${ano}-${String(m).padStart(2,'0')}`;
+    const d=resultadoGrupo[emp][comp];
+    if(d && (d.receitaR||d.despesaR)){ sumR+=d.receitaR||0; sumD+=d.despesaR||0; count++; }
+  }
+  if(!count){ alert('Preencha (ou confirme) o realizado de janeiro a junho antes de gerar a média.'); return; }
+  const avgR=Math.round((sumR/count)*100)/100, avgD=Math.round((sumD/count)*100)/100;
+  for(let m=7;m<=12;m++){
+    const comp=`${ano}-${String(m).padStart(2,'0')}`;
+    if(!resultadoGrupo[emp][comp]) resultadoGrupo[emp][comp]={receitaR:0,despesaR:0,receitaO:0,despesaO:0};
+    const d=resultadoGrupo[emp][comp];
+    if(!d.receitaO) d.receitaO = avgR;
+    if(!d.despesaO) d.despesaO = avgD;
+    cloudSaveResultadoMes(emp, comp);
+  }
+  renderResultadoGrupo();
+  showToast('✅ Orçado de jul-dez preenchido com a média de jan-jun!');
+}
+
+function renderResultadoGrupo(){
+  popularSelectMeses();
+  const emp = g('grupo-empresa-sel').value;
+  const ano = parseInt(g('grupo-ano-sel').value)||2026;
+  const de = parseInt(g('grupo-mes-de').value)||1;
+  const ate = parseInt(g('grupo-mes-ate').value)||12;
+  const readonly = emp==='consolidado';
+  g('grupo-hint').textContent = readonly ? 'Modo consolidado: somente leitura. Para editar, selecione uma empresa.' : '';
+
+  let rows='', totR=0,totD=0,totRO=0,totDO=0;
+  for(let m=de;m<=ate;m++){
+    const comp=`${ano}-${String(m).padStart(2,'0')}`;
+    const d=resultadoDaEmpresaMes(emp, comp);
+    const resR = (d.receitaR||0)-(d.despesaR||0);
+    const resO = (d.receitaO||0)-(d.despesaO||0);
+    const pctR = d.receitaO ? (d.receitaR/d.receitaO*100) : null;
+    const pctD = d.despesaO ? (d.despesaR/d.despesaO*100) : null;
+    totR+=d.receitaR||0; totD+=d.despesaR||0; totRO+=d.receitaO||0; totDO+=d.despesaO||0;
+    const inp=(field,val)=>readonly
+      ? `<td class="tr">${R$(val)}</td>`
+      : `<td class="tr"><input type="number" step="0.01" value="${(val||0).toFixed(2)}" style="width:110px;text-align:right;border:1px solid var(--g200);border-radius:4px;padding:4px 6px;font-family:'IBM Plex Mono',monospace" onchange="setResultadoField('${emp}','${comp}','${field}',this.value)"></td>`;
+    rows+=`<tr>
+      <td><strong>${MESES_NOMES[m-1]}/${ano}</strong></td>
+      ${inp('receitaR', d.receitaR)}
+      ${inp('despesaR', d.despesaR)}
+      <td class="tr" style="font-weight:700;color:${resR>=0?'var(--green)':'var(--red)'}">${R$(resR)}</td>
+      ${inp('receitaO', d.receitaO)}
+      ${inp('despesaO', d.despesaO)}
+      <td class="tr" style="font-weight:700">${R$(resO)}</td>
+      <td class="tr">${pctR===null?'—':PC(pctR)}</td>
+      <td class="tr">${pctD===null?'—':PC(pctD)}</td>
+    </tr>`;
+  }
+  g('tb-grupo').innerHTML = rows || '<tr><td colspan="9" style="text-align:center;color:var(--g400);padding:30px">Nenhum mês no intervalo selecionado.</td></tr>';
+  const totResR=totR-totD, totResO=totRO-totDO;
+  g('tf-grupo').innerHTML = `<tr style="background:var(--g100);font-weight:700">
+    <td>TOTAL</td>
+    <td class="tr">${R$(totR)}</td>
+    <td class="tr">${R$(totD)}</td>
+    <td class="tr" style="color:${totResR>=0?'var(--green)':'var(--red)'}">${R$(totResR)}</td>
+    <td class="tr">${R$(totRO)}</td>
+    <td class="tr">${R$(totDO)}</td>
+    <td class="tr">${R$(totResO)}</td>
+    <td class="tr">${totRO?PC(totR/totRO*100):'—'}</td>
+    <td class="tr">${totDO?PC(totD/totDO*100):'—'}</td>
+  </tr>`;
+}
+
+/* ═══════════════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════════════ */
+let chartReceitaDespesa=null, chartOrcadoRealizado=null;
+function renderDashboard(){
+  const emp = g('dash-empresa-sel').value;
+  const ano = parseInt(g('dash-ano-sel').value)||2026;
+  let totR=0,totD=0,totRO=0,pctSum=0,pctCount=0;
+  const labels=[], serieR=[], serieD=[], serieO=[];
+  for(let m=1;m<=12;m++){
+    const comp=`${ano}-${String(m).padStart(2,'0')}`;
+    const d=resultadoDaEmpresaMes(emp, comp);
+    labels.push(MESES_NOMES[m-1]);
+    serieR.push(+(d.receitaR||0).toFixed(2));
+    serieD.push(+(d.despesaR||0).toFixed(2));
+    serieO.push(+(d.receitaO||0).toFixed(2));
+    totR+=d.receitaR||0; totD+=d.despesaR||0; totRO+=d.receitaO||0;
+    if(d.receitaO){ pctSum+=(d.receitaR/d.receitaO*100); pctCount++; }
+  }
+  g('dash-receita-val').textContent = R$(totR);
+  g('dash-despesa-val').textContent = R$(totD);
+  const res = totR-totD;
+  const resEl = g('dash-resultado-val');
+  resEl.textContent = R$(res);
+  resEl.style.color = res>=0 ? 'var(--green)' : 'var(--red)';
+  g('dash-pct-val').textContent = pctCount ? PC(pctSum/pctCount) : '—';
+
+  if(typeof Chart==='undefined') return;
+  const ctx1 = g('chart-receita-despesa');
+  const ctx2 = g('chart-orcado-realizado');
+  if(chartReceitaDespesa) chartReceitaDespesa.destroy();
+  if(chartOrcadoRealizado) chartOrcadoRealizado.destroy();
+  chartReceitaDespesa = new Chart(ctx1, {
+    type:'bar',
+    data:{ labels, datasets:[
+      {label:'Receita', data:serieR, backgroundColor:'#c4933f'},
+      {label:'Despesa', data:serieD, backgroundColor:'#182640'}
+    ]},
+    options:{ responsive:true, plugins:{legend:{position:'bottom'}}, scales:{y:{beginAtZero:true}} }
+  });
+  chartOrcadoRealizado = new Chart(ctx2, {
+    type:'line',
+    data:{ labels, datasets:[
+      {label:'Receita Realizado', data:serieR, borderColor:'#1c7a52', backgroundColor:'#1c7a52', tension:.25},
+      {label:'Receita Orçado', data:serieO, borderColor:'#9b9790', backgroundColor:'#9b9790', borderDash:[5,4], tension:.25}
+    ]},
+    options:{ responsive:true, plugins:{legend:{position:'bottom'}}, scales:{y:{beginAtZero:true}} }
+  });
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -2058,6 +2440,8 @@ function goTab(tab,el){
   if(tab==='funcionarios') renderFunc();
   if(tab==='saldos')       renderSaldos();
   if(tab==='historico')    renderHistorico();
+  if(tab==='grupo')        renderResultadoGrupo();
+  if(tab==='dashboard')    renderDashboard();
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -3106,6 +3490,14 @@ async function bootApp(){
       allMonths[k]={S:p.S,nF:p.nF||1,nT:p.nT||1,nD:p.nD||1};
     }
   }catch(e){}
+  }
+
+  if(currentRole==='coordenacao'){
+    const okGrupo = await cloudLoadResultadoGrupo();
+    if(okGrupo && vazioResultadoGrupo()){
+      seedResultadoGrupo();
+      await cloudSyncResultadoGrupoAll();
+    }
   }
 
 // Pré-carga das despesas de Maio/2025 da imagem enviada pelo usuário
