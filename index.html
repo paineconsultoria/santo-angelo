@@ -992,6 +992,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
           <select id="grupo-mes-ate" onchange="renderResultadoGrupo()" style="padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px"></select>
         </div>
         <button class="btn-tiny" onclick="preencherOrcadoMedia()" style="height:37px" title="Preenche o orçado de julho a dezembro com a média de janeiro a junho (só onde ainda está vazio)">🔄 Gerar orçado jul-dez (média jan-jun)</button>
+        <button class="btn-tiny" onclick="recarregarDadosPlanilhas()" style="height:37px" title="Repreenche jan-jun/2026 com os valores originais das planilhas enviadas">📥 Recarregar dados das planilhas (jan-jun)</button>
         <div id="grupo-hint" style="font-size:11px;color:var(--g400);margin-left:auto;align-self:center"></div>
       </div>
     </div>
@@ -1707,17 +1708,42 @@ function seedResultadoGrupo(){
 
 function seedDespesaContas(){
   if(!vazioDespesaContas()) return;
+  _aplicarSeedDespesaContas();
+}
+
+function _aplicarSeedDespesaContas(){
   Object.keys(SEED_DESPESA_CONTAS).forEach(emp=>{
     despesaContas[emp] = despesaContas[emp] || {};
     Object.keys(SEED_DESPESA_CONTAS[emp]).forEach(codigo=>{
       const vals = SEED_DESPESA_CONTAS[emp][codigo];
-      despesaContas[emp][codigo] = {};
+      despesaContas[emp][codigo] = despesaContas[emp][codigo] || {};
       vals.forEach((v,i)=>{
         const comp = `2026-${String(i+1).padStart(2,'0')}`;
         despesaContas[emp][codigo][comp] = v;
       });
     });
   });
+}
+
+async function recarregarDadosPlanilhas(){
+  if(!confirm('Isso vai preencher (ou sobrescrever) Janeiro a Junho/2026 com os valores originais das planilhas enviadas — tanto o balancete de despesas por conta quanto a receita de Cantina e Sociedade. Deseja continuar?')) return;
+  const receita = {
+    cantina:  [180506.30,189495.92,207779.88,192177.94,206432.57,195044.41],
+    sociedade:[801040.68,745556.28,800367.68,766133.40,797805.75,772734.63]
+  };
+  ['cantina','sociedade'].forEach(e=>{
+    for(let m=1;m<=6;m++){
+      const comp = `2026-${String(m).padStart(2,'0')}`;
+      if(!resultadoGrupo[e]) resultadoGrupo[e]={};
+      if(!resultadoGrupo[e][comp]) resultadoGrupo[e][comp]={receitaR:0,receitaO:0,despesaO:0};
+      resultadoGrupo[e][comp].receitaR = receita[e][m-1];
+    }
+  });
+  _aplicarSeedDespesaContas();
+  await cloudSyncResultadoGrupoAll();
+  await cloudSyncDespesaContasAll();
+  renderResultadoGrupo();
+  showToast('✅ Dados de jan-jun/2026 recarregados das planilhas originais!');
 }
 
 function popularSelectMeses(){
