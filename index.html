@@ -1404,7 +1404,6 @@ const PLANO_CONTAS = [
   {lvl:'grupo',cod:null,nome:'6. Investimentos e Obras'},
   {lvl:'subgrupo',cod:null,nome:'Investimentos e Obras'},
   {lvl:'conta',cod:'2.06',nome:'DESPESAS OBRA TERRENO NOVO'},
-  {lvl:'grupo',cod:null,nome:'TOTAL GERAL DO GRUPO ECONÔMICO'},
 ];const SEED_DESPESA_CONTAS = {
   cantina: {
     '2.01.001': [8454.68, 9415.02, 12395.48, 12048.66, 12676.13, 12279.23],
@@ -1900,12 +1899,12 @@ function renderResultadoGrupo(){
   g('thead-grupo-detalhe').innerHTML = thead2;
 
   const zeros = ()=>meses.map(()=>0);
-  const linhas = PLANO_CONTAS.map(it=>({ ...it, vals: it.level!=='conta' ? zeros() : null }));
+  const linhas = PLANO_CONTAS.map(it=>({ ...it, vals: it.lvl!=='conta' ? zeros() : null }));
   let curGrupoIdx=null, curSubIdx=null;
   linhas.forEach((row,idx)=>{
-    if(row.level==='grupo'){ curGrupoIdx=idx; row.vals = zeros(); }
-    else if(row.level==='subgrupo'){ curSubIdx=idx; row.vals = zeros(); }
-    else if(row.level==='conta'){
+    if(row.lvl==='grupo'){ curGrupoIdx=idx; row.vals = zeros(); }
+    else if(row.lvl==='subgrupo'){ curSubIdx=idx; row.vals = zeros(); }
+    else if(row.lvl==='conta'){
       const vals = meses.map(mm=>valorContaEmpresaMes(emp, row.cod, mm.comp));
       row.vals = vals;
       vals.forEach((v,i)=>{
@@ -1918,9 +1917,9 @@ function renderResultadoGrupo(){
   let detalheRows='';
   linhas.forEach(row=>{
     const totLinha = row.vals.reduce((a,b)=>a+b,0);
-    if(row.level==='grupo'){
+    if(row.lvl==='grupo'){
       detalheRows += `<tr style="background:var(--navy);color:#fff"><td style="font-weight:700">${row.nome}</td>${row.vals.map(v=>`<td class="tr" style="font-weight:700">${R$(v)}</td>`).join('')}<td class="tr" style="font-weight:700;background:var(--navy-mid)">${R$(totLinha)}</td></tr>`;
-    } else if(row.level==='subgrupo'){
+    } else if(row.lvl==='subgrupo'){
       detalheRows += `<tr style="background:var(--g100)"><td style="font-weight:600;padding-left:24px">${row.nome}</td>${row.vals.map(v=>`<td class="tr" style="font-weight:600">${R$(v)}</td>`).join('')}<td class="tr" style="font-weight:600;background:#e4e1da">${R$(totLinha)}</td></tr>`;
     } else {
       const cels = row.vals.map((v,i)=>{
