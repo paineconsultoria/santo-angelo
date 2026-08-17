@@ -92,6 +92,9 @@ th{background:var(--navy);color:rgba(255,255,255,.82);padding:9px 11px;text-alig
 td{padding:8px 11px;border-bottom:1px solid var(--g100);color:var(--g800);white-space:nowrap;}
 tbody tr:hover td{background:#f8f8f5;}
 tfoot td{background:var(--navy);color:#fff;font-weight:600;padding:10px 11px;}
+table.zebra tbody tr:nth-child(odd) > td{background:#ffffff;}
+table.zebra tbody tr:nth-child(even) > td{background:#eaf3fb;}
+table.zebra tbody tr:hover > td{background:#f8f8f5 !important;}
 .mono{font-family:'IBM Plex Mono',monospace;}
 .tr{text-align:right;}
 .tc{text-align:center;}
@@ -467,26 +470,26 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
             <div class="sub-hdr">💰 Remuneração</div>
             <div class="form-row">
               <div class="form-group"><label>Salário Bruto (R$)</label>
-                <input type="number" id="f-sal" min="0" step="0.01" placeholder="0,00" oninput="previewCusto()"></div>
+                <input type="text" inputmode="decimal" id="f-sal" placeholder="0,00" oninput="maskMoneyInput(this);previewCusto()"></div>
               <div class="form-group"><label>Horas Extras no Mês (R$)</label>
-                <input type="number" id="f-he" min="0" step="0.01" placeholder="0,00" oninput="previewCusto()" title="Valor das horas extras pagas no mês — integra a base de encargos"></div>
+                <input type="text" inputmode="decimal" id="f-he" placeholder="0,00" oninput="maskMoneyInput(this);previewCusto()" title="Valor das horas extras pagas no mês — integra a base de encargos"></div>
               <div class="form-group"><label>H/Aula Contratadas/Mês</label>
                 <input type="number" id="f-hc" min="0" value="220"></div>
               <div class="form-group"><label>Outras Gratificações (R$)</label>
-                <input type="number" id="f-grat" min="0" step="0.01" placeholder="0,00" oninput="previewCusto()"></div>
+                <input type="text" inputmode="decimal" id="f-grat" placeholder="0,00" oninput="maskMoneyInput(this);previewCusto()"></div>
               <div class="form-group"><label>% Encargos (INSS+FGTS+RAT+S)</label>
                 <input type="number" id="f-enc" min="0" max="100" step="0.01" value="35" oninput="previewCusto()"></div>
             </div>
             <div class="sub-hdr">🎁 Benefícios</div>
             <div class="form-row">
               <div class="form-group"><label>Vale Transporte (R$)</label>
-                <input type="number" id="f-vt" min="0" step="0.01" placeholder="0,00" oninput="previewCusto()"></div>
+                <input type="text" inputmode="decimal" id="f-vt" placeholder="0,00" oninput="maskMoneyInput(this);previewCusto()"></div>
               <div class="form-group"><label>Vale Refeição (R$)</label>
-                <input type="number" id="f-vr" min="0" step="0.01" placeholder="0,00" oninput="previewCusto()"></div>
+                <input type="text" inputmode="decimal" id="f-vr" placeholder="0,00" oninput="maskMoneyInput(this);previewCusto()"></div>
               <div class="form-group"><label>Plano de Saúde (R$)</label>
-                <input type="number" id="f-ps" min="0" step="0.01" placeholder="0,00" oninput="previewCusto()"></div>
+                <input type="text" inputmode="decimal" id="f-ps" placeholder="0,00" oninput="maskMoneyInput(this);previewCusto()"></div>
               <div class="form-group"><label>Outros Benefícios (R$)</label>
-                <input type="number" id="f-out" min="0" step="0.01" placeholder="0,00" oninput="previewCusto()"></div>
+                <input type="text" inputmode="decimal" id="f-out" placeholder="0,00" oninput="maskMoneyInput(this);previewCusto()"></div>
             </div>
             <div style="margin-top:10px;display:flex;gap:9px;justify-content:flex-end">
               <button class="btn btn-ghost" onclick="fecharFormFunc()">Cancelar</button>
@@ -522,7 +525,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
         <input type="text" id="busca-f" placeholder="🔍 Buscar nome ou cargo..." style="width:220px;padding:5px 10px;font-size:12px" oninput="renderFunc()">
       </div>
       <div class="tbl-wrap">
-        <table>
+        <table class="zebra">
           <thead>
             <tr>
               <th class="sortable" onclick="sortTable('func','id')">ID<span class="sort-arrow"></span></th>
@@ -603,9 +606,9 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
           <div class="form-group"><label>Nº de Alunos</label>
             <input type="number" id="t-alunos" min="0" placeholder="0"></div>
           <div class="form-group"><label>Receita Mensal (R$)</label>
-            <input type="number" id="t-rec" min="0" step="0.01" placeholder="0,00"></div>
+            <input type="text" inputmode="decimal" id="t-rec" placeholder="0,00" oninput="maskMoneyInput(this)"></div>
           <div class="form-group"><label>Valor Hora/Aula (R$)</label>
-            <input type="number" id="t-hra" min="0" step="0.01" placeholder="0,00" title="Valor da hora-aula desta turma — usado como peso no rateio de custo do professor"></div>
+            <input type="text" inputmode="decimal" id="t-hra" placeholder="0,00" oninput="maskMoneyInput(this)" title="Valor da hora-aula desta turma — usado como peso no rateio de custo do professor"></div>
         </div>
         <div style="display:flex;gap:9px;justify-content:flex-end;margin-top:4px">
           <button class="btn btn-ghost" onclick="fecharFormTurma()">Cancelar</button>
@@ -618,7 +621,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
         <span class="card-title">Turmas Cadastradas — <span id="cnt-turmas">0</span></span>
       </div>
       <div class="tbl-wrap">
-        <table>
+        <table class="zebra">
           <thead>
             <tr>
               <th class="sortable" onclick="sortTable('turmas','id')">ID<span class="sort-arrow"></span></th>
@@ -656,7 +659,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
     <div class="card">
       <div class="card-hdr"><span class="card-title">Custo de Pessoal por Turma</span></div>
       <div class="tbl-wrap">
-        <table>
+        <table class="zebra">
           <thead>
             <tr>
               <th class="sortable" onclick="sortTable('custo','id')">ID<span class="sort-arrow"></span></th>
@@ -676,7 +679,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
     <div class="card">
       <div class="card-hdr"><span class="card-title">⚠️ Funcionários sem Alocação na Grade</span></div>
       <div class="tbl-wrap">
-        <table>
+        <table class="zebra">
           <thead>
             <tr><th>ID</th><th>Nome</th><th>Regime</th><th class="tr">Custo Mensal</th><th>Recomendação</th></tr>
           </thead>
@@ -710,7 +713,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
         <span style="font-size:12px;color:var(--g600)">Total: <strong id="lbl-total-desp">R$ 0,00</strong></span>
       </div>
       <div class="tbl-wrap">
-        <table>
+        <table class="zebra">
           <thead>
             <tr>
               <th style="width:120px">Cód. Conta</th>
@@ -733,7 +736,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
         <button class="btn btn-gold btn-sm" onclick="renderDespTurma()">🔄 Recalcular</button>
       </div>
       <div class="tbl-wrap">
-        <table>
+        <table class="zebra">
           <thead>
             <tr>
               <th class="sortable" onclick="sortTable('desp-turma','nome')">Turma<span class="sort-arrow"></span></th>
@@ -770,7 +773,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
     <div class="kpi-grid" id="kpi-res"></div>
     <div class="card">
       <div class="tbl-wrap">
-        <table>
+        <table class="zebra">
           <thead>
             <tr>
               <th class="sortable" onclick="sortTable('resultado','nome')">Turma<span class="sort-arrow"></span></th>
@@ -811,7 +814,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
     <div class="card" id="hist-card" style="display:none">
       <div class="card-hdr"><span class="card-title" id="hist-card-title">—</span></div>
       <div class="tbl-wrap">
-        <table>
+        <table class="zebra">
           <thead>
             <tr>
               <th>Turma</th>
@@ -1001,7 +1004,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
     <div class="card" style="margin-bottom:16px">
       <div class="card-hdr"><span class="card-title">Resumo — Realizado x Orçado</span></div>
       <div class="tbl-wrap">
-        <table id="tbl-grupo-resumo">
+        <table id="tbl-grupo-resumo" class="zebra">
           <thead><tr id="thead-grupo-resumo"></tr></thead>
           <tbody id="tb-grupo-resumo"></tbody>
         </table>
@@ -1012,7 +1015,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
     <div class="card">
       <div class="card-hdr"><span class="card-title">Balancete de Despesas — Detalhado por Conta</span></div>
       <div class="tbl-wrap">
-        <table id="tbl-grupo-detalhe">
+        <table id="tbl-grupo-detalhe" class="zebra">
           <thead><tr id="thead-grupo-detalhe"></tr></thead>
           <tbody id="tb-grupo-detalhe"></tbody>
         </table>
@@ -1875,7 +1878,7 @@ function renderResultadoGrupo(){
         return `<td class="tr"${cor?` style="color:${cor}"`:''}>${val===null?'—':PC(val)}</td>`;
       }
       if(editable && !readonly){
-        return `<td class="tr"><input type="number" step="0.01" value="${(val||0).toFixed(2)}" style="width:110px;text-align:right;border:1px solid var(--g200);border-radius:4px;padding:4px 6px;font-family:'IBM Plex Mono',monospace" onchange="setResultadoField('${emp}','${mm.comp}','${field}',this.value)"></td>`;
+        return `<td class="tr"><input type="text" inputmode="decimal" value="${N$(val||0)}" style="width:110px;text-align:right;border:1px solid var(--g200);border-radius:4px;padding:4px 6px;font-family:'IBM Plex Mono',monospace" oninput="maskMoneyInput(this)" onchange="setResultadoField('${emp}','${mm.comp}','${field}',unmaskMoneyInput(this.value))"></td>`;
       }
       return `<td class="tr"${cor?` style="color:${cor}"`:''}>${R$(val)}</td>`;
     }).join('');
@@ -1918,13 +1921,13 @@ function renderResultadoGrupo(){
   linhas.forEach(row=>{
     const totLinha = row.vals.reduce((a,b)=>a+b,0);
     if(row.lvl==='grupo'){
-      detalheRows += `<tr style="background:var(--navy);color:#fff"><td style="font-weight:700">${row.nome}</td>${row.vals.map(v=>`<td class="tr" style="font-weight:700">${R$(v)}</td>`).join('')}<td class="tr" style="font-weight:700;background:var(--navy-mid)">${R$(totLinha)}</td></tr>`;
+      detalheRows += `<tr style="background:var(--navy);color:#fff"><td style="font-weight:700;background:var(--navy)">${row.nome}</td>${row.vals.map(v=>`<td class="tr" style="font-weight:700;background:var(--navy)">${R$(v)}</td>`).join('')}<td class="tr" style="font-weight:700;background:var(--navy-mid)">${R$(totLinha)}</td></tr>`;
     } else if(row.lvl==='subgrupo'){
-      detalheRows += `<tr style="background:var(--g100)"><td style="font-weight:600;padding-left:24px">${row.nome}</td>${row.vals.map(v=>`<td class="tr" style="font-weight:600">${R$(v)}</td>`).join('')}<td class="tr" style="font-weight:600;background:#e4e1da">${R$(totLinha)}</td></tr>`;
+      detalheRows += `<tr style="background:var(--g100)"><td style="font-weight:600;padding-left:24px;background:var(--g100)">${row.nome}</td>${row.vals.map(v=>`<td class="tr" style="font-weight:600;background:var(--g100)">${R$(v)}</td>`).join('')}<td class="tr" style="font-weight:600;background:#e4e1da">${R$(totLinha)}</td></tr>`;
     } else {
       const cels = row.vals.map((v,i)=>{
         if(!readonly){
-          return `<td class="tr"><input type="number" step="0.01" value="${(v||0).toFixed(2)}" style="width:100px;text-align:right;border:1px solid var(--g200);border-radius:4px;padding:3px 5px;font-family:'IBM Plex Mono',monospace;font-size:11.5px" onchange="setContaValor('${emp}','${row.cod}','${meses[i].comp}',this.value)"></td>`;
+          return `<td class="tr"><input type="text" inputmode="decimal" value="${N$(v||0)}" style="width:100px;text-align:right;border:1px solid var(--g200);border-radius:4px;padding:3px 5px;font-family:'IBM Plex Mono',monospace;font-size:11.5px" oninput="maskMoneyInput(this)" onchange="setContaValor('${emp}','${row.cod}','${meses[i].comp}',unmaskMoneyInput(this.value))"></td>`;
         }
         return `<td class="tr">${R$(v)}</td>`;
       }).join('');
@@ -1994,8 +1997,27 @@ function renderDashboard(){
 const R$ = v => 'R$\u00a0' + (+(v||0)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const N$ = v => (+(v||0)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const PC = v => (+(v||0)).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
+
+/* Máscara de valor monetário (milhar com ponto, decimal com vírgula) para campos editáveis */
+function maskMoneyInput(el){
+  let digits = el.value.replace(/\D/g,'');
+  digits = digits.replace(/^0+(?=\d)/,'');
+  while(digits.length<3) digits = '0'+digits;
+  const cents = digits.slice(-2);
+  let intPart = digits.slice(0,-2).replace(/^0+(?=\d)/,'') || '0';
+  intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+  el.value = intPart + ',' + cents;
+}
+function unmaskMoneyInput(str){
+  if(!str) return 0;
+  return parseFloat(String(str).replace(/\./g,'').replace(',','.'))||0;
+}
 const g  = id => document.getElementById(id);
-const gN = id => parseFloat(g(id)?.value)||0;
+const gN = id => {
+  const raw = g(id)?.value;
+  if(!raw) return 0;
+  return raw.includes(',') ? unmaskMoneyInput(raw) : (parseFloat(raw)||0);
+};
 const gS = id => (g(id)?.value||'').trim();
 const pad= n => String(n).padStart(3,'0');
 
@@ -2438,7 +2460,7 @@ function renderSbAplicRows(){
       <th style="background:var(--navy);color:#fff;padding:7px 4px;width:28px"></th>
     </tr></thead>
     <tbody>
-    ${sbAplicRows.map((r,i)=>`<tr style="background:${i%2===0?'#fff':'#f9fafb'}">
+    ${sbAplicRows.map((r,i)=>`<tr style="background:${i%2===0?'#fff':'#eaf3fb'}">
       <td style="padding:4px 6px">
         <input list="dl-empresas-aplic" id="sb-ae-emp-${r.id}" value="${r.empresa}" placeholder="Empresa" style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:4px;padding:4px 7px">
         <datalist id="dl-empresas-aplic">${EMPRESAS_APLIC.map(e=>`<option value="${e}">`).join('')}</datalist>
@@ -2448,8 +2470,8 @@ function renderSbAplicRows(){
         <datalist id="dl-aplicacoes">${APLICACOES.map(a=>`<option value="${a}">`).join('')}</datalist>
       </td>
       <td style="padding:4px 6px">
-        <input type="number" id="sb-ae-sal-${r.id}" step="0.01" placeholder="0,00"
-          value="${sbEditMes?(saldoBancario[sbEditMes]?.aplicacoes?.find(x=>x.id===r.id)?.saldo||''):''}"
+        <input type="text" inputmode="decimal" id="sb-ae-sal-${r.id}" placeholder="0,00" oninput="maskMoneyInput(this)"
+          value="${(()=>{const s=sbEditMes?(saldoBancario[sbEditMes]?.aplicacoes?.find(x=>x.id===r.id)?.saldo):null; return s?N$(s):'';})()}"
           style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:4px;padding:4px 7px;text-align:right">
       </td>
       <td style="padding:4px 2px;text-align:center">
@@ -2472,14 +2494,14 @@ function renderSbContaRows(){
       <th style="background:var(--navy);color:#fff;padding:7px 4px;width:28px"></th>
     </tr></thead>
     <tbody>
-    ${sbContaRows.map((r,i)=>`<tr style="background:${i%2===0?'#fff':'#f9fafb'}">
+    ${sbContaRows.map((r,i)=>`<tr style="background:${i%2===0?'#fff':'#eaf3fb'}">
       <td style="padding:4px 6px">
         <input list="dl-empresas-cc" id="sb-cc-emp-${r.id}" value="${r.empresa}" placeholder="Empresa" style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:4px;padding:4px 7px">
         <datalist id="dl-empresas-cc">${EMPRESAS_CC.map(e=>`<option value="${e}">`).join('')}</datalist>
       </td>
       <td style="padding:4px 6px">
-        <input type="number" id="sb-cc-sal-${r.id}" step="0.01" placeholder="0,00"
-          value="${sbEditMes?(saldoBancario[sbEditMes]?.contas?.find(x=>x.id===r.id)?.saldo||''):''}"
+        <input type="text" inputmode="decimal" id="sb-cc-sal-${r.id}" placeholder="0,00" oninput="maskMoneyInput(this)"
+          value="${(()=>{const s=sbEditMes?(saldoBancario[sbEditMes]?.contas?.find(x=>x.id===r.id)?.saldo):null; return s?N$(s):'';})()}"
           style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:4px;padding:4px 7px;text-align:right">
       </td>
       <td style="padding:4px 2px;text-align:center">
@@ -2498,13 +2520,13 @@ function salvarSaldo(){
     id:r.id,
     empresa:(g(`sb-ae-emp-${r.id}`)?.value||'').trim(),
     aplicacao:(g(`sb-ae-apl-${r.id}`)?.value||'').trim(),
-    saldo:parseFloat(g(`sb-ae-sal-${r.id}`)?.value)||0,
+    saldo:unmaskMoneyInput(g(`sb-ae-sal-${r.id}`)?.value),
   })).filter(r=>r.empresa||r.saldo);
 
   const contas=sbContaRows.map(r=>({
     id:r.id,
     empresa:(g(`sb-cc-emp-${r.id}`)?.value||'').trim(),
-    saldo:parseFloat(g(`sb-cc-sal-${r.id}`)?.value)||0
+    saldo:unmaskMoneyInput(g(`sb-cc-sal-${r.id}`)?.value)
   })).filter(r=>r.empresa||r.saldo);
 
   saldoBancario[comp]={aplicacoes,contas};
@@ -2921,15 +2943,15 @@ function abrirFormFunc(id=null){
   g('f-nome').value=f?.nome||'';
   g('f-disc').value=f?.disc||'';
   g('f-regime').value=f?.regime||'MENSALISTA';
-  g('f-sal').value=f?.sal||'';
+  g('f-sal').value=f?.sal?N$(f.sal):'';
   g('f-hc').value=f?.hc||220;
-  g('f-grat').value=f?.grat||'';
+  g('f-grat').value=f?.grat?N$(f.grat):'';
   g('f-enc').value=f?.pctEnc!==undefined?f.pctEnc:35;
-  g('f-he').value=f?.he||'';
-  g('f-vt').value=f?.vt||'';
-  g('f-vr').value=f?.vr||'';
-  g('f-ps').value=f?.ps||'';
-  g('f-out').value=f?.out||'';
+  g('f-he').value=f?.he?N$(f.he):'';
+  g('f-vt').value=f?.vt?N$(f.vt):'';
+  g('f-vr').value=f?.vr?N$(f.vr):'';
+  g('f-ps').value=f?.ps?N$(f.ps):'';
+  g('f-out').value=f?.out?N$(f.out):'';
   g('form-func').style.display='block';
   previewCusto();
   g('f-nome').focus();
@@ -3193,8 +3215,8 @@ function abrirFormTurma(id=null){
   g('form-turma-tit').textContent=t?'Editar Turma':'Nova Turma';
   g('t-nome').value=t?.nome||'';
   g('t-alunos').value=t?.alunos||'';
-  g('t-rec').value=t?.rec||'';
-  g('t-hra').value=t?.hra||'';
+  g('t-rec').value=t?.rec?N$(t.rec):'';
+  g('t-hra').value=t?.hra?N$(t.hra):'';
   g('form-turma').style.display='block';
   g('t-nome').focus();
 }
@@ -3677,9 +3699,10 @@ function despRowHtml(d){
         oninput="updDesp('${d.id}','cat',this.value)">
     </td>
     <td style="width:150px">
-      <input type="number" value="${d.val||''}" min="0" step="0.01" placeholder="0,00"
+      <input type="text" inputmode="decimal" value="${d.val?N$(d.val):''}" placeholder="0,00"
         style="width:100%;text-align:right;font-family:'IBM Plex Mono',monospace"
-        onchange="updDesp('${d.id}','val',this.value);renderDespTurma()">
+        oninput="maskMoneyInput(this)"
+        onchange="updDesp('${d.id}','val',unmaskMoneyInput(this.value));renderDespTurma()">
     </td>
     <td style="width:260px">
       <select style="width:100%;font-size:12px;padding:5px 8px"
