@@ -39,6 +39,10 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--g80
 .nav-item:hover{color:#fff;background:rgba(255,255,255,.05);}
 .nav-item.active{color:var(--gold-lt);background:rgba(196,147,63,.12);border-left-color:var(--gold);font-weight:500;}
 .nav-icon{font-size:15px;width:18px;text-align:center;}
+.subtab-row{display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--g200)}
+.subtab-btn{padding:9px 18px;font-size:12.5px;font-weight:600;color:var(--g400);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;transition:all .14s;}
+.subtab-btn:hover{color:var(--navy);}
+.subtab-btn.active{color:var(--navy);border-bottom-color:var(--gold);}
 .sb-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);}
 .sb-comp{padding:12px 18px;border-top:1px solid rgba(255,255,255,.08);}
 .sb-comp input[type=month]:focus{outline:none;border-color:var(--gold);}
@@ -1000,25 +1004,150 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
       </div>
     </div>
 
-    <!-- Resumo — meses em colunas -->
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-hdr"><span class="card-title">Resumo — Realizado x Orçado</span></div>
-      <div class="tbl-wrap">
-        <table id="tbl-grupo-resumo" class="zebra">
-          <thead><tr id="thead-grupo-resumo"></tr></thead>
-          <tbody id="tb-grupo-resumo"></tbody>
-        </table>
+    <!-- Sub-abas: Preenchimento x Visualização -->
+    <div class="subtab-row">
+      <button type="button" class="subtab-btn active" id="subtab-btn-preenchimento" onclick="mudarModoGrupo('preenchimento')">📝 Preenchimento</button>
+      <button type="button" class="subtab-btn" id="subtab-btn-visualizacao" onclick="mudarModoGrupo('visualizacao')">📊 Visualização (com Rateio)</button>
+    </div>
+
+    <!-- ═══ PAINEL: PREENCHIMENTO ═══ -->
+    <div id="grupo-painel-preenchimento">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+        <button class="btn btn-ghost btn-sm" onclick="abrirModalNovaConta()">➕ Nova conta de despesa (todas as empresas)</button>
+      </div>
+
+      <!-- Resumo — meses em colunas -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hdr"><span class="card-title">Resumo — Realizado x Orçado</span></div>
+        <div class="tbl-wrap">
+          <table id="tbl-grupo-resumo" class="zebra">
+            <thead><tr id="thead-grupo-resumo"></tr></thead>
+            <tbody id="tb-grupo-resumo"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Balancete detalhado — igual ao Excel: Grupo > Subgrupo > Conta, meses em colunas -->
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">Balancete de Despesas — Detalhado por Conta (o que cada empresa efetivamente pagou)</span></div>
+        <div class="tbl-wrap">
+          <table id="tbl-grupo-detalhe" class="zebra">
+            <thead><tr id="thead-grupo-detalhe"></tr></thead>
+            <tbody id="tb-grupo-detalhe"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <!-- Balancete detalhado — igual ao Excel: Grupo > Subgrupo > Conta, meses em colunas -->
-    <div class="card">
-      <div class="card-hdr"><span class="card-title">Balancete de Despesas — Detalhado por Conta</span></div>
+    <!-- ═══ PAINEL: VISUALIZAÇÃO (com rateio aplicado) ═══ -->
+    <div id="grupo-painel-visualizacao" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+        <div style="font-size:11px;color:var(--g400)">Mostra o resultado de cada empresa já com os rateios aplicados — a conta some da empresa pagante e é distribuída conforme configurado.</div>
+        <button class="btn btn-ghost btn-sm" onclick="abrirModalRateio()">⚖️ Configurar Rateios entre Empresas</button>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hdr"><span class="card-title">Resumo — Realizado (após rateio)</span></div>
+        <div class="tbl-wrap">
+          <table id="tbl-grupo-resumo-vis" class="zebra">
+            <thead><tr id="thead-grupo-resumo-vis"></tr></thead>
+            <tbody id="tb-grupo-resumo-vis"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">Balancete de Despesas — Detalhado por Conta (já rateado)</span></div>
+        <div class="tbl-wrap">
+          <table id="tbl-grupo-detalhe-vis" class="zebra">
+            <thead><tr id="thead-grupo-detalhe-vis"></tr></thead>
+            <tbody id="tb-grupo-detalhe-vis"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════╗
+     ║  MODAL — NOVA CONTA DE DESPESA        ║
+     ╚══════════════════════════════════════╝ -->
+<div id="modal-nova-conta" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:flex-start;justify-content:center;padding-top:40px;">
+  <div style="background:#fff;border-radius:10px;width:min(560px,96vw);max-height:88vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.22);">
+    <div class="demo-box-hdr" style="border-radius:10px 10px 0 0;justify-content:space-between;">
+      <span style="color:#fff;font-weight:600;font-size:13.5px">➕ Nova Conta de Despesa</span>
+      <button class="btn-icon" style="color:rgba(255,255,255,.7)" onclick="fecharModalNovaConta()">✕</button>
+    </div>
+    <div style="padding:18px 20px">
+      <div style="font-size:11.5px;color:var(--g400);margin-bottom:14px">A conta criada aqui passa a existir para as 4 empresas automaticamente — cada uma poderá preencher seu próprio valor mês a mês.</div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label>Grupo de contas</label>
+          <select id="novaconta-grupo" onchange="popularSelectSubgrupoNovaConta()" style="width:100%"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label>Subcategoria</label>
+          <select id="novaconta-subgrupo" onchange="toggleNovaSubgrupoInput()" style="width:100%"></select>
+        </div>
+      </div>
+      <div class="form-row" id="novaconta-subgrupo-novo-row" style="display:none">
+        <div class="form-group" style="flex:1">
+          <label>Nome da nova subcategoria</label>
+          <input type="text" id="novaconta-subgrupo-novo" placeholder="Ex: Seguros" style="width:100%">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label>Nome da conta</label>
+          <input type="text" id="novaconta-nome" placeholder="Ex: Seguro contra incêndio" style="width:100%">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:14px;border-top:1px solid var(--g200)">
+        <button class="btn btn-ghost" onclick="fecharModalNovaConta()">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvarNovaConta()">💾 Criar Conta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════╗
+     ║  MODAL — CONFIGURAR RATEIO            ║
+     ╚══════════════════════════════════════╝ -->
+<div id="modal-rateio" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:flex-start;justify-content:center;padding-top:40px;">
+  <div style="background:#fff;border-radius:10px;width:min(940px,97vw);max-height:88vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.22);">
+    <div class="demo-box-hdr" style="border-radius:10px 10px 0 0;justify-content:space-between;">
+      <span style="color:#fff;font-weight:600;font-size:13.5px">⚖️ Configurar Rateio de Despesas entre Empresas</span>
+      <button class="btn-icon" style="color:rgba(255,255,255,.7)" onclick="fecharModalRateio()">✕</button>
+    </div>
+    <div style="padding:18px 20px">
+      <div class="form-row">
+        <div class="form-group" style="flex:2">
+          <label>Conta de despesa</label>
+          <select id="rateio-conta-sel" onchange="renderModalRateioMeses()" style="width:100%"></select>
+        </div>
+        <div class="form-group">
+          <label>Ano</label>
+          <input type="number" id="rateio-ano-sel" style="width:100px" onchange="renderModalRateioMeses()">
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--g400);margin:6px 0 12px">
+        Defina, mês a mês, como esta conta deve ser dividida entre as empresas. <strong>Por faturamento</strong> calcula automaticamente pela receita realizada de cada empresa naquele mês. <strong>Manual</strong> usa os percentuais que você definir (a soma precisa fechar em 100%). <strong>Sem rateio</strong> mantém o valor 100% na empresa que pagou.
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-bottom:10px" onclick="copiarRateioMes1ParaTodos()">📋 Copiar Janeiro para todos os meses</button>
       <div class="tbl-wrap">
-        <table id="tbl-grupo-detalhe" class="zebra">
-          <thead><tr id="thead-grupo-detalhe"></tr></thead>
-          <tbody id="tb-grupo-detalhe"></tbody>
+        <table class="zebra" id="tbl-rateio-meses" style="font-size:12px">
+          <thead><tr>
+            <th>Mês</th><th>Tipo de rateio</th>
+            <th class="tr">Cantina %</th><th class="tr">TMS %</th><th class="tr">TS %</th><th class="tr">Sociedade %</th>
+            <th>Soma</th>
+          </tr></thead>
+          <tbody id="tb-rateio-meses"></tbody>
         </table>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--g200)">
+        <button class="btn btn-primary" onclick="fecharModalRateio()">Concluído</button>
       </div>
     </div>
   </div>
@@ -1284,7 +1413,7 @@ const EMPRESAS_GRUPO = [
 ];
 const MESES_NOMES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
-const PLANO_CONTAS = [
+const PLANO_CONTAS_BASE = [
   {lvl:'grupo',cod:null,nome:'1. Pessoal e Encargos'},
   {lvl:'subgrupo',cod:null,nome:'Remuneração e Rescisões'},
   {lvl:'conta',cod:'2.01.001',nome:'Salários e ordenados'},
@@ -1407,7 +1536,45 @@ const PLANO_CONTAS = [
   {lvl:'grupo',cod:null,nome:'6. Investimentos e Obras'},
   {lvl:'subgrupo',cod:null,nome:'Investimentos e Obras'},
   {lvl:'conta',cod:'2.06',nome:'DESPESAS OBRA TERRENO NOVO'},
-];const SEED_DESPESA_CONTAS = {
+];
+
+// Contas de despesa adicionadas manualmente pelo usuário (ficam disponíveis para as 4 empresas)
+// Cada item: { cod, nome, grupoNome, subgrupoNome }
+let CONTAS_CUSTOM = [];
+
+// Retorna o plano de contas efetivo (base + contas customizadas), já inseridas
+// no grupo/subgrupo corretos, na ordem certa para renderização.
+function getPlanoContas(){
+  if(!CONTAS_CUSTOM.length) return PLANO_CONTAS_BASE;
+  const linhas = PLANO_CONTAS_BASE.map(x=>({...x}));
+  CONTAS_CUSTOM.forEach(c=>{
+    let grupoStart=-1, grupoEnd=linhas.length;
+    for(let i=0;i<linhas.length;i++){
+      if(linhas[i].lvl==='grupo'){
+        if(linhas[i].nome===c.grupoNome){ grupoStart=i; }
+        else if(grupoStart!==-1){ grupoEnd=i; break; }
+      }
+    }
+    if(grupoStart===-1) return; // grupo não encontrado, ignora
+    let subIdx=-1;
+    for(let i=grupoStart+1;i<grupoEnd;i++){
+      if(linhas[i].lvl==='subgrupo' && linhas[i].nome===c.subgrupoNome){ subIdx=i; break; }
+    }
+    let insertIdx;
+    if(subIdx!==-1){
+      let j=subIdx+1;
+      while(j<grupoEnd && linhas[j].lvl==='conta') j++;
+      insertIdx=j;
+    } else {
+      linhas.splice(grupoEnd,0,{lvl:'subgrupo',cod:null,nome:c.subgrupoNome});
+      insertIdx=grupoEnd+1;
+    }
+    linhas.splice(insertIdx,0,{lvl:'conta',cod:c.cod,nome:c.nome,custom:true});
+  });
+  return linhas;
+}
+
+const SEED_DESPESA_CONTAS = {
   cantina: {
     '2.01.001': [8454.68, 9415.02, 12395.48, 12048.66, 12676.13, 12279.23],
     '2.01.010': [0.0, 0.0, 386.94, 0.0, 85.16, 0.0],
@@ -1624,6 +1791,124 @@ async function cloudLoadDespesaContas(){
   }catch(err){ console.error('Falha ao carregar despesas por conta:', err); return false; }
 }
 
+async function cloudLoadContasCustom(){
+  try{
+    const { data, error } = await sb.from('plano_contas_custom').select('*');
+    if(error) throw error;
+    CONTAS_CUSTOM = (data||[]).map(r=>({cod:r.codigo, nome:r.nome, grupoNome:r.grupo_nome, subgrupoNome:r.subgrupo_nome}));
+    return true;
+  }catch(err){ console.error('Falha ao carregar contas customizadas:', err); return false; }
+}
+
+async function cloudSaveContaCustom(c){
+  try{
+    const { error } = await sb.from('plano_contas_custom').upsert({
+      codigo:c.cod, nome:c.nome, grupo_nome:c.grupoNome, subgrupo_nome:c.subgrupoNome,
+      updated_by: currentUser ? currentUser.id : null
+    }, { onConflict:'codigo' });
+    if(error){ console.error(error); setCloudStatus('⚠️ Falha ao salvar conta nova', true); }
+  }catch(err){ console.error(err); }
+}
+
+async function cloudDeleteContaCustom(cod){
+  try{
+    const { error } = await sb.from('plano_contas_custom').delete().eq('codigo', cod);
+    if(error) console.error(error);
+  }catch(err){ console.error(err); }
+}
+
+// rateioConfig: { codigo: { "YYYY-MM": {tipo:'faturamento'} | {tipo:'manual',cantina,tms,ts,sociedade} } }
+let rateioConfig = {};
+
+async function cloudLoadRateioConfig(){
+  try{
+    const { data, error } = await sb.from('resultado_rateio_config').select('*');
+    if(error) throw error;
+    rateioConfig = {};
+    (data||[]).forEach(r=>{
+      if(!rateioConfig[r.codigo]) rateioConfig[r.codigo]={};
+      rateioConfig[r.codigo][r.competencia] = r.tipo==='manual'
+        ? {tipo:'manual', cantina:+r.pct_cantina||0, tms:+r.pct_tms||0, ts:+r.pct_ts||0, sociedade:+r.pct_sociedade||0}
+        : {tipo:r.tipo};
+    });
+    return true;
+  }catch(err){ console.error('Falha ao carregar rateios:', err); return false; }
+}
+
+async function cloudSaveRateioContaMes(codigo, comp){
+  try{
+    const cfg = rateioConfig[codigo] && rateioConfig[codigo][comp];
+    if(!cfg){
+      await sb.from('resultado_rateio_config').delete().eq('codigo', codigo).eq('competencia', comp);
+      return;
+    }
+    const { error } = await sb.from('resultado_rateio_config').upsert({
+      codigo, competencia: comp, tipo: cfg.tipo,
+      pct_cantina: cfg.cantina||0, pct_tms: cfg.tms||0, pct_ts: cfg.ts||0, pct_sociedade: cfg.sociedade||0,
+      updated_by: currentUser ? currentUser.id : null
+    }, { onConflict:'codigo,competencia' });
+    if(error){ console.error(error); setCloudStatus('⚠️ Falha ao salvar rateio', true); }
+  }catch(err){ console.error(err); }
+}
+
+// Verifica se a conta tem uma configuração de rateio válida naquele mês
+function rateioValido(codigo, comp){
+  const cfg = rateioConfig[codigo] && rateioConfig[codigo][comp];
+  if(!cfg || !cfg.tipo) return false;
+  if(cfg.tipo==='manual'){
+    const soma=(cfg.cantina||0)+(cfg.tms||0)+(cfg.ts||0)+(cfg.sociedade||0);
+    return Math.abs(soma-100)<0.01;
+  }
+  if(cfg.tipo==='faturamento'){
+    let total=0;
+    EMPRESAS_GRUPO.forEach(e=>{ const d=(resultadoGrupo[e.id]&&resultadoGrupo[e.id][comp])||{}; total+=d.receitaR||0; });
+    return total>0;
+  }
+  return false;
+}
+
+// % que cabe a uma empresa numa conta/mês com rateio já validado
+function pctRateio(codigo, comp, empresaId){
+  const cfg = rateioConfig[codigo][comp];
+  if(cfg.tipo==='manual') return cfg[empresaId]||0;
+  const receitas={}; let total=0;
+  EMPRESAS_GRUPO.forEach(e=>{ const d=(resultadoGrupo[e.id]&&resultadoGrupo[e.id][comp])||{}; receitas[e.id]=d.receitaR||0; total+=receitas[e.id]; });
+  return total>0 ? receitas[empresaId]/total*100 : 0;
+}
+
+// Valor de uma conta para uma empresa, já considerando o rateio (se configurado para o mês)
+function valorContaEmpresaMesRateado(empresaId, codigo, comp){
+  if(empresaId==='consolidado'){
+    return EMPRESAS_GRUPO.reduce((acc,e)=>acc+valorContaEmpresaMesRateado(e.id,codigo,comp),0);
+  }
+  if(!rateioValido(codigo,comp)) return valorContaEmpresaMes(empresaId,codigo,comp);
+  const total = valorContaEmpresaMes('consolidado', codigo, comp);
+  const pct = pctRateio(codigo, comp, empresaId);
+  return total*pct/100;
+}
+
+// Soma de todas as contas de despesa de uma empresa, já rateadas, num mês
+function despesaTotalEmpresaMesRateado(empresaId, comp){
+  const plano = getPlanoContas();
+  let acc=0;
+  plano.forEach(row=>{ if(row.lvl==='conta') acc+=valorContaEmpresaMesRateado(empresaId,row.cod,comp); });
+  return acc;
+}
+
+function resultadoDaEmpresaMesRateado(empresaId, comp){
+  if(empresaId!=='consolidado'){
+    const d=(resultadoGrupo[empresaId]&&resultadoGrupo[empresaId][comp])||{receitaR:0,receitaO:0,despesaO:0};
+    return { receitaR:d.receitaR||0, receitaO:d.receitaO||0, despesaO:d.despesaO||0, despesaR:despesaTotalEmpresaMesRateado(empresaId,comp) };
+  }
+  const tot={receitaR:0,receitaO:0,despesaO:0};
+  EMPRESAS_GRUPO.forEach(e=>{
+    const d=(resultadoGrupo[e.id]&&resultadoGrupo[e.id][comp])||{receitaR:0,receitaO:0,despesaO:0};
+    tot.receitaR+=d.receitaR||0; tot.receitaO+=d.receitaO||0; tot.despesaO+=d.despesaO||0;
+  });
+  tot.despesaR=despesaTotalEmpresaMesRateado('consolidado',comp);
+  return tot;
+}
+
 async function cloudSaveResultadoMes(empresa, comp){
   const d = resultadoGrupo[empresa] && resultadoGrupo[empresa][comp]; if(!d) return;
   const { error } = await sb.from('resultado_mensal').upsert({
@@ -1764,6 +2049,197 @@ function mudarEmpresaGrupo(v){
   renderResultadoGrupo();
 }
 
+/* ═══════════════════════════════════════════════════════
+   SUB-ABAS: PREENCHIMENTO x VISUALIZAÇÃO
+═══════════════════════════════════════════════════════ */
+function mudarModoGrupo(modo){
+  const painelP = g('grupo-painel-preenchimento');
+  const painelV = g('grupo-painel-visualizacao');
+  const btnP = g('subtab-btn-preenchimento');
+  const btnV = g('subtab-btn-visualizacao');
+  if(modo==='visualizacao'){
+    painelP.style.display='none'; painelV.style.display='';
+    btnP.classList.remove('active'); btnV.classList.add('active');
+  } else {
+    painelP.style.display=''; painelV.style.display='none';
+    btnP.classList.add('active'); btnV.classList.remove('active');
+  }
+  renderResultadoGrupo();
+}
+
+/* ═══════════════════════════════════════════════════════
+   MODAL — NOVA CONTA DE DESPESA
+═══════════════════════════════════════════════════════ */
+function abrirModalNovaConta(){
+  const selGrupo = g('novaconta-grupo');
+  const gruposUnicos = [];
+  PLANO_CONTAS_BASE.forEach(row=>{ if(row.lvl==='grupo' && !gruposUnicos.includes(row.nome)) gruposUnicos.push(row.nome); });
+  selGrupo.innerHTML = gruposUnicos.map(nm=>`<option value="${escHtml(nm)}">${escHtml(nm)}</option>`).join('');
+  g('novaconta-nome').value='';
+  g('novaconta-subgrupo-novo').value='';
+  g('novaconta-subgrupo-novo-row').style.display='none';
+  popularSelectSubgrupoNovaConta();
+  g('modal-nova-conta').style.display='flex';
+}
+function fecharModalNovaConta(){ g('modal-nova-conta').style.display='none'; }
+
+function popularSelectSubgrupoNovaConta(){
+  const grupoNome = gS('novaconta-grupo');
+  const plano = getPlanoContas();
+  const subs=[];
+  let curGrupo=null;
+  plano.forEach(row=>{
+    if(row.lvl==='grupo') curGrupo=row.nome;
+    else if(row.lvl==='subgrupo' && curGrupo===grupoNome && !subs.includes(row.nome)) subs.push(row.nome);
+  });
+  const sel = g('novaconta-subgrupo');
+  sel.innerHTML = subs.map(nm=>`<option value="${escHtml(nm)}">${escHtml(nm)}</option>`).join('') + '<option value="__novo__">➕ Criar nova subcategoria...</option>';
+  toggleNovaSubgrupoInput();
+}
+function toggleNovaSubgrupoInput(){
+  const isNovo = gS('novaconta-subgrupo')==='__novo__';
+  g('novaconta-subgrupo-novo-row').style.display = isNovo ? '' : 'none';
+}
+
+function gerarCodigoCustom(){
+  let max=0;
+  CONTAS_CUSTOM.forEach(c=>{
+    const m = /^NOVA\.(\d+)$/.exec(c.cod);
+    if(m) max = Math.max(max, parseInt(m[1]));
+  });
+  return `NOVA.${String(max+1).padStart(3,'0')}`;
+}
+
+async function salvarNovaConta(){
+  const grupoNome = gS('novaconta-grupo');
+  let subgrupoNome = gS('novaconta-subgrupo');
+  if(subgrupoNome==='__novo__') subgrupoNome = gS('novaconta-subgrupo-novo');
+  const nome = gS('novaconta-nome');
+  if(!grupoNome || !subgrupoNome || !nome){ alert('Preencha o grupo, a subcategoria e o nome da conta.'); return; }
+  const cod = gerarCodigoCustom();
+  const nova = {cod, nome, grupoNome, subgrupoNome};
+  CONTAS_CUSTOM.push(nova);
+  await cloudSaveContaCustom(nova);
+  fecharModalNovaConta();
+  renderResultadoGrupo();
+  showToast('✅ Conta criada! Já disponível para preenchimento nas 4 empresas.');
+}
+
+async function excluirContaCustom(cod){
+  if(!confirm('Excluir esta conta customizada de todas as telas? Os valores já preenchidos ficam salvos no banco, mas deixam de aparecer.')) return;
+  CONTAS_CUSTOM = CONTAS_CUSTOM.filter(c=>c.cod!==cod);
+  await cloudDeleteContaCustom(cod);
+  renderResultadoGrupo();
+  showToast('🗑️ Conta removida das telas.');
+}
+
+/* ═══════════════════════════════════════════════════════
+   MODAL — CONFIGURAR RATEIO
+═══════════════════════════════════════════════════════ */
+function abrirModalRateio(){
+  const sel = g('rateio-conta-sel');
+  const plano = getPlanoContas();
+  let opts=''; let curGrupo=null, curSub=null, abriuGrupo=false;
+  plano.forEach(row=>{
+    if(row.lvl==='grupo'){ curGrupo=row.nome; }
+    else if(row.lvl==='subgrupo'){
+      if(abriuGrupo) opts += '</optgroup>';
+      curSub=row.nome;
+      opts += `<optgroup label="${escHtml(curGrupo)} — ${escHtml(curSub)}">`;
+      abriuGrupo=true;
+    } else if(row.lvl==='conta'){
+      opts += `<option value="${row.cod}">${row.cod} — ${escHtml(row.nome)}</option>`;
+    }
+  });
+  if(abriuGrupo) opts += '</optgroup>';
+  sel.innerHTML = opts;
+  g('rateio-ano-sel').value = g('grupo-ano-sel').value || 2026;
+  renderModalRateioMeses();
+  g('modal-rateio').style.display='flex';
+}
+function fecharModalRateio(){ g('modal-rateio').style.display='none'; renderResultadoGrupo(); }
+
+function renderModalRateioMeses(){
+  const codigo = g('rateio-conta-sel').value;
+  const ano = parseInt(g('rateio-ano-sel').value)||2026;
+  if(!codigo) return;
+  let rows='';
+  for(let m=1;m<=12;m++){
+    const comp = `${ano}-${String(m).padStart(2,'0')}`;
+    const cfg = (rateioConfig[codigo] && rateioConfig[codigo][comp]) || {tipo:''};
+    const isManual = cfg.tipo==='manual';
+    const soma = isManual ? (cfg.cantina||0)+(cfg.tms||0)+(cfg.ts||0)+(cfg.sociedade||0) : null;
+    const somaOk = soma===null || Math.abs(soma-100)<0.01;
+    let pctFat = {cantina:0,tms:0,ts:0,sociedade:0};
+    if(cfg.tipo==='faturamento'){
+      let total=0;
+      EMPRESAS_GRUPO.forEach(e=>{ const d=(resultadoGrupo[e.id]&&resultadoGrupo[e.id][comp])||{}; pctFat[e.id]=d.receitaR||0; total+=pctFat[e.id]; });
+      EMPRESAS_GRUPO.forEach(e=>{ pctFat[e.id] = total>0 ? pctFat[e.id]/total*100 : 0; });
+    }
+    rows += `<tr>
+      <td>${MESES_NOMES[m-1]}</td>
+      <td>
+        <select onchange="setRateioTipo('${codigo}','${comp}',this.value)" style="padding:4px 6px;border:1px solid var(--g200);border-radius:4px;font-size:11.5px">
+          <option value="" ${!cfg.tipo?'selected':''}>Sem rateio</option>
+          <option value="faturamento" ${cfg.tipo==='faturamento'?'selected':''}>Por faturamento</option>
+          <option value="manual" ${cfg.tipo==='manual'?'selected':''}>Manual</option>
+        </select>
+      </td>
+      ${EMPRESAS_GRUPO.map(e=>{
+        if(isManual){
+          return `<td class="tr"><input type="number" step="0.01" value="${cfg[e.id]||0}" style="width:64px;text-align:right;border:1px solid var(--g200);border-radius:4px;padding:3px 5px" onchange="setRateioPct('${codigo}','${comp}','${e.id}',this.value)"></td>`;
+        }
+        if(cfg.tipo==='faturamento'){
+          return `<td class="tr" style="color:var(--g400)">${PC(pctFat[e.id])}</td>`;
+        }
+        return `<td class="tr" style="color:var(--g400)">—</td>`;
+      }).join('')}
+      <td style="color:${isManual?(somaOk?'var(--green)':'var(--red)'):'var(--g400)'};font-weight:600">${isManual?PC(soma):'—'}</td>
+    </tr>`;
+  }
+  g('tb-rateio-meses').innerHTML = rows;
+}
+
+function setRateioTipo(codigo, comp, tipo){
+  if(!rateioConfig[codigo]) rateioConfig[codigo]={};
+  if(!tipo){
+    delete rateioConfig[codigo][comp];
+  } else if(tipo==='faturamento'){
+    rateioConfig[codigo][comp] = {tipo:'faturamento'};
+  } else {
+    const prev = rateioConfig[codigo][comp] || {};
+    rateioConfig[codigo][comp] = {tipo:'manual', cantina:prev.cantina||0, tms:prev.tms||0, ts:prev.ts||0, sociedade:prev.sociedade||0};
+  }
+  cloudSaveRateioContaMes(codigo, comp);
+  renderModalRateioMeses();
+}
+
+function setRateioPct(codigo, comp, empresa, val){
+  if(!rateioConfig[codigo]) rateioConfig[codigo]={};
+  if(!rateioConfig[codigo][comp] || rateioConfig[codigo][comp].tipo!=='manual'){
+    rateioConfig[codigo][comp] = {tipo:'manual', cantina:0, tms:0, ts:0, sociedade:0};
+  }
+  rateioConfig[codigo][comp][empresa] = parseFloat(val)||0;
+  cloudSaveRateioContaMes(codigo, comp);
+  renderModalRateioMeses();
+}
+
+function copiarRateioMes1ParaTodos(){
+  const codigo = g('rateio-conta-sel').value;
+  const ano = parseInt(g('rateio-ano-sel').value)||2026;
+  const comp1 = `${ano}-01`;
+  const cfg1 = rateioConfig[codigo] && rateioConfig[codigo][comp1];
+  if(!cfg1){ alert('Configure primeiro o mês de Janeiro para poder copiar para os demais.'); return; }
+  if(!rateioConfig[codigo]) rateioConfig[codigo]={};
+  for(let m=2;m<=12;m++){
+    const comp = `${ano}-${String(m).padStart(2,'0')}`;
+    rateioConfig[codigo][comp] = {...cfg1};
+    cloudSaveRateioContaMes(codigo, comp);
+  }
+  renderModalRateioMeses();
+  showToast('✅ Configuração de Janeiro copiada para todos os meses!');
+}
+
 // Soma de todas as contas de despesa de uma empresa (ou do consolidado) num mês
 function despesaTotalEmpresaMes(empresaId, comp){
   if(empresaId==='consolidado'){
@@ -1854,6 +2330,11 @@ function mesesSelecionadosGrupo(){
 
 function renderResultadoGrupo(){
   popularSelectMeses();
+  renderPreenchimento();
+  renderVisualizacao();
+}
+
+function renderPreenchimento(){
   const emp = g('grupo-empresa-sel').value;
   const readonly = emp==='consolidado';
   g('grupo-hint').textContent = readonly ? 'Modo consolidado: somente leitura. Para editar, selecione uma empresa.' : '';
@@ -1902,7 +2383,7 @@ function renderResultadoGrupo(){
   g('thead-grupo-detalhe').innerHTML = thead2;
 
   const zeros = ()=>meses.map(()=>0);
-  const linhas = PLANO_CONTAS.map(it=>({ ...it, vals: it.lvl!=='conta' ? zeros() : null }));
+  const linhas = getPlanoContas().map(it=>({ ...it, vals: it.lvl!=='conta' ? zeros() : null }));
   let curGrupoIdx=null, curSubIdx=null;
   linhas.forEach((row,idx)=>{
     if(row.lvl==='grupo'){ curGrupoIdx=idx; row.vals = zeros(); }
@@ -1931,10 +2412,79 @@ function renderResultadoGrupo(){
         }
         return `<td class="tr">${R$(v)}</td>`;
       }).join('');
-      detalheRows += `<tr><td style="padding-left:44px;color:var(--g600);font-size:11.5px"><span style="font-family:'IBM Plex Mono',monospace;color:var(--g400);margin-right:6px">${row.cod}</span>${row.nome}</td>${cels}<td class="tr" style="background:var(--g100)">${R$(totLinha)}</td></tr>`;
+      const delBtn = (row.custom && readonly) ? ` <span title="Excluir esta conta customizada" style="cursor:pointer;color:var(--red)" onclick="excluirContaCustom('${row.cod}')">✕</span>` : '';
+      const customBadge = row.custom ? ' <span title="Conta customizada" style="color:var(--gold);font-size:10px">＋</span>' : '';
+      detalheRows += `<tr><td style="padding-left:44px;color:var(--g600);font-size:11.5px"><span style="font-family:'IBM Plex Mono',monospace;color:var(--g400);margin-right:6px">${row.cod}</span>${row.nome}${customBadge}${delBtn}</td>${cels}<td class="tr" style="background:var(--g100)">${R$(totLinha)}</td></tr>`;
     }
   });
   g('tb-grupo-detalhe').innerHTML = detalheRows;
+}
+
+/* ═══════════════════════════════════════════════════════
+   VISUALIZAÇÃO — resultado com rateio já aplicado (somente leitura)
+═══════════════════════════════════════════════════════ */
+function renderVisualizacao(){
+  const emp = g('grupo-empresa-sel').value;
+  const meses = mesesSelecionadosGrupo();
+
+  /* ---- RESUMO ---- */
+  let thead = '<th style="min-width:200px">Indicador</th>' + meses.map(mm=>`<th class="tr">${mm.label}</th>`).join('') + '<th class="tr" style="background:var(--g100)">TOTAL</th>';
+  g('thead-grupo-resumo-vis').innerHTML = thead;
+
+  const linhaVis = (label, field, corFn)=>{
+    let tot=0;
+    const cels = meses.map(mm=>{
+      const d = resultadoDaEmpresaMesRateado(emp, mm.comp);
+      const val = field==='resultadoR' ? d.receitaR-d.despesaR : d[field];
+      if(typeof val === 'number') tot += val;
+      const cor = corFn ? corFn(val) : '';
+      return `<td class="tr"${cor?` style="color:${cor}"`:''}>${R$(val)}</td>`;
+    }).join('');
+    return `<tr><td><strong>${label}</strong></td>${cels}<td class="tr" style="background:var(--g100);font-weight:700">${R$(tot)}</td></tr>`;
+  };
+
+  let resumoRows='';
+  resumoRows += linhaVis('Receita Realizado', 'receitaR');
+  resumoRows += linhaVis('Despesa Realizado (após rateio)', 'despesaR');
+  resumoRows += linhaVis('Resultado Realizado (após rateio)', 'resultadoR', v=>v>=0?'var(--green)':'var(--red)');
+  g('tb-grupo-resumo-vis').innerHTML = resumoRows;
+
+  /* ---- DETALHE POR CONTA ---- */
+  let thead2 = '<th style="min-width:280px">Grupo / Subgrupo / Conta</th>' + meses.map(mm=>`<th class="tr">${mm.label}</th>`).join('') + '<th class="tr" style="background:var(--g100)">TOTAL</th>';
+  g('thead-grupo-detalhe-vis').innerHTML = thead2;
+
+  const zeros = ()=>meses.map(()=>0);
+  const linhas = getPlanoContas().map(it=>({ ...it, vals: it.lvl!=='conta' ? zeros() : null }));
+  let curGrupoIdx=null, curSubIdx=null;
+  linhas.forEach((row,idx)=>{
+    if(row.lvl==='grupo'){ curGrupoIdx=idx; row.vals=zeros(); }
+    else if(row.lvl==='subgrupo'){ curSubIdx=idx; row.vals=zeros(); }
+    else if(row.lvl==='conta'){
+      const vals = meses.map(mm=>valorContaEmpresaMesRateado(emp, row.cod, mm.comp));
+      row.vals = vals;
+      vals.forEach((v,i)=>{
+        if(curGrupoIdx!==null) linhas[curGrupoIdx].vals[i]+=v;
+        if(curSubIdx!==null) linhas[curSubIdx].vals[i]+=v;
+      });
+    }
+  });
+
+  let detalheRows='';
+  linhas.forEach(row=>{
+    const totLinha = row.vals.reduce((a,b)=>a+b,0);
+    if(row.lvl==='grupo'){
+      detalheRows += `<tr style="background:var(--navy);color:#fff"><td style="font-weight:700;background:var(--navy)">${row.nome}</td>${row.vals.map(v=>`<td class="tr" style="font-weight:700;background:var(--navy)">${R$(v)}</td>`).join('')}<td class="tr" style="font-weight:700;background:var(--navy-mid)">${R$(totLinha)}</td></tr>`;
+    } else if(row.lvl==='subgrupo'){
+      detalheRows += `<tr style="background:var(--g100)"><td style="font-weight:600;padding-left:24px;background:var(--g100)">${row.nome}</td>${row.vals.map(v=>`<td class="tr" style="font-weight:600;background:var(--g100)">${R$(v)}</td>`).join('')}<td class="tr" style="font-weight:600;background:#e4e1da">${R$(totLinha)}</td></tr>`;
+    } else {
+      const temRateioAtivo = meses.some(mm=>rateioValido(row.cod, mm.comp));
+      const badge = temRateioAtivo ? ' <span title="Rateio ativo neste período" style="color:var(--gold);font-size:10px">⚖️</span>' : '';
+      const customBadge = row.custom ? ' <span title="Conta customizada" style="color:var(--gold);font-size:10px">＋</span>' : '';
+      const cels = row.vals.map(v=>`<td class="tr">${R$(v)}</td>`).join('');
+      detalheRows += `<tr><td style="padding-left:44px;color:var(--g600);font-size:11.5px"><span style="font-family:'IBM Plex Mono',monospace;color:var(--g400);margin-right:6px">${row.cod}</span>${row.nome}${customBadge}${badge}</td>${cels}<td class="tr" style="background:var(--g100)">${R$(totLinha)}</td></tr>`;
+    }
+  });
+  g('tb-grupo-detalhe-vis').innerHTML = detalheRows;
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -3993,6 +4543,8 @@ async function bootApp(){
       seedDespesaContas();
       await cloudSyncDespesaContasAll();
     }
+    await cloudLoadContasCustom();
+    await cloudLoadRateioConfig();
   }
 
 // Pré-carga das despesas de Maio/2025 da imagem enviada pelo usuário
