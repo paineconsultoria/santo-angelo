@@ -95,7 +95,8 @@ input[type="number"]{font-family:'IBM Plex Mono',monospace;}
 .tbl-wrap.tbl-scroll{max-height:70vh;overflow-y:auto;}
 table{width:100%;border-collapse:collapse;font-size:12.5px;}
 th{background:var(--navy);color:rgba(255,255,255,.82);padding:9px 11px;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:.5px;white-space:nowrap;}
-td{padding:8px 11px;border-bottom:1px solid var(--g100);color:var(--g800);white-space:nowrap;}
+td{padding:8px 11px;border-bottom:1px solid var(--g100);color:inherit;white-space:nowrap;}
+tbody{color:var(--g800);}
 tbody tr:hover td{background:#f8f8f5;}
 tfoot td{background:var(--navy);color:#fff;font-weight:600;padding:10px 11px;}
 table.zebra tbody tr:nth-child(odd) > td{background:#ffffff;}
@@ -2535,7 +2536,7 @@ function renderPreenchimento(){
   linhas.forEach(row=>{
     const totLinha = row.vals.reduce((a,b)=>a+b,0);
     if(row.lvl==='grupo'){
-      detalheRows += `<tr style="background:var(--navy);color:#fff"><td style="font-weight:700;background:var(--navy)">${row.nome}</td>${row.vals.map(v=>`<td class="tr" style="font-weight:700;background:var(--navy)">${R$(v)}</td>`).join('')}<td class="tr" style="font-weight:700;background:var(--navy-mid)">${R$(totLinha)}</td></tr>`;
+      detalheRows += `<tr style="background:var(--navy)"><td style="font-weight:700;background:var(--navy);color:#fff">${row.nome}</td>${row.vals.map(v=>`<td class="tr" style="font-weight:700;background:var(--navy);color:#fff">${R$(v)}</td>`).join('')}<td class="tr" style="font-weight:700;background:var(--navy-mid);color:#fff">${R$(totLinha)}</td></tr>`;
     } else if(row.lvl==='subgrupo'){
       detalheRows += `<tr style="background:var(--g100)"><td style="font-weight:600;padding-left:24px;background:var(--g100)">${row.nome}</td>${row.vals.map(v=>`<td class="tr" style="font-weight:600;background:var(--g100)">${R$(v)}</td>`).join('')}<td class="tr" style="font-weight:600;background:#e4e1da">${R$(totLinha)}</td></tr>`;
     } else {
@@ -2606,7 +2607,7 @@ function renderVisualizacao(){
   linhas.forEach(row=>{
     const totLinha = row.vals.reduce((a,b)=>a+b,0);
     if(row.lvl==='grupo'){
-      detalheRows += `<tr style="background:var(--navy);color:#fff"><td style="font-weight:700;background:var(--navy)">${row.nome}</td>${row.vals.map(v=>`<td class="tr" style="font-weight:700;background:var(--navy)">${R$(v)}</td>`).join('')}<td class="tr" style="font-weight:700;background:var(--navy-mid)">${R$(totLinha)}</td></tr>`;
+      detalheRows += `<tr style="background:var(--navy)"><td style="font-weight:700;background:var(--navy);color:#fff">${row.nome}</td>${row.vals.map(v=>`<td class="tr" style="font-weight:700;background:var(--navy);color:#fff">${R$(v)}</td>`).join('')}<td class="tr" style="font-weight:700;background:var(--navy-mid);color:#fff">${R$(totLinha)}</td></tr>`;
     } else if(row.lvl==='subgrupo'){
       detalheRows += `<tr style="background:var(--g100)"><td style="font-weight:600;padding-left:24px;background:var(--g100)">${row.nome}</td>${row.vals.map(v=>`<td class="tr" style="font-weight:600;background:var(--g100)">${R$(v)}</td>`).join('')}<td class="tr" style="font-weight:600;background:#e4e1da">${R$(totLinha)}</td></tr>`;
     } else {
@@ -3150,7 +3151,7 @@ function renderHistoricoComparativo(){
     const totalCels = totaisPorMes.map(v=>`<td class="tr" style="font-weight:700">${fmt(v)}</td>`).join('');
     const totalGeral = totaisPorMes.reduce((a,b)=>a+b,0);
     const mediaGeral = keys.length ? totalGeral/keys.length : null;
-    rows += `<tr style="background:var(--navy);color:#fff"><td style="font-weight:700;background:var(--navy)">TOTAL</td>${totaisPorMes.map(v=>`<td class="tr" style="font-weight:700;background:var(--navy)">${fmt(v)}</td>`).join('')}<td class="tr" style="font-weight:700;background:var(--navy-mid)">${fmt(mediaGeral)}</td></tr>`;
+    rows += `<tr style="background:var(--navy)"><td style="font-weight:700;background:var(--navy);color:#fff">TOTAL</td>${totaisPorMes.map(v=>`<td class="tr" style="font-weight:700;background:var(--navy);color:#fff">${fmt(v)}</td>`).join('')}<td class="tr" style="font-weight:700;background:var(--navy-mid);color:#fff">${fmt(mediaGeral)}</td></tr>`;
   }
 
   g('tb-hist-comp').innerHTML = rows;
