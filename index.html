@@ -819,34 +819,68 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
     <button class="btn btn-ghost btn-sm" onclick="renderHistorico()">🔄 Atualizar</button>
   </div>
   <div class="content">
-    <div class="hist-months" id="hist-months"></div>
-    <div class="kpi-grid" id="kpi-hist"></div>
-    <div class="card" id="hist-card" style="display:none">
-      <div class="card-hdr"><span class="card-title" id="hist-card-title">—</span></div>
-      <div class="tbl-wrap">
-        <table class="zebra">
-          <thead>
-            <tr>
-              <th>Turma</th>
-              <th class="tr">Alunos</th>
-              <th class="tr">Receita</th>
-              <th class="tr">Rec./Aluno</th>
-              <th class="tr">Custo Pessoal</th>
-              <th class="tr">Desp. Operac.</th>
-              <th class="tr">Custo Total</th>
-              <th class="tr" style="min-width:120px">Resultado</th>
-              <th class="tr">Margem</th>
-            </tr>
-          </thead>
-          <tbody id="tb-hist"></tbody>
-          <tfoot id="tf-hist"></tfoot>
-        </table>
+    <div class="subtab-row">
+      <button type="button" class="subtab-btn active" id="subtab-btn-hist-mes" onclick="mudarModoHistorico('mes')">📅 Ver por Mês</button>
+      <button type="button" class="subtab-btn" id="subtab-btn-hist-comp" onclick="mudarModoHistorico('comparativo')">📊 Comparativo entre Meses</button>
+    </div>
+
+    <div id="hist-painel-mes">
+      <div class="hist-months" id="hist-months"></div>
+      <div class="kpi-grid" id="kpi-hist"></div>
+      <div class="card" id="hist-card" style="display:none">
+        <div class="card-hdr"><span class="card-title" id="hist-card-title">—</span></div>
+        <div class="tbl-wrap">
+          <table class="zebra">
+            <thead>
+              <tr>
+                <th>Turma</th>
+                <th class="tr">Alunos</th>
+                <th class="tr">Receita</th>
+                <th class="tr">Rec./Aluno</th>
+                <th class="tr">Custo Pessoal</th>
+                <th class="tr">Desp. Operac.</th>
+                <th class="tr">Custo Total</th>
+                <th class="tr" style="min-width:120px">Resultado</th>
+                <th class="tr">Margem</th>
+              </tr>
+            </thead>
+            <tbody id="tb-hist"></tbody>
+            <tfoot id="tf-hist"></tfoot>
+          </table>
+        </div>
+      </div>
+      <div id="hist-empty" style="padding:60px;text-align:center;color:var(--g400)">
+        <div style="font-size:36px;margin-bottom:12px">📅</div>
+        <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:6px">Nenhum mês salvo ainda</div>
+        <div style="font-size:12.5px">Use o botão <strong>💾 Salvar mês atual</strong> na barra de competência para registrar o resultado de cada mês.</div>
       </div>
     </div>
-    <div id="hist-empty" style="padding:60px;text-align:center;color:var(--g400)">
-      <div style="font-size:36px;margin-bottom:12px">📅</div>
-      <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:6px">Nenhum mês salvo ainda</div>
-      <div style="font-size:12.5px">Use o botão <strong>💾 Salvar mês atual</strong> na barra de competência para registrar o resultado de cada mês.</div>
+
+    <div id="hist-painel-comparativo" style="display:none">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-body" style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;padding:16px 18px">
+          <div>
+            <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">MÉTRICA</label>
+            <select id="hist-comp-metrica" onchange="renderHistoricoComparativo()" style="padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px;min-width:200px">
+              <option value="resultado">Resultado (Lucro/Prejuízo)</option>
+              <option value="margem">Margem (%)</option>
+              <option value="receita">Receita Mensal</option>
+              <option value="custoTotal">Custo Total</option>
+              <option value="alunos">Nº de Alunos</option>
+            </select>
+          </div>
+          <div style="font-size:11px;color:var(--g400);align-self:center">Mostra todas as turmas com meses salvos, lado a lado</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><span class="card-title" id="hist-comp-title">Comparativo por Turma</span></div>
+        <div class="tbl-wrap tbl-scroll">
+          <table class="zebra">
+            <thead><tr id="thead-hist-comp"></tr></thead>
+            <tbody id="tb-hist-comp"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -2939,6 +2973,8 @@ function zerarEReimportarMesAnterior(){
 let histViewComp='';
 
 function renderHistorico(){
+  const painelComp = g('hist-painel-comparativo');
+  if(painelComp && painelComp.style.display!=='none'){ renderHistoricoComparativo(); return; }
   const keys=Object.keys(allMonths).sort();
   const months=g('hist-months');
   const empty=g('hist-empty');
@@ -3025,7 +3061,102 @@ function viewHistMes(comp){
   </tr>`;
 }
 
-// Generic calculation functions that accept a state object
+function mudarModoHistorico(modo){
+  const painelMes = g('hist-painel-mes');
+  const painelComp = g('hist-painel-comparativo');
+  const btnMes = g('subtab-btn-hist-mes');
+  const btnComp = g('subtab-btn-hist-comp');
+  if(modo==='comparativo'){
+    painelMes.style.display='none'; painelComp.style.display='';
+    btnMes.classList.remove('active'); btnComp.classList.add('active');
+    renderHistoricoComparativo();
+  } else {
+    painelMes.style.display=''; painelComp.style.display='none';
+    btnMes.classList.add('active'); btnComp.classList.remove('active');
+    renderHistorico();
+  }
+}
+
+function compLabelShort(comp){
+  if(!comp) return '—';
+  const [y,m]=comp.split('-');
+  return `${MESES_NOMES[+m-1]}/${y.slice(2)}`;
+}
+
+// Calcula as métricas de uma turma (por nome) num mês salvo específico
+function metricasTurmaMes(nomeTurma, comp){
+  const d = allMonths[comp];
+  if(!d) return null;
+  const HS = d.S;
+  const t = HS.turmas.find(x=>x.nome===nomeTurma);
+  if(!t) return null;
+  const cp = custoPessoalPorTurmaOf(HS);
+  const cd = custoDespPorTurmaOf(HS);
+  const rec = +(t.rec||0), al = +(t.alunos||0);
+  const cPes = cp[t.id]||0, cDes = cd[t.id]||0;
+  const custoTotal = cPes+cDes;
+  const resultado = rec-custoTotal;
+  const margem = rec>0 ? (resultado/rec*100) : null;
+  return { alunos:al, receita:rec, custoTotal, resultado, margem };
+}
+
+function renderHistoricoComparativo(){
+  const keys = Object.keys(allMonths).sort();
+  const metrica = gS('hist-comp-metrica') || 'resultado';
+  const titulos = { resultado:'Resultado (Lucro/Prejuízo)', margem:'Margem (%)', receita:'Receita Mensal', custoTotal:'Custo Total', alunos:'Nº de Alunos' };
+  g('hist-comp-title').textContent = `Comparativo por Turma — ${titulos[metrica]}`;
+
+  if(!keys.length){
+    g('thead-hist-comp').innerHTML = '<th>Turma</th>';
+    g('tb-hist-comp').innerHTML = '<tr><td style="text-align:center;color:var(--g400);padding:40px">Nenhum mês salvo ainda. Use "💾 Salvar mês" na barra lateral em cada competência preenchida.</td></tr>';
+    return;
+  }
+
+  // Une os nomes de turma que aparecem em qualquer mês salvo, na ordem em que surgem
+  const nomesTurma = [];
+  keys.forEach(comp=>{
+    (allMonths[comp].S.turmas||[]).forEach(t=>{ if(!nomesTurma.includes(t.nome)) nomesTurma.push(t.nome); });
+  });
+
+  const isMoney = metrica==='receita' || metrica==='custoTotal' || metrica==='resultado';
+  const isPct = metrica==='margem';
+  const fmt = v => v===null||v===undefined ? '—' : (isMoney?R$(v) : isPct?PC(v) : N$(v));
+
+  let thead = '<th style="min-width:200px">Turma</th>' + keys.map(comp=>`<th class="tr">${compLabelShort(comp)}</th>`).join('') + '<th class="tr" style="background:var(--g100)">MÉDIA</th>';
+  g('thead-hist-comp').innerHTML = thead;
+
+  let rows = '';
+  const totaisPorMes = keys.map(()=>0);
+  const totaisContagem = keys.map(()=>0);
+
+  nomesTurma.forEach(nome=>{
+    const vals = keys.map((comp,i)=>{
+      const m = metricasTurmaMes(nome, comp);
+      const v = m ? m[metrica] : null;
+      if(v!==null && v!==undefined){ totaisPorMes[i]+=v; totaisContagem[i]++; }
+      return v;
+    });
+    const validVals = vals.filter(v=>v!==null && v!==undefined);
+    const media = validVals.length ? validVals.reduce((a,b)=>a+b,0)/validVals.length : null;
+    const cels = vals.map(v=>{
+      const cor = (metrica==='resultado' && v!==null) ? (v>=0?'var(--green)':'var(--red)') : '';
+      return `<td class="tr"${cor?` style="color:${cor}"`:''}>${fmt(v)}</td>`;
+    }).join('');
+    rows += `<tr><td style="font-weight:500">${nome}</td>${cels}<td class="tr" style="background:var(--g100);font-weight:600">${fmt(media)}</td></tr>`;
+  });
+
+  // linha de total (soma) por mês — só faz sentido pra métricas monetárias e nº alunos
+  if(metrica!=='margem'){
+    const totalCels = totaisPorMes.map(v=>`<td class="tr" style="font-weight:700">${fmt(v)}</td>`).join('');
+    const totalGeral = totaisPorMes.reduce((a,b)=>a+b,0);
+    const mediaGeral = keys.length ? totalGeral/keys.length : null;
+    rows += `<tr style="background:var(--navy);color:#fff"><td style="font-weight:700;background:var(--navy)">TOTAL</td>${totaisPorMes.map(v=>`<td class="tr" style="font-weight:700;background:var(--navy)">${fmt(v)}</td>`).join('')}<td class="tr" style="font-weight:700;background:var(--navy-mid)">${fmt(mediaGeral)}</td></tr>`;
+  }
+
+  g('tb-hist-comp').innerHTML = rows;
+}
+
+
 function custoPessoalPorTurmaOf(hs){
   const r={};
   hs.turmas.forEach(t=>r[t.id]=0);
