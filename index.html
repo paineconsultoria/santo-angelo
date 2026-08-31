@@ -874,7 +874,10 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
         </div>
       </div>
       <div class="card">
-        <div class="card-hdr"><span class="card-title" id="hist-comp-title">Comparativo por Turma</span></div>
+        <div class="card-hdr" style="display:flex;justify-content:space-between;align-items:center">
+          <span class="card-title" id="hist-comp-title">Comparativo por Turma</span>
+          <button class="btn btn-ghost btn-sm" onclick="exportarHistoricoComparativoExcel()">⬇️ Exportar Excel</button>
+        </div>
         <div class="tbl-wrap tbl-scroll">
           <table class="zebra">
             <thead><tr id="thead-hist-comp"></tr></thead>
@@ -1292,6 +1295,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════════
    STATE — MENSAL
@@ -3155,6 +3159,68 @@ function renderHistoricoComparativo(){
   }
 
   g('tb-hist-comp').innerHTML = rows;
+}
+
+// Monta os dados do comparativo (mesma lógica do render) sem tocar no DOM — reaproveitado pela exportação
+function montarDadosHistoricoComparativo(){
+  const keys = Object.keys(allMonths).sort();
+  const metrica = gS('hist-comp-metrica') || 'resultado';
+  const nomesTurma = [];
+  keys.forEach(comp=>{
+    (allMonths[comp].S.turmas||[]).forEach(t=>{ if(!nomesTurma.includes(t.nome)) nomesTurma.push(t.nome); });
+  });
+  const linhas = nomesTurma.map(nome=>{
+    const vals = keys.map(comp=>{
+      const m = metricasTurmaMes(nome, comp);
+      return m ? m[metrica] : null;
+    });
+    const validVals = vals.filter(v=>v!==null && v!==undefined);
+    const media = validVals.length ? validVals.reduce((a,b)=>a+b,0)/validVals.length : null;
+    return { nome, vals, media };
+  });
+  return { keys, metrica, nomesTurma, linhas };
+}
+
+function exportarHistoricoComparativoExcel(){
+  if(typeof XLSX==='undefined'){ alert('Biblioteca de exportação não carregou. Verifique sua conexão e tente novamente.'); return; }
+  const { keys, metrica, linhas } = montarDadosHistoricoComparativo();
+  if(!keys.length){ alert('Nenhum mês salvo ainda — não há dados para exportar.'); return; }
+
+  const titulos = { resultado:'Resultado (Lucro/Prejuízo)', margem:'Margem (%)', receita:'Receita Mensal', custoTotal:'Custo Total', alunos:'Nº de Alunos' };
+  const isPct = metrica==='margem';
+
+  const header = ['Turma', ...keys.map(compLabelShort), 'Média'];
+  const aoa = [header];
+  linhas.forEach(l=>{
+    aoa.push([l.nome, ...l.vals.map(v=>v===null||v===undefined?null:(isPct?v/100:v)), l.media===null?null:(isPct?l.media/100:l.media)]);
+  });
+  if(metrica!=='margem'){
+    const totaisPorMes = keys.map((_,i)=>{
+      let s=0; linhas.forEach(l=>{ if(l.vals[i]!==null && l.vals[i]!==undefined) s+=l.vals[i]; });
+      return s;
+    });
+    const mediaGeral = totaisPorMes.length ? totaisPorMes.reduce((a,b)=>a+b,0)/totaisPorMes.length : null;
+    aoa.push(['TOTAL', ...totaisPorMes, mediaGeral]);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  // formata as colunas numéricas (tudo menos a primeira, "Turma")
+  const numFmt = isPct ? '0.0%' : '#,##0.00';
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for(let R=1; R<=range.e.r; R++){
+    for(let C=1; C<=range.e.c; C++){
+      const cell = ws[XLSX.utils.encode_cell({r:R,c:C})];
+      if(cell && typeof cell.v==='number') cell.z = numFmt;
+    }
+  }
+  ws['!cols'] = [{wch:32}, ...keys.map(()=>({wch:12})), {wch:12}];
+
+  const wb = XLSX.utils.book_new();
+  const nomeAba = titulos[metrica].replace(/[:\\/?*\[\]]/g, '-').slice(0,31); // remove caracteres inválidos e respeita o limite de 31 do Excel
+  XLSX.utils.book_append_sheet(wb, ws, nomeAba);
+
+  const anoRef = keys[0] ? keys[0].split('-')[0] : '';
+  XLSX.writeFile(wb, `Comparativo_Turmas_${metrica}_${anoRef}.xlsx`);
 }
 
 
