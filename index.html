@@ -1801,14 +1801,20 @@ async function cloudLoadResultadoGrupo(){
 
 async function cloudLoadDespesaContas(){
   try{
-    const { data, error } = await sb.from('resultado_despesa_conta').select('*');
-    if(error) throw error;
     EMPRESAS_GRUPO.forEach(e=>despesaContas[e.id]={});
-    (data||[]).forEach(r=>{
-      if(!despesaContas[r.empresa]) despesaContas[r.empresa]={};
-      if(!despesaContas[r.empresa][r.codigo]) despesaContas[r.empresa][r.codigo]={};
-      despesaContas[r.empresa][r.codigo][r.competencia] = +r.valor||0;
-    });
+    const PAGE = 1000;
+    let from = 0;
+    while(true){
+      const { data, error } = await sb.from('resultado_despesa_conta').select('*').range(from, from+PAGE-1);
+      if(error) throw error;
+      (data||[]).forEach(r=>{
+        if(!despesaContas[r.empresa]) despesaContas[r.empresa]={};
+        if(!despesaContas[r.empresa][r.codigo]) despesaContas[r.empresa][r.codigo]={};
+        despesaContas[r.empresa][r.codigo][r.competencia] = +r.valor||0;
+      });
+      if(!data || data.length < PAGE) break; // última página
+      from += PAGE;
+    }
     return true;
   }catch(err){ console.error('Falha ao carregar despesas por conta:', err); return false; }
 }
@@ -1844,15 +1850,21 @@ let rateioConfig = {};
 
 async function cloudLoadRateioConfig(){
   try{
-    const { data, error } = await sb.from('resultado_rateio_config').select('*');
-    if(error) throw error;
     rateioConfig = {};
-    (data||[]).forEach(r=>{
-      if(!rateioConfig[r.codigo]) rateioConfig[r.codigo]={};
-      rateioConfig[r.codigo][r.competencia] = r.tipo==='manual'
-        ? {tipo:'manual', cantina:+r.pct_cantina||0, tms:+r.pct_tms||0, ts:+r.pct_ts||0, sociedade:+r.pct_sociedade||0}
-        : {tipo:r.tipo};
-    });
+    const PAGE = 1000;
+    let from = 0;
+    while(true){
+      const { data, error } = await sb.from('resultado_rateio_config').select('*').range(from, from+PAGE-1);
+      if(error) throw error;
+      (data||[]).forEach(r=>{
+        if(!rateioConfig[r.codigo]) rateioConfig[r.codigo]={};
+        rateioConfig[r.codigo][r.competencia] = r.tipo==='manual'
+          ? {tipo:'manual', cantina:+r.pct_cantina||0, tms:+r.pct_tms||0, ts:+r.pct_ts||0, sociedade:+r.pct_sociedade||0}
+          : {tipo:r.tipo};
+      });
+      if(!data || data.length < PAGE) break;
+      from += PAGE;
+    }
     return true;
   }catch(err){ console.error('Falha ao carregar rateios:', err); return false; }
 }
@@ -4563,6 +4575,9 @@ async function bootApp(){
   if(currentRole==='coordenacao'){
     const okGrupo = await cloudLoadResultadoGrupo();
     const okContas = await cloudLoadDespesaContas();
+    if(!okGrupo || !okContas){
+      mostrarAvisoErro('Falha ao carregar os dados do Resultado do Grupo da nuvem');
+    }
     if(okGrupo && vazioResultadoGrupo()){
       seedResultadoGrupo();
       await cloudSyncResultadoGrupoAll();
