@@ -1275,11 +1275,33 @@ let currentUser = null;
 let currentRole = 'funcionario';
 let cloudReady = false;
 
+// Contador de salvamentos em andamento — se o usuário tentar fechar/sair
+// com algo ainda não confirmado no banco, avisa antes.
+let pendingCloudSaves = 0;
+window.addEventListener('beforeunload', function(e){
+  if(pendingCloudSaves > 0){
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
 function setCloudStatus(msg, isError){
   const el = g('cloud-status');
-  if(!el) return;
-  el.textContent = msg;
-  el.style.color = isError ? '#ff9d90' : 'rgba(255,255,255,.55)';
+  if(el){ el.textContent = msg; el.style.color = isError ? '#ff9d90' : 'rgba(255,255,255,.55)'; }
+  if(isError) mostrarAvisoErro(msg);
+}
+
+// Banner vermelho fixo no topo — não some sozinho, o usuário precisa fechar.
+// Serve pra qualquer falha de salvamento na nuvem não passar despercebida.
+function mostrarAvisoErro(msg){
+  let b = document.getElementById('erro-banner');
+  if(!b){
+    b = document.createElement('div');
+    b.id = 'erro-banner';
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#bf3327;color:#fff;padding:11px 18px;font-size:13px;font-weight:600;z-index:9999;display:flex;justify-content:space-between;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,.3);';
+    document.body.appendChild(b);
+  }
+  b.innerHTML = `<span>⚠️ ${msg} — o valor pode não ter sido salvo. Verifique sua conexão e preencha esse campo novamente antes de sair da página.</span><button onclick="this.parentElement.remove()" style="background:none;border:1px solid rgba(255,255,255,.6);color:#fff;border-radius:4px;padding:4px 12px;cursor:pointer;font-size:12px;flex-shrink:0">Fechar</button>`;
 }
 
 function applyRoleGate(role){
@@ -1911,22 +1933,26 @@ function resultadoDaEmpresaMesRateado(empresaId, comp){
 
 async function cloudSaveResultadoMes(empresa, comp){
   const d = resultadoGrupo[empresa] && resultadoGrupo[empresa][comp]; if(!d) return;
+  pendingCloudSaves++;
   const { error } = await sb.from('resultado_mensal').upsert({
     empresa, competencia: comp,
     receita_realizado: d.receitaR||0, despesa_realizado: 0,
     receita_orcado: d.receitaO||0,   despesa_orcado: d.despesaO||0,
     updated_by: currentUser ? currentUser.id : null
   }, { onConflict:'empresa,competencia' });
+  pendingCloudSaves--;
   if(error){ console.error(error); setCloudStatus('⚠️ Falha ao salvar resultado do grupo', true); }
   else setCloudStatus('☁️ Salvo na nuvem');
 }
 
 async function cloudSaveDespesaConta(empresa, codigo, comp){
   const valor = (despesaContas[empresa] && despesaContas[empresa][codigo] && despesaContas[empresa][codigo][comp]) || 0;
+  pendingCloudSaves++;
   const { error } = await sb.from('resultado_despesa_conta').upsert({
     empresa, codigo, competencia: comp, valor,
     updated_by: currentUser ? currentUser.id : null
   }, { onConflict:'empresa,codigo,competencia' });
+  pendingCloudSaves--;
   if(error){ console.error(error); setCloudStatus('⚠️ Falha ao salvar despesa por conta', true); }
   else setCloudStatus('☁️ Salvo na nuvem');
 }
@@ -2071,6 +2097,7 @@ function mudarModoGrupo(modo){
    MODAL — NOVA CONTA DE DESPESA
 ═══════════════════════════════════════════════════════ */
 function abrirModalNovaConta(){
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
   const selGrupo = g('novaconta-grupo');
   const gruposUnicos = [];
   PLANO_CONTAS_BASE.forEach(row=>{ if(row.lvl==='grupo' && !gruposUnicos.includes(row.nome)) gruposUnicos.push(row.nome); });
@@ -2137,6 +2164,7 @@ async function excluirContaCustom(cod){
    MODAL — CONFIGURAR RATEIO
 ═══════════════════════════════════════════════════════ */
 function abrirModalRateio(){
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
   const sel = g('rateio-conta-sel');
   const plano = getPlanoContas();
   let opts=''; let curGrupo=null, curSub=null, abriuGrupo=false;
