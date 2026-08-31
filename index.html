@@ -34,7 +34,12 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--g80
 .sb-logo{font-family:'Playfair Display',serif;font-size:15px;color:var(--gold-lt);line-height:1.35;}
 .sb-sub{font-size:10px;color:var(--g400);margin-top:3px;letter-spacing:.8px;text-transform:uppercase;}
 .sb-nav{padding:12px 0;flex:1;}
-.nav-group-label{font-size:9px;color:var(--g400);letter-spacing:1.2px;text-transform:uppercase;padding:14px 18px 5px;}
+.nav-group-label{font-size:9px;color:var(--g400);letter-spacing:1.2px;text-transform:uppercase;padding:14px 18px 5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;}
+.nav-group-label:hover{color:var(--gold-lt);}
+.nav-group-chevron{font-size:9px;transition:transform .18s;}
+.nav-group.collapsed .nav-group-chevron{transform:rotate(-90deg);}
+.nav-group-items{overflow:hidden;max-height:600px;transition:max-height .22s ease;}
+.nav-group.collapsed .nav-group-items{max-height:0;}
 .nav-item{display:flex;align-items:center;gap:9px;padding:9px 18px;color:rgba(255,255,255,.55);cursor:pointer;font-size:12.5px;font-weight:400;transition:all .14s;border-left:3px solid transparent;}
 .nav-item:hover{color:#fff;background:rgba(255,255,255,.05);}
 .nav-item.active{color:var(--gold-lt);background:rgba(196,147,63,.12);border-left-color:var(--gold);font-weight:500;}
@@ -360,38 +365,66 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
     <div class="sb-sub">Gestão Pedagógica · Mensal</div>
   </div>
   <div class="sb-nav">
-    <div class="nav-group-label">Cadastros</div>
-    <div class="nav-item active" data-tab="funcionarios" onclick="goTab('funcionarios',this)">
-      <span class="nav-icon">👥</span><span>Funcionários</span>
+    <div class="nav-group" id="navgrp-cadastros">
+      <div class="nav-group-label" onclick="toggleNavGroup('cadastros')">
+        <span>Cadastros</span><span class="nav-group-chevron" id="chev-cadastros">▾</span>
+      </div>
+      <div class="nav-group-items" id="items-cadastros">
+        <div class="nav-item active" data-tab="funcionarios" onclick="goTab('funcionarios',this)">
+          <span class="nav-icon">👥</span><span>Funcionários</span>
+        </div>
+        <div class="nav-item" data-tab="grade" onclick="goTab('grade',this)">
+          <span class="nav-icon">📅</span><span>Grade Horária</span>
+        </div>
+        <div class="nav-item" data-tab="turmas" onclick="goTab('turmas',this)">
+          <span class="nav-icon">🏫</span><span>Turmas</span>
+        </div>
+      </div>
     </div>
-    <div class="nav-item" data-tab="grade" onclick="goTab('grade',this)">
-      <span class="nav-icon">📅</span><span>Grade Horária</span>
+    <div class="nav-group" id="navgrp-analise">
+      <div class="nav-group-label" onclick="toggleNavGroup('analise')">
+        <span>Análise</span><span class="nav-group-chevron" id="chev-analise">▾</span>
+      </div>
+      <div class="nav-group-items" id="items-analise">
+        <div class="nav-item" data-tab="custo" onclick="goTab('custo',this)">
+          <span class="nav-icon">💰</span><span>Custo por Turma</span>
+        </div>
+        <div class="nav-item" data-tab="despesas" onclick="goTab('despesas',this)">
+          <span class="nav-icon">📋</span><span>Rateio de Despesas</span>
+        </div>
+        <div class="nav-item" data-tab="resultado" onclick="goTab('resultado',this)">
+          <span class="nav-icon">📊</span><span>Resultado</span>
+        </div>
+        <div class="nav-item" data-tab="historico" onclick="goTab('historico',this)">
+          <span class="nav-icon">📅</span><span>Histórico Mensal</span>
+        </div>
+        <div class="nav-item" data-tab="saldos" onclick="goTab('saldos',this)">
+          <span class="nav-icon">🏦</span><span>Saldos Bancários</span>
+        </div>
+      </div>
     </div>
-    <div class="nav-item" data-tab="turmas" onclick="goTab('turmas',this)">
-      <span class="nav-icon">🏫</span><span>Turmas</span>
+    <div class="nav-group" id="navgrp-grupo">
+      <div class="nav-group-label" onclick="toggleNavGroup('grupo')">
+        <span>Grupo Econômico</span><span class="nav-group-chevron" id="chev-grupo">▾</span>
+      </div>
+      <div class="nav-group-items" id="items-grupo">
+        <div class="nav-item" data-tab="grupo" onclick="goTab('grupo',this)">
+          <span class="nav-icon">🏢</span><span>Resultado do Grupo</span>
+        </div>
+        <div class="nav-item" data-tab="dashboard" onclick="goTab('dashboard',this)">
+          <span class="nav-icon">📈</span><span>Dashboard</span>
+        </div>
+      </div>
     </div>
-    <div class="nav-group-label" style="margin-top:6px">Análise</div>
-    <div class="nav-item" data-tab="custo" onclick="goTab('custo',this)">
-      <span class="nav-icon">💰</span><span>Custo por Turma</span>
-    </div>
-    <div class="nav-item" data-tab="despesas" onclick="goTab('despesas',this)">
-      <span class="nav-icon">📋</span><span>Rateio de Despesas</span>
-    </div>
-    <div class="nav-item" data-tab="resultado" onclick="goTab('resultado',this)">
-      <span class="nav-icon">📊</span><span>Resultado</span>
-    </div>
-    <div class="nav-item" data-tab="historico" onclick="goTab('historico',this)">
-      <span class="nav-icon">📅</span><span>Histórico Mensal</span>
-    </div>
-    <div class="nav-item" data-tab="saldos" onclick="goTab('saldos',this)">
-      <span class="nav-icon">🏦</span><span>Saldos Bancários</span>
-    </div>
-    <div class="nav-group-label" style="margin-top:6px">Grupo Econômico</div>
-    <div class="nav-item" data-tab="grupo" onclick="goTab('grupo',this)">
-      <span class="nav-icon">🏢</span><span>Resultado do Grupo</span>
-    </div>
-    <div class="nav-item" data-tab="dashboard" onclick="goTab('dashboard',this)">
-      <span class="nav-icon">📈</span><span>Dashboard</span>
+    <div class="nav-group" id="navgrp-planejamento">
+      <div class="nav-group-label" onclick="toggleNavGroup('planejamento')">
+        <span>Planejamento</span><span class="nav-group-chevron" id="chev-planejamento">▾</span>
+      </div>
+      <div class="nav-group-items" id="items-planejamento">
+        <div class="nav-item" data-tab="sim2027" onclick="goTab('sim2027',this)">
+          <span class="nav-icon">🔮</span><span>Simulação 2027</span>
+        </div>
+      </div>
     </div>
   </div>
   <div class="sb-comp">
@@ -1291,6 +1324,130 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
   </div>
 </div>
 
+<!-- ╔══════════════════════════════════════════════════════╗
+     ║  SIMULAÇÃO 2027                                       ║
+     ╚══════════════════════════════════════════════════════╝ -->
+<div id="tab-sim2027" class="tab-section">
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">Simulação 2027</div>
+      <div class="page-desc">Projete custo por turma, reajustes e ponto de equilíbrio — sem afetar os dados reais</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="copiarParaSimulacao()">📋 Copiar dados atuais (2026) para a simulação</button>
+      <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="limparSimulacao()">🗑️ Limpar simulação</button>
+    </div>
+  </div>
+  <div class="content">
+    <div id="sim-vazio" style="padding:60px;text-align:center;color:var(--g400)">
+      <div style="font-size:36px;margin-bottom:12px">🔮</div>
+      <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:6px">Nenhuma simulação iniciada</div>
+      <div style="font-size:12.5px">Clique em <strong>"📋 Copiar dados atuais (2026) para a simulação"</strong> acima pra começar — isso clona funcionários, grade horária, despesas e turmas de agora, sem alterar nada do que já está preenchido.</div>
+    </div>
+
+    <div id="sim-conteudo" style="display:none">
+      <!-- Reajustes -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hdr"><span class="card-title">Reajustes para 2027</span></div>
+        <div class="card-body" style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;padding:16px 18px">
+          <div>
+            <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">% REAJUSTE DE FOLHA (salários)</label>
+            <input type="number" step="0.1" id="sim-reaj-folha" value="0" style="width:110px;padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px">
+          </div>
+          <div>
+            <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">% REAJUSTE DE ALUGUEL</label>
+            <input type="number" step="0.1" id="sim-reaj-aluguel" value="0" style="width:110px;padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px">
+          </div>
+          <div>
+            <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">% REAJUSTE DEMAIS DESPESAS</label>
+            <input type="number" step="0.1" id="sim-reaj-despesas" value="0" style="width:110px;padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px">
+          </div>
+          <div>
+            <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">% REAJUSTE DE MENSALIDADE</label>
+            <input type="number" step="0.1" id="sim-reaj-mensalidade" value="0" style="width:110px;padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px">
+          </div>
+          <button class="btn btn-primary" onclick="aplicarReajustesSim()">✅ Aplicar Reajustes</button>
+          <div style="font-size:10.5px;color:var(--g400);flex-basis:100%">Os % são aplicados sobre os valores atuais da simulação (pode aplicar mais de uma vez, cada aplicação soma em cima do resultado anterior — use "Copiar dados atuais" pra reiniciar do zero).</div>
+        </div>
+      </div>
+
+      <!-- Funcionários da simulação -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hdr" style="display:flex;justify-content:space-between;align-items:center">
+          <span class="card-title">Funcionários — 2027</span>
+          <button class="btn btn-ghost btn-sm" onclick="simAddFunc()">➕ Adicionar Funcionário</button>
+        </div>
+        <div class="tbl-wrap tbl-scroll">
+          <table class="zebra">
+            <thead><tr>
+              <th>Nome</th><th>Regime</th><th class="tr">Salário</th><th class="tr">% Encargos</th>
+              <th class="tr">VT</th><th class="tr">VR</th><th class="tr">Plano Saúde</th><th class="tr">Outros</th>
+              <th class="tr" style="background:var(--navy-mid)">Custo Total</th><th></th>
+            </tr></thead>
+            <tbody id="tb-sim-func"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Grade horária da simulação -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hdr"><span class="card-title">Grade Horária — 2027 (horas de cada professor por turma)</span></div>
+        <div class="tbl-wrap tbl-scroll">
+          <table class="zebra">
+            <thead><tr id="thead-sim-grade"></tr></thead>
+            <tbody id="tb-sim-grade"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Despesas da simulação -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hdr" style="display:flex;justify-content:space-between;align-items:center">
+          <span class="card-title">Despesas Operacionais — 2027</span>
+          <button class="btn btn-ghost btn-sm" onclick="simAddDesp()">➕ Adicionar Despesa</button>
+        </div>
+        <div class="tbl-wrap tbl-scroll">
+          <table class="zebra">
+            <thead><tr><th>Descrição</th><th class="tr">Valor Mensal</th><th>Critério de Rateio</th><th></th></tr></thead>
+            <tbody id="tb-sim-desp"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Turmas da simulação -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hdr" style="display:flex;justify-content:space-between;align-items:center">
+          <span class="card-title">Turmas — 2027 (alunos e mensalidade projetados)</span>
+          <button class="btn btn-ghost btn-sm" onclick="simAddTurma()">➕ Adicionar Turma</button>
+        </div>
+        <div class="tbl-wrap tbl-scroll">
+          <table class="zebra">
+            <thead><tr><th>Turma</th><th class="tr">Nº Alunos</th><th class="tr">Receita Mensal (turma)</th><th class="tr">Valor Hora-Aula</th><th></th></tr></thead>
+            <tbody id="tb-sim-turmas"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Resultado & Ponto de Equilíbrio -->
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">Resultado & Ponto de Equilíbrio — 2027 (projetado)</span></div>
+        <div class="tbl-wrap tbl-scroll">
+          <table class="zebra">
+            <thead><tr>
+              <th>Turma</th><th class="tr">Alunos</th><th class="tr">Custo Pessoal</th><th class="tr">Desp. Operac.</th>
+              <th class="tr" style="background:var(--g100)">Custo Total</th><th class="tr">Receita Projetada</th>
+              <th class="tr" style="min-width:120px">Resultado</th>
+              <th class="tr">Alunos p/ Equilíbrio</th><th class="tr">Mensalidade p/ Equilíbrio</th>
+            </tr></thead>
+            <tbody id="tb-sim-resultado"></tbody>
+            <tfoot id="tf-sim-resultado"></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
@@ -1350,7 +1507,7 @@ const SUPABASE_URL = 'https://bbjqvhsjktframsakuln.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_h-v8yFRs8mgtnydrXMmniw_3ckD1jxO';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const TABS_SOMENTE_COORDENACAO = ['custo','despesas','resultado','historico','saldos','grupo','dashboard'];
+const TABS_SOMENTE_COORDENACAO = ['custo','despesas','resultado','historico','saldos','grupo','dashboard','sim2027'];
 
 let currentUser = null;
 let currentRole = 'funcionario';
@@ -2633,6 +2790,280 @@ function renderVisualizacao(){
    DASHBOARD
 ═══════════════════════════════════════════════════════ */
 let chartReceitaDespesa=null, chartOrcadoRealizado=null, chartMargem=null;
+/* ═══════════════════════════════════════════════════════
+   SIMULAÇÃO 2027 — sandbox independente dos dados reais
+   Reaproveita as mesmas funções de cálculo (custoFunc, calcBreakdown,
+   custoPessoalPorTurmaOf, custoDespPorTurmaOf) que já aceitam
+   qualquer objeto de estado — o mesmo padrão usado no Histórico Mensal.
+═══════════════════════════════════════════════════════ */
+let SIM = null; // {funcs, turmas, grade, despesas, criterio}
+let nSimF=1, nSimT=1, nSimD=1;
+
+function copiarParaSimulacao(){
+  if(SIM && !confirm('Já existe uma simulação em andamento. Copiar os dados atuais vai substituir tudo o que você editou na simulação. Continuar?')) return;
+  SIM = {
+    funcs: JSON.parse(JSON.stringify(S.funcs)),
+    turmas: JSON.parse(JSON.stringify(S.turmas)),
+    grade: JSON.parse(JSON.stringify(S.grade)),
+    despesas: JSON.parse(JSON.stringify(S.despesas)),
+    criterio: S.criterio || 'faturamento',
+  };
+  nSimF = SIM.funcs.length+1; nSimT = SIM.turmas.length+1; nSimD = SIM.despesas.length+1;
+  g('sim-vazio').style.display='none';
+  g('sim-conteudo').style.display='';
+  renderSimulacao();
+  showToast('✅ Dados de 2026 copiados para a simulação.');
+}
+
+function limparSimulacao(){
+  if(!confirm('Isso apaga toda a simulação em andamento (não afeta os dados reais). Continuar?')) return;
+  SIM = null;
+  g('sim-vazio').style.display='';
+  g('sim-conteudo').style.display='none';
+}
+
+function aplicarReajustesSim(){
+  if(!SIM) return;
+  const pFolha = parseFloat(g('sim-reaj-folha').value)||0;
+  const pAluguel = parseFloat(g('sim-reaj-aluguel').value)||0;
+  const pDemais = parseFloat(g('sim-reaj-despesas').value)||0;
+  const pMensal = parseFloat(g('sim-reaj-mensalidade').value)||0;
+
+  if(pFolha){
+    SIM.funcs.forEach(f=>{ f.sal = (+(f.sal||0)) * (1+pFolha/100); });
+  }
+  if(pAluguel || pDemais){
+    SIM.despesas.forEach(d=>{
+      const isAluguel = (d.cat||'').toLowerCase().includes('aluguel');
+      const p = isAluguel ? pAluguel : pDemais;
+      if(p) d.val = (+(d.val||0)) * (1+p/100);
+    });
+  }
+  if(pMensal){
+    SIM.turmas.forEach(t=>{ t.rec = (+(t.rec||0)) * (1+pMensal/100); });
+  }
+
+  g('sim-reaj-folha').value=0; g('sim-reaj-aluguel').value=0;
+  g('sim-reaj-despesas').value=0; g('sim-reaj-mensalidade').value=0;
+  renderSimulacao();
+  showToast('✅ Reajustes aplicados à simulação.');
+}
+
+function renderSimulacao(){
+  if(!SIM){
+    g('sim-vazio').style.display='';
+    g('sim-conteudo').style.display='none';
+    return;
+  }
+  g('sim-vazio').style.display='none';
+  g('sim-conteudo').style.display='';
+  renderSimFunc();
+  renderSimGrade();
+  renderSimDesp();
+  renderSimTurmas();
+  renderSimResultado();
+}
+
+/* ---------- Funcionários (simulação) ---------- */
+function simAddFunc(){
+  SIM.funcs.push({id:'SF'+pad(nSimF++), nome:'Novo funcionário', regime:'MENSALISTA', sal:0, pctEnc:0, vt:0, vr:0, ps:0, out:0, ativo:true});
+  renderSimulacao();
+}
+function simDelFunc(id){
+  if(!confirm('Remover este funcionário da simulação?')) return;
+  SIM.funcs = SIM.funcs.filter(f=>f.id!==id);
+  delete SIM.grade[id];
+  renderSimulacao();
+}
+function simSetFuncField(id, field, val){
+  const f = SIM.funcs.find(x=>x.id===id);
+  if(!f) return;
+  if(field==='nome' || field==='regime') f[field]=val;
+  else f[field] = parseFloat(val)||0;
+  renderSimulacao();
+}
+function renderSimFunc(){
+  const tb = g('tb-sim-func');
+  if(!SIM.funcs.length){
+    tb.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--g400);padding:24px">Nenhum funcionário na simulação.</td></tr>';
+    return;
+  }
+  tb.innerHTML = SIM.funcs.map(f=>{
+    const b = calcBreakdown(f);
+    return `<tr>
+      <td><input type="text" value="${escHtml(f.nome||'')}" style="width:100%;min-width:140px" onchange="simSetFuncField('${f.id}','nome',this.value)"></td>
+      <td>
+        <select style="font-size:12px;padding:4px 6px" onchange="simSetFuncField('${f.id}','regime',this.value)">
+          <option value="MENSALISTA" ${f.regime==='MENSALISTA'?'selected':''}>Mensalista</option>
+          <option value="HORISTA" ${f.regime==='HORISTA'?'selected':''}>Horista</option>
+          <option value="ESTAGIARIO" ${f.regime==='ESTAGIARIO'?'selected':''}>Estagiário</option>
+        </select>
+      </td>
+      <td class="tr"><input type="text" inputmode="decimal" value="${f.sal?N$(f.sal):''}" style="width:90px;text-align:right" oninput="maskMoneyInput(this)" onchange="simSetFuncField('${f.id}','sal',unmaskMoneyInput(this.value))"></td>
+      <td class="tr"><input type="number" step="0.1" value="${f.pctEnc||0}" style="width:64px;text-align:right" onchange="simSetFuncField('${f.id}','pctEnc',this.value)"></td>
+      <td class="tr"><input type="text" inputmode="decimal" value="${f.vt?N$(f.vt):''}" style="width:80px;text-align:right" oninput="maskMoneyInput(this)" onchange="simSetFuncField('${f.id}','vt',unmaskMoneyInput(this.value))"></td>
+      <td class="tr"><input type="text" inputmode="decimal" value="${f.vr?N$(f.vr):''}" style="width:80px;text-align:right" oninput="maskMoneyInput(this)" onchange="simSetFuncField('${f.id}','vr',unmaskMoneyInput(this.value))"></td>
+      <td class="tr"><input type="text" inputmode="decimal" value="${f.ps?N$(f.ps):''}" style="width:80px;text-align:right" oninput="maskMoneyInput(this)" onchange="simSetFuncField('${f.id}','ps',unmaskMoneyInput(this.value))"></td>
+      <td class="tr"><input type="text" inputmode="decimal" value="${f.out?N$(f.out):''}" style="width:80px;text-align:right" oninput="maskMoneyInput(this)" onchange="simSetFuncField('${f.id}','out',unmaskMoneyInput(this.value))"></td>
+      <td class="tr" style="background:var(--g100);font-weight:700">${R$(b.total)}</td>
+      <td><button class="btn-icon" onclick="simDelFunc('${f.id}')" title="Excluir">🗑️</button></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ---------- Grade horária (simulação) — matriz func x turma ---------- */
+function simSetGrade(fId, tId, val){
+  if(!SIM.grade[fId]) SIM.grade[fId]={};
+  SIM.grade[fId][tId] = parseFloat(val)||0;
+  renderSimResultado();
+}
+function renderSimGrade(){
+  const thead = g('thead-sim-grade');
+  const tb = g('tb-sim-grade');
+  if(!SIM.funcs.length || !SIM.turmas.length){
+    thead.innerHTML = '<th>Professor</th>';
+    tb.innerHTML = '<tr><td style="text-align:center;color:var(--g400);padding:24px">Cadastre funcionários e turmas na simulação primeiro.</td></tr>';
+    return;
+  }
+  thead.innerHTML = '<th style="min-width:160px">Professor</th>' + SIM.turmas.map(t=>`<th class="tr">${escHtml(t.nome)}</th>`).join('') + '<th class="tr" style="background:var(--g100)">Total h</th>';
+  tb.innerHTML = SIM.funcs.map(f=>{
+    const gh = SIM.grade[f.id]||{};
+    const totH = SIM.turmas.reduce((a,t)=>a+(+(gh[t.id]||0)),0);
+    const cels = SIM.turmas.map(t=>`<td class="tr"><input type="number" min="0" step="1" value="${gh[t.id]||''}" placeholder="0" style="width:56px;text-align:right" onchange="simSetGrade('${f.id}','${t.id}',this.value)"></td>`).join('');
+    return `<tr><td style="font-weight:500">${escHtml(f.nome)}</td>${cels}<td class="tr" style="background:var(--g100);font-weight:600">${totH} h</td></tr>`;
+  }).join('');
+}
+
+/* ---------- Despesas (simulação) ---------- */
+function simAddDesp(){
+  SIM.despesas.push({id:'SD'+pad(nSimD++), cod:'', cat:'Nova despesa', val:0, criterio:'faturamento'});
+  renderSimulacao();
+}
+function simDelDesp(id){
+  SIM.despesas = SIM.despesas.filter(d=>d.id!==id);
+  renderSimulacao();
+}
+function simSetDespField(id, field, val){
+  const d = SIM.despesas.find(x=>x.id===id);
+  if(!d) return;
+  if(field==='cat' || field==='criterio') d[field]=val;
+  else d[field] = parseFloat(val)||0;
+  renderSimResultado();
+}
+function renderSimDesp(){
+  const tb = g('tb-sim-desp');
+  if(!SIM.despesas.length){
+    tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--g400);padding:24px">Nenhuma despesa na simulação.</td></tr>';
+    return;
+  }
+  tb.innerHTML = SIM.despesas.map(d=>{
+    const tOpts = SIM.turmas.map(t=>{
+      const val = `turma:${t.id}`;
+      return `<option value="${val}" ${d.criterio===val?'selected':''}>🎯 Direto para: ${escHtml(t.nome)}</option>`;
+    }).join('');
+    return `<tr>
+    <td><input type="text" value="${escHtml(d.cat||'')}" style="width:100%;min-width:180px" onchange="simSetDespField('${d.id}','cat',this.value)"></td>
+    <td class="tr"><input type="text" inputmode="decimal" value="${d.val?N$(d.val):''}" style="width:110px;text-align:right" oninput="maskMoneyInput(this)" onchange="simSetDespField('${d.id}','val',unmaskMoneyInput(this.value))"></td>
+    <td>
+      <select style="font-size:12px;padding:5px 8px;width:100%" onchange="simSetDespField('${d.id}','criterio',this.value)">
+        <option value="faturamento" ${(d.criterio||'faturamento')==='faturamento'?'selected':''}>📊 Por Faturamento Proporcional</option>
+        <option value="turmas" ${d.criterio==='turmas'?'selected':''}>🔢 Por Nº de Turmas (igualitário)</option>
+        ${tOpts}
+      </select>
+    </td>
+    <td><button class="btn-icon" onclick="simDelDesp('${d.id}')" title="Excluir">🗑️</button></td>
+  </tr>`;
+  }).join('');
+}
+
+/* ---------- Turmas (simulação) ---------- */
+function simAddTurma(){
+  SIM.turmas.push({id:'ST'+pad(nSimT++), nome:'Nova turma', alunos:0, rec:0, hra:0});
+  renderSimulacao();
+}
+function simDelTurma(id){
+  if(!confirm('Remover esta turma da simulação?')) return;
+  SIM.turmas = SIM.turmas.filter(t=>t.id!==id);
+  Object.keys(SIM.grade).forEach(fId=>{ delete SIM.grade[fId][id]; });
+  renderSimulacao();
+}
+function simSetTurmaField(id, field, val){
+  const t = SIM.turmas.find(x=>x.id===id);
+  if(!t) return;
+  if(field==='nome') t.nome=val;
+  else t[field] = parseFloat(val)||0;
+  renderSimulacao();
+}
+function renderSimTurmas(){
+  const tb = g('tb-sim-turmas');
+  if(!SIM.turmas.length){
+    tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--g400);padding:24px">Nenhuma turma na simulação.</td></tr>';
+    return;
+  }
+  tb.innerHTML = SIM.turmas.map(t=>`<tr>
+    <td><input type="text" value="${escHtml(t.nome||'')}" style="width:100%;min-width:160px" onchange="simSetTurmaField('${t.id}','nome',this.value)"></td>
+    <td class="tr"><input type="number" min="0" step="1" value="${t.alunos||''}" style="width:70px;text-align:right" onchange="simSetTurmaField('${t.id}','alunos',this.value)"></td>
+    <td class="tr"><input type="text" inputmode="decimal" value="${t.rec?N$(t.rec):''}" style="width:110px;text-align:right" oninput="maskMoneyInput(this)" onchange="simSetTurmaField('${t.id}','rec',unmaskMoneyInput(this.value))"></td>
+    <td class="tr"><input type="text" inputmode="decimal" value="${t.hra?N$(t.hra):''}" style="width:90px;text-align:right" oninput="maskMoneyInput(this)" onchange="simSetTurmaField('${t.id}','hra',unmaskMoneyInput(this.value))"></td>
+    <td><button class="btn-icon" onclick="simDelTurma('${t.id}')" title="Excluir">🗑️</button></td>
+  </tr>`).join('');
+}
+
+/* ---------- Resultado & Ponto de Equilíbrio (simulação) ---------- */
+function renderSimResultado(){
+  const tb = g('tb-sim-resultado');
+  const tf = g('tf-sim-resultado');
+  if(!SIM.turmas.length){
+    tb.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--g400);padding:24px">Cadastre turmas na simulação primeiro.</td></tr>';
+    tf.innerHTML = '';
+    return;
+  }
+  const custoPessoal = custoPessoalPorTurmaOf(SIM);
+  const custoDesp = custoDespPorTurmaOf(SIM);
+
+  let totAlunos=0, totCP=0, totCD=0, totCT=0, totRec=0, totRes=0;
+  const rows = SIM.turmas.map(t=>{
+    const cp = custoPessoal[t.id]||0;
+    const cd = custoDesp[t.id]||0;
+    const ct = cp+cd;
+    const rec = +(t.rec||0);
+    const alunos = +(t.alunos||0);
+    const resultado = rec-ct;
+    const mensalidadeAtual = alunos>0 ? rec/alunos : 0;
+    const alunosEquilibrio = mensalidadeAtual>0 ? Math.ceil(ct/mensalidadeAtual) : null;
+    const mensalidadeEquilibrio = alunos>0 ? ct/alunos : null;
+
+    totAlunos+=alunos; totCP+=cp; totCD+=cd; totCT+=ct; totRec+=rec; totRes+=resultado;
+
+    const cor = resultado>=0?'var(--green)':'var(--red)';
+    return `<tr>
+      <td style="font-weight:500">${escHtml(t.nome)}</td>
+      <td class="tr">${alunos}</td>
+      <td class="tr">${R$(cp)}</td>
+      <td class="tr">${R$(cd)}</td>
+      <td class="tr" style="background:var(--g100);font-weight:600">${R$(ct)}</td>
+      <td class="tr">${R$(rec)}</td>
+      <td class="tr" style="color:${cor};font-weight:700">${R$(resultado)}</td>
+      <td class="tr">${alunosEquilibrio===null?'—':alunosEquilibrio+(alunosEquilibrio>alunos?' ⚠️':'')}</td>
+      <td class="tr">${mensalidadeEquilibrio===null?'—':R$(mensalidadeEquilibrio)}</td>
+    </tr>`;
+  });
+  tb.innerHTML = rows.join('');
+
+  const corTot = totRes>=0?'var(--green)':'var(--red)';
+  tf.innerHTML = `<tr style="background:var(--navy)">
+    <td style="font-weight:700;background:var(--navy);color:#fff">TOTAL</td>
+    <td class="tr" style="font-weight:700;background:var(--navy);color:#fff">${totAlunos}</td>
+    <td class="tr" style="font-weight:700;background:var(--navy);color:#fff">${R$(totCP)}</td>
+    <td class="tr" style="font-weight:700;background:var(--navy);color:#fff">${R$(totCD)}</td>
+    <td class="tr" style="font-weight:700;background:var(--navy-mid);color:#fff">${R$(totCT)}</td>
+    <td class="tr" style="font-weight:700;background:var(--navy);color:#fff">${R$(totRec)}</td>
+    <td class="tr" style="font-weight:700;background:var(--navy);color:${totRes>=0?'#8fd9b6':'#ffb4ac'}">${R$(totRes)}</td>
+    <td class="tr" style="background:var(--navy)"></td>
+    <td class="tr" style="background:var(--navy)"></td>
+  </tr>`;
+}
+
 function renderDashboard(){
   const emp = g('dash-empresa-sel').value;
   const ano = parseInt(g('dash-ano-sel').value)||2026;
@@ -3836,12 +4267,32 @@ function custoDespPorTurma(){
 /* ═══════════════════════════════════════════════════════
    NAVIGATION
 ═══════════════════════════════════════════════════════ */
+const TAB_TO_NAVGROUP = {
+  funcionarios:'cadastros', grade:'cadastros', turmas:'cadastros',
+  custo:'analise', despesas:'analise', resultado:'analise', historico:'analise', saldos:'analise',
+  grupo:'grupo', dashboard:'grupo',
+  sim2027:'planejamento',
+};
+
+function toggleNavGroup(nome){
+  const el = g('navgrp-'+nome);
+  if(el) el.classList.toggle('collapsed');
+}
+
+function abrirNavGroupDoTab(tab){
+  const grupo = TAB_TO_NAVGROUP[tab];
+  if(!grupo) return;
+  const el = g('navgrp-'+grupo);
+  if(el) el.classList.remove('collapsed');
+}
+
 function goTab(tab,el){
   if(currentRole!=='coordenacao' && TABS_SOMENTE_COORDENACAO.includes(tab)) return;
   document.querySelectorAll('.tab-section').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
   g('tab-'+tab).classList.add('active');
   el.classList.add('active');
+  abrirNavGroupDoTab(tab);
   if(tab==='grade')      renderGrade();
   if(tab==='turmas')     renderTurmas();
   if(tab==='custo')      renderCusto();
@@ -3852,6 +4303,7 @@ function goTab(tab,el){
   if(tab==='historico')    renderHistorico();
   if(tab==='grupo')        renderResultadoGrupo();
   if(tab==='dashboard')    renderDashboard();
+  if(tab==='sim2027')      renderSimulacao();
 }
 
 /* ═══════════════════════════════════════════════════════
