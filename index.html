@@ -282,6 +282,10 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
 .grade-num-in:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(196,147,63,.2);}
 .grade-num-in:not([value=""]):not([value="0"]){color:var(--navy);}
 .saldo-resumo{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;}
+.dash-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;}
+.sr-sub{font-size:10.5px;color:var(--g400);margin-top:6px;line-height:1.4;}
+.sr-sub.up{color:var(--green);font-weight:600;}
+.sr-sub.down{color:var(--red);font-weight:600;}
 .saldo-resumo-card{background:#fff;border-radius:10px;border:1px solid var(--g200);padding:16px 20px;position:relative;overflow:hidden;}
 .saldo-resumo-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;}
 .saldo-resumo-card.aplic::before{background:var(--gold);}
@@ -1185,24 +1189,46 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
         </div>
       </div>
     </div>
-    <div class="saldo-resumo" style="grid-template-columns:repeat(4,1fr)">
+    <div class="dash-kpi-grid" style="margin-bottom:16px">
       <div class="saldo-resumo-card aplic">
-        <div class="sr-label">💰 Receita Realizada (ano)</div>
+        <div class="sr-label">💵 Receita Bruta (ano)</div>
+        <div class="sr-val" id="dash-receitabruta-val">—</div>
+      </div>
+      <div class="saldo-resumo-card cc">
+        <div class="sr-label">🏷️ Desconto Concedido (ano)</div>
+        <div class="sr-val" id="dash-desconto-val">—</div>
+        <div class="sr-sub" id="dash-desconto-pct">—</div>
+      </div>
+      <div class="saldo-resumo-card aplic">
+        <div class="sr-label">💰 Receita Líquida Realizada (ano)</div>
         <div class="sr-val" id="dash-receita-val">—</div>
+        <div class="sr-sub" id="dash-receita-mom">—</div>
       </div>
       <div class="saldo-resumo-card cc">
         <div class="sr-label">📤 Despesa Realizada (ano)</div>
         <div class="sr-val" id="dash-despesa-val">—</div>
+        <div class="sr-sub" id="dash-despesa-mom">—</div>
       </div>
       <div class="saldo-resumo-card total">
         <div class="sr-label">📊 Resultado Realizado (ano)</div>
         <div class="sr-val" id="dash-resultado-val">—</div>
+        <div class="sr-sub" id="dash-resultado-mom">—</div>
+      </div>
+      <div class="saldo-resumo-card total">
+        <div class="sr-label">📈 Margem Líquida Média (ano)</div>
+        <div class="sr-val" id="dash-margem-val">—</div>
       </div>
       <div class="saldo-resumo-card aplic">
         <div class="sr-label">🎯 % Médio do Orçado Atingido</div>
         <div class="sr-val" id="dash-pct-val">—</div>
       </div>
+      <div class="saldo-resumo-card cc">
+        <div class="sr-label">🧑‍🏫 Folha de Pagamento / Receita Bruta</div>
+        <div class="sr-val" id="dash-folha-val">—</div>
+        <div class="sr-sub">Indicador de sustentabilidade escolar — faixa saudável costuma ficar entre 40% e 60%</div>
+      </div>
     </div>
+
     <div class="card" style="margin-top:16px;padding:18px">
       <div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:10px">Receita x Despesa — Realizado por mês</div>
       <canvas id="chart-receita-despesa" height="90"></canvas>
@@ -1210,6 +1236,19 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
     <div class="card" style="margin-top:16px;padding:18px">
       <div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:10px">Receita — Realizado x Orçado por mês</div>
       <canvas id="chart-orcado-realizado" height="90"></canvas>
+    </div>
+    <div class="card" style="margin-top:16px;padding:18px">
+      <div style="font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:10px">Margem Líquida (%) — evolução mensal</div>
+      <canvas id="chart-margem" height="90"></canvas>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="card-hdr"><span class="card-title">Top 10 Maiores Despesas do Período</span></div>
+      <div class="tbl-wrap">
+        <table class="zebra">
+          <thead><tr><th>#</th><th>Conta</th><th class="tr">Valor no ano</th><th class="tr">% do total de despesas</th><th style="min-width:160px">Proporção</th></tr></thead>
+          <tbody id="tb-dash-top-despesas"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -1795,7 +1834,9 @@ async function cloudLoadResultadoGrupo(){
       resultadoGrupo[r.empresa][r.competencia] = {
         receitaR: +r.receita_realizado||0,
         receitaO: +r.receita_orcado||0,
-        despesaO: +r.despesa_orcado||0
+        despesaO: +r.despesa_orcado||0,
+        receitaBruta: +r.receita_bruta||0,
+        descontoConcedido: +r.desconto_concedido||0
       };
     });
     return true;
@@ -1953,6 +1994,7 @@ async function cloudSaveResultadoMes(empresa, comp){
     empresa, competencia: comp,
     receita_realizado: d.receitaR||0, despesa_realizado: 0,
     receita_orcado: d.receitaO||0,   despesa_orcado: d.despesaO||0,
+    receita_bruta: d.receitaBruta||0, desconto_concedido: d.descontoConcedido||0,
     updated_by: currentUser ? currentUser.id : null
   }, { onConflict:'empresa,competencia' });
   pendingCloudSaves--;
@@ -2292,6 +2334,17 @@ function despesaTotalEmpresaMes(empresaId, comp){
   return Object.keys(contas).reduce((acc,cod)=>acc+(contas[cod][comp]||0),0);
 }
 
+// Soma a despesa de um único GRUPO do plano de contas (ex: "1. Pessoal e Encargos") pra uma empresa/mês
+function despesaGrupoEmpresaMes(empresaId, grupoNome, comp){
+  const plano = getPlanoContas();
+  let acc=0, dentro=false;
+  plano.forEach(row=>{
+    if(row.lvl==='grupo'){ dentro = (row.nome===grupoNome); }
+    else if(row.lvl==='conta' && dentro){ acc += valorContaEmpresaMes(empresaId, row.cod, comp); }
+  });
+  return acc;
+}
+
 // Valor de uma conta específica de despesa, para uma empresa (ou soma no consolidado) num mês
 function valorContaEmpresaMes(empresaId, codigo, comp){
   if(empresaId==='consolidado'){
@@ -2307,12 +2360,13 @@ function valorContaEmpresaMes(empresaId, codigo, comp){
 function resultadoDaEmpresaMes(empresaId, comp){
   if(empresaId!=='consolidado'){
     const d = (resultadoGrupo[empresaId] && resultadoGrupo[empresaId][comp]) || {receitaR:0,receitaO:0,despesaO:0};
-    return { receitaR:d.receitaR||0, receitaO:d.receitaO||0, despesaO:d.despesaO||0, despesaR: despesaTotalEmpresaMes(empresaId,comp) };
+    return { receitaR:d.receitaR||0, receitaO:d.receitaO||0, despesaO:d.despesaO||0, despesaR: despesaTotalEmpresaMes(empresaId,comp), receitaBruta:d.receitaBruta||0, descontoConcedido:d.descontoConcedido||0 };
   }
-  const tot={receitaR:0,receitaO:0,despesaO:0};
+  const tot={receitaR:0,receitaO:0,despesaO:0,receitaBruta:0,descontoConcedido:0};
   EMPRESAS_GRUPO.forEach(e=>{
     const d=(resultadoGrupo[e.id] && resultadoGrupo[e.id][comp]) || {receitaR:0,receitaO:0,despesaO:0};
     tot.receitaR+=d.receitaR||0; tot.receitaO+=d.receitaO||0; tot.despesaO+=d.despesaO||0;
+    tot.receitaBruta+=d.receitaBruta||0; tot.descontoConcedido+=d.descontoConcedido||0;
   });
   tot.despesaR = despesaTotalEmpresaMes('consolidado',comp);
   return tot;
@@ -2411,7 +2465,9 @@ function renderPreenchimento(){
   };
 
   let resumoRows = '';
-  resumoRows += linhaResumo('Receita Realizado', 'receitaR', true);
+  resumoRows += linhaResumo('Receita Bruta', 'receitaBruta', true);
+  resumoRows += linhaResumo('Desconto Concedido', 'descontoConcedido', true, v=>v>0?'var(--red)':'');
+  resumoRows += linhaResumo('Receita Realizado (líquida)', 'receitaR', true);
   resumoRows += linhaResumo('Despesa Realizado', 'despesaR', false);
   resumoRows += linhaResumo('Resultado Realizado', 'resultadoR', false, v=>v>=0?'var(--green)':'var(--red)');
   resumoRows += linhaResumo('Receita Orçado', 'receitaO', true);
@@ -2537,12 +2593,13 @@ function renderVisualizacao(){
 /* ═══════════════════════════════════════════════════════
    DASHBOARD
 ═══════════════════════════════════════════════════════ */
-let chartReceitaDespesa=null, chartOrcadoRealizado=null;
+let chartReceitaDespesa=null, chartOrcadoRealizado=null, chartMargem=null;
 function renderDashboard(){
   const emp = g('dash-empresa-sel').value;
   const ano = parseInt(g('dash-ano-sel').value)||2026;
-  let totR=0,totD=0,totRO=0,pctSum=0,pctCount=0;
-  const labels=[], serieR=[], serieD=[], serieO=[];
+  let totR=0,totD=0,totRO=0,totBruta=0,totDesconto=0,totFolha=0,pctSum=0,pctCount=0;
+  const labels=[], serieR=[], serieD=[], serieO=[], serieMargem=[];
+  let mesesComDado=[]; // {m, receitaR, despesaR, resultado}
   for(let m=1;m<=12;m++){
     const comp=`${ano}-${String(m).padStart(2,'0')}`;
     const d=resultadoDaEmpresaMes(emp, comp);
@@ -2550,22 +2607,88 @@ function renderDashboard(){
     serieR.push(+(d.receitaR||0).toFixed(2));
     serieD.push(+(d.despesaR||0).toFixed(2));
     serieO.push(+(d.receitaO||0).toFixed(2));
+    const margemMes = d.receitaR ? ((d.receitaR-d.despesaR)/d.receitaR*100) : null;
+    serieMargem.push(margemMes===null ? null : +margemMes.toFixed(2));
     totR+=d.receitaR||0; totD+=d.despesaR||0; totRO+=d.receitaO||0;
+    totBruta+=d.receitaBruta||0; totDesconto+=d.descontoConcedido||0;
+    totFolha+=despesaGrupoEmpresaMes(emp,'1. Pessoal e Encargos',comp);
     if(d.receitaO){ pctSum+=(d.receitaR/d.receitaO*100); pctCount++; }
+    if((d.receitaR||0)>0 || (d.despesaR||0)>0){ mesesComDado.push({m, receitaR:d.receitaR||0, despesaR:d.despesaR||0, resultado:(d.receitaR||0)-(d.despesaR||0)}); }
   }
+
+  /* ---- KPI cards ---- */
+  g('dash-receitabruta-val').textContent = R$(totBruta);
+  g('dash-desconto-val').textContent = R$(totDesconto);
+  g('dash-desconto-pct').textContent = totBruta ? `${PC(totDesconto/totBruta*100)} da receita bruta` : '—';
   g('dash-receita-val').textContent = R$(totR);
   g('dash-despesa-val').textContent = R$(totD);
   const res = totR-totD;
   const resEl = g('dash-resultado-val');
   resEl.textContent = R$(res);
   resEl.style.color = res>=0 ? 'var(--green)' : 'var(--red)';
+  const margemMedia = totR ? (res/totR*100) : null;
+  g('dash-margem-val').textContent = margemMedia===null ? '—' : PC(margemMedia);
   g('dash-pct-val').textContent = pctCount ? PC(pctSum/pctCount) : '—';
+  g('dash-folha-val').textContent = totBruta ? PC(totFolha/totBruta*100) : (totR ? PC(totFolha/totR*100) : '—');
+
+  /* ---- MoM: compara o último mês com dado x o mês anterior ---- */
+  const setMom = (elId, mesAtual, mesAnterior)=>{
+    const el = g(elId);
+    if(!mesAtual || !mesAnterior || !mesAnterior.receitaR && !mesAnterior.despesaR && mesAnterior.resultado===0){
+      // ainda assim tenta, só evita divisão por zero abaixo
+    }
+    return el;
+  };
+  const ultimo = mesesComDado.length ? mesesComDado[mesesComDado.length-1] : null;
+  const anterior = mesesComDado.length>1 ? mesesComDado[mesesComDado.length-2] : null;
+  const momCard = (elId, atualVal, anteriorVal, invertColor)=>{
+    const el = g(elId);
+    if(!ultimo || !anterior || !anteriorVal){ el.textContent='—'; el.className='sr-sub'; return; }
+    const delta = (atualVal-anteriorVal)/Math.abs(anteriorVal)*100;
+    const subiu = delta>=0;
+    const bom = invertColor ? !subiu : subiu;
+    el.textContent = `${subiu?'▲':'▼'} ${PC(Math.abs(delta))} vs ${MESES_NOMES[anterior.m-1]}`;
+    el.className = 'sr-sub ' + (bom?'up':'down');
+  };
+  if(ultimo && anterior){
+    momCard('dash-receita-mom', ultimo.receitaR, anterior.receitaR, false);
+    momCard('dash-despesa-mom', ultimo.despesaR, anterior.despesaR, true);
+    momCard('dash-resultado-mom', ultimo.resultado, anterior.resultado, false);
+  } else {
+    ['dash-receita-mom','dash-despesa-mom','dash-resultado-mom'].forEach(id=>{ g(id).textContent = mesesComDado.length ? 'Sem mês anterior pra comparar' : '—'; });
+  }
+
+  /* ---- Top 10 maiores despesas do período ---- */
+  const plano = getPlanoContas().filter(r=>r.lvl==='conta');
+  const totalContas = plano.map(row=>{
+    let tot=0;
+    for(let m=1;m<=12;m++){
+      const comp=`${ano}-${String(m).padStart(2,'0')}`;
+      tot += valorContaEmpresaMes(emp, row.cod, comp);
+    }
+    return { cod:row.cod, nome:row.nome, total:tot };
+  }).filter(r=>r.total>0).sort((a,b)=>b.total-a.total).slice(0,10);
+  const maxTop = totalContas.length ? totalContas[0].total : 0;
+  const totalDespesasAno = totD;
+  g('tb-dash-top-despesas').innerHTML = totalContas.map((r,i)=>{
+    const pct = totalDespesasAno ? (r.total/totalDespesasAno*100) : 0;
+    const barPct = maxTop ? (r.total/maxTop*100) : 0;
+    return `<tr>
+      <td>${i+1}</td>
+      <td><span style="font-family:'IBM Plex Mono',monospace;color:var(--g400);margin-right:6px;font-size:11px">${r.cod}</span>${r.nome}</td>
+      <td class="tr">${R$(r.total)}</td>
+      <td class="tr">${PC(pct)}</td>
+      <td><div style="background:var(--g100);border-radius:4px;height:14px;overflow:hidden"><div style="width:${barPct}%;background:var(--gold);height:100%"></div></div></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--g400);padding:16px">Sem despesas registradas nesse período</td></tr>';
 
   if(typeof Chart==='undefined') return;
   const ctx1 = g('chart-receita-despesa');
   const ctx2 = g('chart-orcado-realizado');
+  const ctx3 = g('chart-margem');
   if(chartReceitaDespesa) chartReceitaDespesa.destroy();
   if(chartOrcadoRealizado) chartOrcadoRealizado.destroy();
+  if(chartMargem) chartMargem.destroy();
   chartReceitaDespesa = new Chart(ctx1, {
     type:'bar',
     data:{ labels, datasets:[
@@ -2581,6 +2704,13 @@ function renderDashboard(){
       {label:'Receita Orçado', data:serieO, borderColor:'#9b9790', backgroundColor:'#9b9790', borderDash:[5,4], tension:.25}
     ]},
     options:{ responsive:true, plugins:{legend:{position:'bottom'}}, scales:{y:{beginAtZero:true}} }
+  });
+  chartMargem = new Chart(ctx3, {
+    type:'line',
+    data:{ labels, datasets:[
+      {label:'Margem Líquida (%)', data:serieMargem, borderColor:'#c4933f', backgroundColor:'rgba(196,147,63,.15)', tension:.25, fill:true, spanGaps:true}
+    ]},
+    options:{ responsive:true, plugins:{legend:{position:'bottom'}}, scales:{y:{ticks:{callback:v=>v+'%'}}} }
   });
 }
 
