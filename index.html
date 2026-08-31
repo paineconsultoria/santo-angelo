@@ -91,6 +91,8 @@ input[type="number"]{font-family:'IBM Plex Mono',monospace;}
 
 /* ── TABLES ─────────────────────────────────────────── */
 .tbl-wrap{overflow-x:auto;}
+.tbl-wrap table thead th{position:sticky;top:0;z-index:5;box-shadow:0 1px 0 rgba(0,0,0,.15);}
+.tbl-wrap.tbl-scroll{max-height:70vh;overflow-y:auto;}
 table{width:100%;border-collapse:collapse;font-size:12.5px;}
 th{background:var(--navy);color:rgba(255,255,255,.82);padding:9px 11px;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:.5px;white-space:nowrap;}
 td{padding:8px 11px;border-bottom:1px solid var(--g100);color:var(--g800);white-space:nowrap;}
@@ -1019,7 +1021,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
       <!-- Resumo — meses em colunas -->
       <div class="card" style="margin-bottom:16px">
         <div class="card-hdr"><span class="card-title">Resumo — Realizado x Orçado</span></div>
-        <div class="tbl-wrap">
+        <div class="tbl-wrap tbl-scroll">
           <table id="tbl-grupo-resumo" class="zebra">
             <thead><tr id="thead-grupo-resumo"></tr></thead>
             <tbody id="tb-grupo-resumo"></tbody>
@@ -1030,7 +1032,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
       <!-- Balancete detalhado — igual ao Excel: Grupo > Subgrupo > Conta, meses em colunas -->
       <div class="card">
         <div class="card-hdr"><span class="card-title">Balancete de Despesas — Detalhado por Conta (o que cada empresa efetivamente pagou)</span></div>
-        <div class="tbl-wrap">
+        <div class="tbl-wrap tbl-scroll">
           <table id="tbl-grupo-detalhe" class="zebra">
             <thead><tr id="thead-grupo-detalhe"></tr></thead>
             <tbody id="tb-grupo-detalhe"></tbody>
@@ -1048,7 +1050,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
 
       <div class="card" style="margin-bottom:16px">
         <div class="card-hdr"><span class="card-title">Resumo — Realizado (após rateio)</span></div>
-        <div class="tbl-wrap">
+        <div class="tbl-wrap tbl-scroll">
           <table id="tbl-grupo-resumo-vis" class="zebra">
             <thead><tr id="thead-grupo-resumo-vis"></tr></thead>
             <tbody id="tb-grupo-resumo-vis"></tbody>
@@ -1058,7 +1060,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
 
       <div class="card">
         <div class="card-hdr"><span class="card-title">Balancete de Despesas — Detalhado por Conta (já rateado)</span></div>
-        <div class="tbl-wrap">
+        <div class="tbl-wrap tbl-scroll">
           <table id="tbl-grupo-detalhe-vis" class="zebra">
             <thead><tr id="thead-grupo-detalhe-vis"></tr></thead>
             <tbody id="tb-grupo-detalhe-vis"></tbody>
@@ -1066,6 +1068,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
         </div>
       </div>
     </div>
+
   </div>
 </div>
 
