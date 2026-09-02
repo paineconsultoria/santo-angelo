@@ -379,6 +379,9 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
         <div class="nav-item" data-tab="turmas" onclick="goTab('turmas',this)">
           <span class="nav-icon">🏫</span><span>Turmas</span>
         </div>
+        <div class="nav-item" data-tab="rateiofunc" onclick="goTab('rateiofunc',this)">
+          <span class="nav-icon">🔎</span><span>Rateio por Turma</span>
+        </div>
       </div>
     </div>
     <div class="nav-group" id="navgrp-analise">
@@ -678,6 +681,38 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
             <tr><td colspan="7" class="tc" style="padding:40px;color:var(--g400)">Nenhuma turma cadastrada.</td></tr>
           </tbody>
           <tfoot id="tf-turmas"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════╗
+     ║  RATEIO POR TURMA (dados reais)       ║
+     ╚══════════════════════════════════════╝ -->
+<div id="tab-rateiofunc" class="tab-section">
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">Rateio por Turma</div>
+      <div class="page-desc">Veja quem está alocado em cada turma, com carga horária e valor de rateio — competência atual</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div class="card-hdr" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <span class="card-title">Funcionários</span>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select id="rateiofunc-turma-filtro" onchange="renderRateioFunc()" style="padding:7px 10px;border:1px solid var(--g200);border-radius:6px;font-size:12.5px">
+            <option value="">Todas as turmas</option>
+          </select>
+          <input type="text" id="rateiofunc-busca" placeholder="🔎 Buscar por nome ou função..." oninput="renderRateioFunc()" style="padding:7px 10px;border:1px solid var(--g200);border-radius:6px;font-size:12.5px;min-width:220px">
+        </div>
+      </div>
+      <div style="padding:10px 18px 0;font-size:11px;color:var(--g400)" id="rateiofunc-hint">Selecione uma turma no filtro pra ver quem dá aula nela, com carga horária e valor de rateio alocado.</div>
+      <div class="tbl-wrap tbl-scroll">
+        <table class="zebra">
+          <thead><tr id="thead-rateiofunc"></tr></thead>
+          <tbody id="tb-rateiofunc"></tbody>
         </table>
       </div>
     </div>
@@ -1432,7 +1467,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
           </div>
           <div class="tbl-wrap tbl-scroll">
             <table class="zebra">
-              <thead><tr><th>Descrição</th><th class="tr">Valor Mensal</th><th>Critério de Rateio</th><th></th></tr></thead>
+              <thead><tr id="thead-sim-desp"></tr></thead>
               <tbody id="tb-sim-desp"></tbody>
             </table>
           </div>
@@ -1448,7 +1483,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
           </div>
           <div class="tbl-wrap tbl-scroll">
             <table class="zebra">
-              <thead><tr><th>Turma</th><th class="tr">Nº Alunos</th><th class="tr">Receita Mensal (turma)</th><th class="tr">Valor Hora-Aula</th><th></th></tr></thead>
+              <thead><tr id="thead-sim-turmas"></tr></thead>
               <tbody id="tb-sim-turmas"></tbody>
             </table>
           </div>
@@ -1461,15 +1496,11 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
           <div class="card-hdr"><span class="card-title">Resultado &amp; Ponto de Equilíbrio — 2027 (projetado)</span></div>
           <div class="tbl-wrap tbl-scroll">
             <table class="zebra">
-              <thead><tr>
-                <th>Turma</th><th class="tr">Alunos</th><th class="tr">Custo Pessoal</th><th class="tr">Desp. Operac.</th>
-                <th class="tr" style="background:var(--g100)">Custo Total</th><th class="tr">Receita Projetada</th>
-                <th class="tr" style="min-width:120px">Resultado</th>
-                <th class="tr">Alunos p/ Equilíbrio</th><th class="tr">Mensalidade p/ Equilíbrio</th>
-              </tr></thead>
+              <thead><tr id="thead-sim-resultado"></tr></thead>
               <tbody id="tb-sim-resultado"></tbody>
               <tfoot id="tf-sim-resultado"></tfoot>
             </table>
+
           </div>
         </div>
       </div>
@@ -2928,32 +2959,46 @@ function renderSimFunc(){
   const busca = (gS('sim-func-busca')||'').toLowerCase();
   const turmaFiltro = gS('sim-func-turma-filtro');
 
-  let lista = SIM.funcs.filter(f=>!busca || (f.nome||'').toLowerCase().includes(busca) || (f.disc||'').toLowerCase().includes(busca));
+  let base = SIM.funcs.filter(f=>!busca || (f.nome||'').toLowerCase().includes(busca) || (f.disc||'').toLowerCase().includes(busca));
+  let lista;
   if(turmaFiltro){
-    lista = lista
-      .map(f=>({ f, horas: +((SIM.grade[f.id]||{})[turmaFiltro]||0) }))
-      .filter(x=>x.horas>0)
-      .sort((a,b)=>b.horas-a.horas);
+    lista = base
+      .map(f=>({ f, horas: +((SIM.grade[f.id]||{})[turmaFiltro]||0), rateio: custoFuncNaTurma(f, turmaFiltro, SIM) }))
+      .filter(x=>x.horas>0);
+    lista = sortedList(lista, 'sim-func', {
+      nome:x=>x.f.nome||'', disc:x=>x.f.disc||'', regime:x=>x.f.regime||'',
+      sal:x=>+(x.f.sal||0), horas:x=>x.horas, rateio:x=>x.rateio,
+      total:x=>calcBreakdown(x.f).total,
+    });
+    if(!sortState['sim-func']) lista.sort((a,b)=>b.horas-a.horas);
+  } else {
+    lista = sortedList(base, 'sim-func', {
+      nome:f=>f.nome||'', disc:f=>f.disc||'', regime:f=>f.regime||'',
+      sal:f=>+(f.sal||0), total:f=>calcBreakdown(f).total,
+    });
   }
 
-  const colHoras = turmaFiltro ? '<th class="tr" style="background:var(--gold);color:var(--navy)">Horas nesta turma</th>' : '';
-  thead.innerHTML = `<th>Nome</th><th>Função / Disciplina</th><th>Regime</th><th class="tr">Salário</th><th class="tr">% Encargos</th>
+  const colHoras = turmaFiltro ? thSort('sim-func','horas','Horas nesta turma','style="background:var(--gold);color:var(--navy)"') : '';
+  const colRateio = turmaFiltro ? thSort('sim-func','rateio','Rateio Alocado','style="background:var(--gold);color:var(--navy)"') : '';
+  thead.innerHTML = `${thSort('sim-func','nome','Nome')}${thSort('sim-func','disc','Função / Disciplina')}${thSort('sim-func','regime','Regime')}${thSort('sim-func','sal','Salário')}<th class="tr">% Encargos</th>
     <th class="tr">VT</th><th class="tr">VR</th><th class="tr">Plano Saúde</th><th class="tr">Outros</th>
-    ${colHoras}<th class="tr" style="background:var(--navy-mid)">Custo Total</th><th></th>`;
+    ${colHoras}${colRateio}${thSort('sim-func','total','Custo Total','style="background:var(--navy-mid)"')}<th></th>`;
 
   if(!SIM.funcs.length){
-    tb.innerHTML = `<tr><td colspan="${turmaFiltro?12:11}" style="text-align:center;color:var(--g400);padding:24px">Nenhum funcionário na simulação.</td></tr>`;
+    tb.innerHTML = `<tr><td colspan="${turmaFiltro?13:11}" style="text-align:center;color:var(--g400);padding:24px">Nenhum funcionário na simulação.</td></tr>`;
     return;
   }
   if(!lista.length){
-    tb.innerHTML = `<tr><td colspan="${turmaFiltro?12:11}" style="text-align:center;color:var(--g400);padding:24px">${turmaFiltro?'Nenhum funcionário com carga horária nessa turma.':'Nenhum funcionário encontrado pra essa busca.'}</td></tr>`;
+    tb.innerHTML = `<tr><td colspan="${turmaFiltro?13:11}" style="text-align:center;color:var(--g400);padding:24px">${turmaFiltro?'Nenhum funcionário com carga horária nessa turma.':'Nenhum funcionário encontrado pra essa busca.'}</td></tr>`;
     return;
   }
   tb.innerHTML = lista.map(item=>{
     const f = turmaFiltro ? item.f : item;
     const horas = turmaFiltro ? item.horas : null;
+    const rateio = turmaFiltro ? item.rateio : null;
     const b = calcBreakdown(f);
     const colHorasCel = turmaFiltro ? `<td class="tr" style="background:#fdf6e8;font-weight:700;color:var(--navy)">${horas} h</td>` : '';
+    const colRateioCel = turmaFiltro ? `<td class="tr" style="background:#fdf6e8;font-weight:700;color:var(--navy)">${R$(rateio)}</td>` : '';
     return `<tr>
       <td><input type="text" value="${escHtml(f.nome||'')}" style="width:100%;min-width:140px" onchange="simSetFuncField('${f.id}','nome',this.value)"></td>
       <td><input type="text" value="${escHtml(f.disc||'')}" placeholder="Ex: Professor de Matemática" style="width:100%;min-width:160px" onchange="simSetFuncField('${f.id}','disc',this.value)"></td>
@@ -2970,7 +3015,7 @@ function renderSimFunc(){
       <td class="tr"><input type="text" inputmode="decimal" value="${f.vr?N$(f.vr):''}" style="width:80px;text-align:right" oninput="maskMoneyInput(this)" onchange="simSetFuncField('${f.id}','vr',unmaskMoneyInput(this.value))"></td>
       <td class="tr"><input type="text" inputmode="decimal" value="${f.ps?N$(f.ps):''}" style="width:80px;text-align:right" oninput="maskMoneyInput(this)" onchange="simSetFuncField('${f.id}','ps',unmaskMoneyInput(this.value))"></td>
       <td class="tr"><input type="text" inputmode="decimal" value="${f.out?N$(f.out):''}" style="width:80px;text-align:right" oninput="maskMoneyInput(this)" onchange="simSetFuncField('${f.id}','out',unmaskMoneyInput(this.value))"></td>
-      ${colHorasCel}
+      ${colHorasCel}${colRateioCel}
       <td class="tr" style="background:var(--g100);font-weight:700">${R$(b.total)}</td>
       <td><button class="btn-icon" onclick="simDelFunc('${f.id}')" title="Excluir">🗑️</button></td>
     </tr>`;
@@ -2997,6 +3042,73 @@ function popularFiltrosTurmaSim(){
 }
 // mantém o nome antigo funcionando (compatibilidade com chamadas já existentes)
 function popularFiltroTurmaSimGrade(){ popularFiltrosTurmaSim(); }
+
+/* ═══════════════════════════════════════════════════════
+   RATEIO POR TURMA — versão com dados reais (S), não simulação
+   Mesma lógica de filtro/rateio da Simulação, aplicada à competência atual.
+═══════════════════════════════════════════════════════ */
+function popularFiltroTurmaRateioFunc(){
+  const sel = g('rateiofunc-turma-filtro');
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Todas as turmas</option>' + S.turmas.map(t=>`<option value="${t.id}">${escHtml(t.nome)}</option>`).join('');
+  if([...sel.options].some(o=>o.value===atual)) sel.value = atual;
+}
+
+function renderRateioFunc(){
+  popularFiltroTurmaRateioFunc();
+  const thead = g('thead-rateiofunc');
+  const tb = g('tb-rateiofunc');
+  const hint = g('rateiofunc-hint');
+  if(!S.funcs.length || !S.turmas.length){
+    thead.innerHTML = '<th>Nome</th>';
+    tb.innerHTML = '<tr><td style="text-align:center;color:var(--g400);padding:24px">Cadastre funcionários e turmas nessa competência primeiro.</td></tr>';
+    return;
+  }
+  const turmaFiltro = gS('rateiofunc-turma-filtro');
+  const busca = (gS('rateiofunc-busca')||'').toLowerCase();
+  const funcsFiltrados = S.funcs.filter(f=>(f.ativo!==false) && (!busca || (f.nome||'').toLowerCase().includes(busca) || (f.disc||'').toLowerCase().includes(busca)));
+
+  if(!turmaFiltro){
+    hint.textContent = 'Selecione uma turma no filtro pra ver quem dá aula nela, com carga horária e valor de rateio alocado.';
+    thead.innerHTML = thSort('rateiofunc','nome','Nome') + thSort('rateiofunc','disc','Função / Disciplina') + thSort('rateiofunc','regime','Regime') + thSort('rateiofunc','sal','Salário');
+    const lista = sortedList(funcsFiltrados, 'rateiofunc', { nome:f=>f.nome||'', disc:f=>f.disc||'', regime:f=>f.regime||'', sal:f=>+(f.sal||0) });
+    tb.innerHTML = lista.map(f=>`<tr>
+      <td style="font-weight:500">${escHtml(f.nome)}</td>
+      <td style="color:var(--g600)">${escHtml(f.disc||'—')}</td>
+      <td>${regimeBadge[f.regime]||f.regime||'—'}</td>
+      <td class="tr">${R$(f.sal||0)}</td>
+    </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--g400);padding:24px">Nenhum funcionário encontrado.</td></tr>';
+    return;
+  }
+
+  const turma = S.turmas.find(t=>t.id===turmaFiltro);
+  hint.textContent = `Mostrando só quem tem carga horária em "${turma?turma.nome:''}" — clique nos títulos das colunas pra ordenar.`;
+  thead.innerHTML = thSort('rateiofunc','nome','Nome') + thSort('rateiofunc','disc','Função / Disciplina') + thSort('rateiofunc','horas','Horas nesta turma','style="background:var(--gold);color:var(--navy)"') + thSort('rateiofunc','sal','Salário') + thSort('rateiofunc','rateio','Rateio Alocado','style="background:var(--gold);color:var(--navy)"') + thSort('rateiofunc','total','Custo Total','style="background:var(--navy-mid)"');
+
+  let linhas = funcsFiltrados
+    .map(f=>({ f, horas: +((S.grade[f.id]||{})[turmaFiltro]||0), rateio: custoFuncNaTurma(f, turmaFiltro, S) }))
+    .filter(x=>x.horas>0);
+  linhas = sortedList(linhas, 'rateiofunc', {
+    nome:x=>x.f.nome||'', disc:x=>x.f.disc||'', horas:x=>x.horas, sal:x=>+(x.f.sal||0), rateio:x=>x.rateio, total:x=>calcBreakdown(x.f).total,
+  });
+  if(!sortState['rateiofunc']) linhas.sort((a,b)=>b.horas-a.horas);
+
+  if(!linhas.length){
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--g400);padding:24px">Nenhum funcionário com carga horária nessa turma ainda.</td></tr>';
+    return;
+  }
+  tb.innerHTML = linhas.map(({f,horas,rateio})=>{
+    const b = calcBreakdown(f);
+    return `<tr>
+      <td style="font-weight:500">${escHtml(f.nome)}</td>
+      <td style="color:var(--g600)">${escHtml(f.disc||'—')}</td>
+      <td class="tr" style="background:#fdf6e8;font-weight:700;color:var(--navy)">${horas} h</td>
+      <td class="tr">${R$(f.sal||0)}</td>
+      <td class="tr" style="background:#fdf6e8;font-weight:700;color:var(--navy)">${R$(rateio)}</td>
+      <td class="tr" style="background:var(--g100);font-weight:600">${R$(b.total)}</td>
+    </tr>`;
+  }).join('');
+}
 function renderSimGrade(){
   const thead = g('thead-sim-grade');
   const tb = g('tb-sim-grade');
@@ -3013,12 +3125,15 @@ function renderSimGrade(){
   if(turmaFiltro){
     // Modo "quem está nessa turma": nome, função, horas, salário
     const turma = SIM.turmas.find(t=>t.id===turmaFiltro);
-    hint.textContent = `Mostrando só quem tem carga horária em "${turma?turma.nome:''}" — ordenado por mais horas primeiro.`;
-    thead.innerHTML = '<th style="min-width:160px">Professor</th><th>Função / Disciplina</th><th class="tr">Horas nesta turma</th><th class="tr">Salário</th><th class="tr" style="background:var(--g100)">Custo Total</th>';
-    const linhas = funcsFiltrados
+    hint.textContent = `Mostrando só quem tem carga horária em "${turma?turma.nome:''}" — clique nos títulos das colunas pra ordenar.`;
+    thead.innerHTML = thSort('sim-grade','nome','Professor') + thSort('sim-grade','disc','Função / Disciplina') + thSort('sim-grade','horas','Horas nesta turma') + thSort('sim-grade','sal','Salário') + thSort('sim-grade','total','Custo Total','style="background:var(--g100)"');
+    let linhas = funcsFiltrados
       .map(f=>({ f, horas: +((SIM.grade[f.id]||{})[turmaFiltro]||0) }))
-      .filter(x=>x.horas>0)
-      .sort((a,b)=>b.horas-a.horas);
+      .filter(x=>x.horas>0);
+    linhas = sortedList(linhas, 'sim-grade', {
+      nome:x=>x.f.nome||'', disc:x=>x.f.disc||'', horas:x=>x.horas, sal:x=>+(x.f.sal||0), total:x=>calcBreakdown(x.f).total,
+    });
+    if(!sortState['sim-grade']) linhas.sort((a,b)=>b.horas-a.horas);
     if(!linhas.length){
       tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--g400);padding:24px">Nenhum professor com carga horária nessa turma ainda.</td></tr>';
       return;
@@ -3036,14 +3151,18 @@ function renderSimGrade(){
     return;
   }
 
-  // Modo matriz completa (todas as turmas), com filtro de busca por nome/função
-  hint.textContent = 'Selecione uma turma no filtro pra ver rapidamente quem dá aula nela, com salário e carga horária.';
-  thead.innerHTML = '<th style="min-width:160px">Professor</th><th style="min-width:140px">Função</th>' + SIM.turmas.map(t=>`<th class="tr">${escHtml(t.nome)}</th>`).join('') + '<th class="tr" style="background:var(--g100)">Total h</th>';
-  if(!funcsFiltrados.length){
+  // Modo matriz completa (todas as turmas), com filtro de busca por nome/função + ordenação por nome/função/total
+  hint.textContent = 'Selecione uma turma no filtro pra ver rapidamente quem dá aula nela, com salário e carga horária. Clique em "Professor", "Função" ou "Total h" pra ordenar.';
+  const listaOrdenada = sortedList(funcsFiltrados, 'sim-grade-matriz', {
+    nome:f=>f.nome||'', disc:f=>f.disc||'',
+    totalh:f=>{ const gh=SIM.grade[f.id]||{}; return SIM.turmas.reduce((a,t)=>a+(+(gh[t.id]||0)),0); },
+  });
+  thead.innerHTML = thSort('sim-grade-matriz','nome','Professor','style="min-width:160px"') + thSort('sim-grade-matriz','disc','Função','style="min-width:140px"') + SIM.turmas.map(t=>`<th class="tr">${escHtml(t.nome)}</th>`).join('') + thSort('sim-grade-matriz','totalh','Total h','style="background:var(--g100)"');
+  if(!listaOrdenada.length){
     tb.innerHTML = '<tr><td colspan="' + (SIM.turmas.length+3) + '" style="text-align:center;color:var(--g400);padding:24px">Nenhum funcionário encontrado pra essa busca.</td></tr>';
     return;
   }
-  tb.innerHTML = funcsFiltrados.map(f=>{
+  tb.innerHTML = listaOrdenada.map(f=>{
     const gh = SIM.grade[f.id]||{};
     const totH = SIM.turmas.reduce((a,t)=>a+(+(gh[t.id]||0)),0);
     const cels = SIM.turmas.map(t=>`<td class="tr"><input type="number" min="0" step="1" value="${gh[t.id]||''}" placeholder="0" style="width:56px;text-align:right" onchange="simSetGrade('${f.id}','${t.id}',this.value)"></td>`).join('');
@@ -3069,11 +3188,13 @@ function simSetDespField(id, field, val){
 }
 function renderSimDesp(){
   const tb = g('tb-sim-desp');
+  g('thead-sim-desp').innerHTML = thSort('sim-desp','cat','Descrição') + thSort('sim-desp','val','Valor Mensal') + '<th>Critério de Rateio</th><th></th>';
   if(!SIM.despesas.length){
     tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--g400);padding:24px">Nenhuma despesa na simulação.</td></tr>';
     return;
   }
-  tb.innerHTML = SIM.despesas.map(d=>{
+  const lista = sortedList(SIM.despesas, 'sim-desp', { cat:d=>d.cat||'', val:d=>+(d.val||0) });
+  tb.innerHTML = lista.map(d=>{
     const tOpts = SIM.turmas.map(t=>{
       const val = `turma:${t.id}`;
       return `<option value="${val}" ${d.criterio===val?'selected':''}>🎯 Direto para: ${escHtml(t.nome)}</option>`;
@@ -3113,11 +3234,13 @@ function simSetTurmaField(id, field, val){
 }
 function renderSimTurmas(){
   const tb = g('tb-sim-turmas');
+  g('thead-sim-turmas').innerHTML = thSort('sim-turmas','nome','Turma') + thSort('sim-turmas','alunos','Nº Alunos') + thSort('sim-turmas','rec','Receita Mensal (turma)') + thSort('sim-turmas','hra','Valor Hora-Aula') + '<th></th>';
   if(!SIM.turmas.length){
     tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--g400);padding:24px">Nenhuma turma na simulação.</td></tr>';
     return;
   }
-  tb.innerHTML = SIM.turmas.map(t=>`<tr>
+  const lista = sortedList(SIM.turmas, 'sim-turmas', { nome:t=>t.nome||'', alunos:t=>+(t.alunos||0), rec:t=>+(t.rec||0), hra:t=>+(t.hra||0) });
+  tb.innerHTML = lista.map(t=>`<tr>
     <td><input type="text" value="${escHtml(t.nome||'')}" style="width:100%;min-width:160px" onchange="simSetTurmaField('${t.id}','nome',this.value)"></td>
     <td class="tr"><input type="number" min="0" step="1" value="${t.alunos||''}" style="width:70px;text-align:right" onchange="simSetTurmaField('${t.id}','alunos',this.value)"></td>
     <td class="tr"><input type="text" inputmode="decimal" value="${t.rec?N$(t.rec):''}" style="width:110px;text-align:right" oninput="maskMoneyInput(this)" onchange="simSetTurmaField('${t.id}','rec',unmaskMoneyInput(this.value))"></td>
@@ -3130,6 +3253,7 @@ function renderSimTurmas(){
 function renderSimResultado(){
   const tb = g('tb-sim-resultado');
   const tf = g('tf-sim-resultado');
+  g('thead-sim-resultado').innerHTML = thSort('sim-resultado','nome','Turma') + thSort('sim-resultado','alunos','Alunos') + thSort('sim-resultado','cp','Custo Pessoal') + thSort('sim-resultado','cd','Desp. Operac.') + thSort('sim-resultado','ct','Custo Total','style="background:var(--g100)"') + thSort('sim-resultado','rec','Receita Projetada') + thSort('sim-resultado','resultado','Resultado','style="min-width:120px"') + thSort('sim-resultado','alunosEq','Alunos p/ Equilíbrio') + thSort('sim-resultado','mensEq','Mensalidade p/ Equilíbrio');
   if(!SIM.turmas.length){
     tb.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--g400);padding:24px">Cadastre turmas na simulação primeiro.</td></tr>';
     tf.innerHTML = '';
@@ -3138,8 +3262,7 @@ function renderSimResultado(){
   const custoPessoal = custoPessoalPorTurmaOf(SIM);
   const custoDesp = custoDespPorTurmaOf(SIM);
 
-  let totAlunos=0, totCP=0, totCD=0, totCT=0, totRec=0, totRes=0;
-  const rows = SIM.turmas.map(t=>{
+  let dados = SIM.turmas.map(t=>{
     const cp = custoPessoal[t.id]||0;
     const cd = custoDesp[t.id]||0;
     const ct = cp+cd;
@@ -3149,9 +3272,17 @@ function renderSimResultado(){
     const mensalidadeAtual = alunos>0 ? rec/alunos : 0;
     const alunosEquilibrio = mensalidadeAtual>0 ? Math.ceil(ct/mensalidadeAtual) : null;
     const mensalidadeEquilibrio = alunos>0 ? ct/alunos : null;
+    return { t, cp, cd, ct, rec, alunos, resultado, alunosEquilibrio, mensalidadeEquilibrio };
+  });
+  dados = sortedList(dados, 'sim-resultado', {
+    nome:x=>x.t.nome||'', alunos:x=>x.alunos, cp:x=>x.cp, cd:x=>x.cd, ct:x=>x.ct, rec:x=>x.rec,
+    resultado:x=>x.resultado, alunosEq:x=>x.alunosEquilibrio===null?-Infinity:x.alunosEquilibrio,
+    mensEq:x=>x.mensalidadeEquilibrio===null?-Infinity:x.mensalidadeEquilibrio,
+  });
 
+  let totAlunos=0, totCP=0, totCD=0, totCT=0, totRec=0, totRes=0;
+  const rows = dados.map(({t,cp,cd,ct,rec,alunos,resultado,alunosEquilibrio,mensalidadeEquilibrio})=>{
     totAlunos+=alunos; totCP+=cp; totCD+=cd; totCT+=ct; totRec+=rec; totRes+=resultado;
-
     const cor = resultado>=0?'var(--green)':'var(--red)';
     return `<tr>
       <td style="font-weight:500">${escHtml(t.nome)}</td>
@@ -3487,6 +3618,7 @@ function refreshActiveTab(){
   if(tab==='despesas') renderDespTurma();
   if(tab==='resultado') renderResultado();
   if(tab==='funcionarios') renderFunc();
+  if(tab==='rateiofunc') renderRateioFunc();
 }
 
 // Zera o mês atual e reimporta TODOS os dados do mês anterior (funcionários,
@@ -3797,6 +3929,25 @@ function custoPessoalPorTurmaOf(hs){
     });
   });
   return r;
+}
+
+// Quanto do custo de UM funcionário específico é alocado (rateado) numa turma específica.
+// Mesma lógica de peso do custoPessoalPorTurmaOf, mas devolve o valor individual — usado
+// nos filtros por turma (Simulação e Cadastros) pra mostrar o rateio de cada pessoa.
+function custoFuncNaTurma(f, turmaId, hs){
+  const ct = custoFunc(f);
+  const gh = hs.grade[f.id]||{};
+  const isHorista = (f.regime==='HORISTA');
+  let totPeso=0, pesoTurma=0;
+  hs.turmas.forEach(t=>{
+    const h=+(gh[t.id]||0);
+    const hra=+(t.hra||0);
+    const peso = isHorista && hra>0 ? h*hra : h;
+    totPeso+=peso;
+    if(t.id===turmaId) pesoTurma=peso;
+  });
+  if(totPeso===0 || pesoTurma===0) return 0;
+  return (pesoTurma/totPeso)*ct;
 }
 
 function custoDespPorTurmaOf(hs){
@@ -4385,7 +4536,7 @@ function custoDespPorTurma(){
    NAVIGATION
 ═══════════════════════════════════════════════════════ */
 const TAB_TO_NAVGROUP = {
-  funcionarios:'cadastros', grade:'cadastros', turmas:'cadastros',
+  funcionarios:'cadastros', grade:'cadastros', turmas:'cadastros', rateiofunc:'cadastros',
   custo:'analise', despesas:'analise', resultado:'analise', historico:'analise', saldos:'analise',
   grupo:'grupo', dashboard:'grupo',
   sim2027:'planejamento',
@@ -4403,7 +4554,7 @@ function abrirNavGroupDoTab(tab){
   if(el) el.classList.remove('collapsed');
 }
 
-const TABS_COM_COMPETENCIA = ['funcionarios','grade','turmas','custo','despesas','resultado','historico','saldos'];
+const TABS_COM_COMPETENCIA = ['funcionarios','grade','turmas','rateiofunc','custo','despesas','resultado','historico','saldos'];
 
 function goTab(tab,el){
   if(currentRole!=='coordenacao' && TABS_SOMENTE_COORDENACAO.includes(tab)) return;
@@ -4415,6 +4566,7 @@ function goTab(tab,el){
   g('comp-topbar').style.display = TABS_COM_COMPETENCIA.includes(tab) ? 'flex' : 'none';
   if(tab==='grade')      renderGrade();
   if(tab==='turmas')     renderTurmas();
+  if(tab==='rateiofunc') renderRateioFunc();
   if(tab==='custo')      renderCusto();
   if(tab==='despesas')   renderDespTurma();
   if(tab==='resultado')  renderResultado();
@@ -4618,6 +4770,12 @@ function sortTable(tblKey,col){
   else if(tblKey==='desp-turma') renderDespTurma();
   else if(tblKey==='custo') renderCusto();
   else if(tblKey==='resultado') renderResultado();
+  else if(tblKey==='rateiofunc') renderRateioFunc();
+  else if(tblKey==='sim-func') renderSimFunc();
+  else if(tblKey==='sim-grade' || tblKey==='sim-grade-matriz') renderSimGrade();
+  else if(tblKey==='sim-desp') renderSimDesp();
+  else if(tblKey==='sim-turmas') renderSimTurmas();
+  else if(tblKey==='sim-resultado') renderSimResultado();
 }
 
 const regimeBadge={
