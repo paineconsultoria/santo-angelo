@@ -784,6 +784,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
       <div class="page-desc">Custos operacionais do mês e como distribuí-los entre as turmas</div>
     </div>
     <div style="display:flex;gap:9px">
+      <button class="btn btn-ghost" onclick="abrirModalImportarDespesasGrupo()" title="Puxa os valores já rateados da Sociedade no Resultado do Grupo, exceto Pessoal e Encargos (que vem da Grade Horária)">📥 Importar do Resultado do Grupo</button>
       <button class="btn btn-ghost" onclick="restaurarContasPadrao()" title="Adiciona as contas do plano padrão (balancete) que ainda não estiverem cadastradas neste mês">🔄 Restaurar Contas Padrão</button>
       <button class="btn btn-primary" onclick="addDespesa()">+ Nova Despesa</button>
     </div>
@@ -802,6 +803,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
               <th>Descrição da Conta</th>
               <th style="width:150px" class="tr">Valor (R$)</th>
               <th style="width:260px">Critério de Rateio</th>
+              <th style="width:60px" class="tc" title="Se marcado, essa conta é atualizada automaticamente ao clicar em 'Importar do Resultado do Grupo'">🔄 Auto</th>
               <th style="width:44px"></th>
             </tr>
           </thead>
@@ -835,6 +837,32 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
           </tbody>
           <tfoot id="tf-desp-turma"></tfoot>
         </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════╗
+     ║  MODAL — IMPORTAR DO RESULTADO DO GRUPO ║
+     ╚══════════════════════════════════════╝ -->
+<div id="modal-import-desp-grupo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:flex-start;justify-content:center;padding-top:40px;">
+  <div style="background:#fff;border-radius:10px;width:min(760px,96vw);max-height:88vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.22);">
+    <div class="demo-box-hdr" style="border-radius:10px 10px 0 0;justify-content:space-between;">
+      <span style="color:#fff;font-weight:600;font-size:13.5px">📥 Importar Despesas do Resultado do Grupo</span>
+      <button class="btn-icon" style="color:rgba(255,255,255,.7)" onclick="fecharModalImportarDespesasGrupo()">✕</button>
+    </div>
+    <div style="padding:18px 20px">
+      <div style="font-size:11.5px;color:var(--g400);margin-bottom:14px">
+        Traz o valor já rateado da <strong>Sociedade</strong> (aba Resultado do Grupo → Visualização) pra competência atual. As contas de <strong>Pessoal e Encargos</strong> ficam de fora por padrão — o custo de pessoal já é calculado pela Grade Horária. Desmarque o que não quiser trazer.
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <button class="btn-tiny" onclick="marcarTodasContasImport(true)">☑️ Marcar todas</button>
+        <button class="btn-tiny" onclick="marcarTodasContasImport(false)">⬜ Desmarcar todas</button>
+      </div>
+      <div id="lista-import-desp-grupo" style="max-height:50vh;overflow-y:auto;border:1px solid var(--g200);border-radius:6px"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:14px;border-top:1px solid var(--g200)">
+        <button class="btn btn-ghost" onclick="fecharModalImportarDespesasGrupo()">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmarImportarDespesasGrupo()">📥 Importar Selecionadas</button>
       </div>
     </div>
   </div>
@@ -5320,7 +5348,7 @@ function gerarDespesasPadrao(startId){
   let n=startId;
   return CONTAS_PADRAO.map(c=>({
     id:'D'+pad(n++), cod:c.cod, cat:c.cat, grupo:c.grupo, subgrupo:c.subgrupo,
-    val:0, criterio:'faturamento', fixo:true
+    val:0, criterio:'faturamento', fixo:true, importAuto:c.grupo!=='1. Pessoal e Encargos'
   }));
 }
 
@@ -5331,7 +5359,7 @@ function restaurarContasPadrao(){
   let adicionadas=0;
   CONTAS_PADRAO.forEach(c=>{
     if(!existentes.has(c.cod)){
-      S.despesas.push({id:'D'+pad(nD++), cod:c.cod, cat:c.cat, grupo:c.grupo, subgrupo:c.subgrupo, val:0, criterio:'faturamento', fixo:true});
+      S.despesas.push({id:'D'+pad(nD++), cod:c.cod, cat:c.cat, grupo:c.grupo, subgrupo:c.subgrupo, val:0, criterio:'faturamento', fixo:true, importAuto:c.grupo!=='1. Pessoal e Encargos'});
       adicionadas++;
     }
   });
@@ -5340,8 +5368,105 @@ function restaurarContasPadrao(){
 }
 
 function addDespesa(){
-  S.despesas.push({id:'D'+pad(nD++), cod:'', cat:'', val:0, criterio:'faturamento', fixo:false});
+  S.despesas.push({id:'D'+pad(nD++), cod:'', cat:'', val:0, criterio:'faturamento', fixo:false, importAuto:false});
   renderDespTabela(); save();
+}
+
+/* ═══════════════════════════════════════════════════════
+   IMPORTAR DESPESAS DO RESULTADO DO GRUPO (Sociedade, já rateado)
+   Reaproveita getPlanoContas() e valorContaEmpresaMesRateado() do
+   módulo Resultado do Grupo — mesmos códigos de conta dos dois lados.
+═══════════════════════════════════════════════════════ */
+let _importSelecoes = {}; // { cod: true/false } — estado temporário do modal
+
+function contasImportaveis(){
+  // Todas as contas do plano do Resultado do Grupo, exceto Pessoal e Encargos
+  // (o custo de pessoal já é calculado pela Grade Horária, não deve ser somado 2x)
+  const plano = getPlanoContas();
+  const linhas = [];
+  let curGrupo=null, curSub=null;
+  plano.forEach(row=>{
+    if(row.lvl==='grupo') curGrupo=row.nome;
+    else if(row.lvl==='subgrupo') curSub=row.nome;
+    else if(row.lvl==='conta' && curGrupo!=='1. Pessoal e Encargos'){
+      linhas.push({cod:row.cod, nome:row.nome, grupo:curGrupo, subgrupo:curSub});
+    }
+  });
+  return linhas;
+}
+
+function abrirModalImportarDespesasGrupo(){
+  if(!currentComp){ alert('Selecione uma competência primeiro.'); return; }
+  const contas = contasImportaveis();
+  if(!contas.length){ alert('Não há contas cadastradas no Resultado do Grupo (fora de Pessoal e Encargos) pra importar.'); return; }
+
+  _importSelecoes = {};
+  const existentesPorCod = {};
+  S.despesas.forEach(d=>{ if(d.cod) existentesPorCod[d.cod]=d; });
+
+  let html='';
+  let curGrupo=null;
+  contas.forEach(c=>{
+    if(c.grupo!==curGrupo){
+      curGrupo=c.grupo;
+      html+=`<div style="background:var(--navy);color:var(--gold-lt);font-weight:700;font-size:11px;text-transform:uppercase;padding:7px 12px">${escHtml(curGrupo)}</div>`;
+    }
+    const valorAtual = valorContaEmpresaMesRateado('sociedade', c.cod, currentComp);
+    const existente = existentesPorCod[c.cod];
+    const marcado = existente ? (existente.importAuto!==false) : true; // default: marcado
+    _importSelecoes[c.cod] = marcado;
+    html+=`<label style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid var(--g100);cursor:pointer;font-size:12.5px">
+      <input type="checkbox" ${marcado?'checked':''} onchange="_importSelecoes['${c.cod}']=this.checked">
+      <span style="font-family:'IBM Plex Mono',monospace;color:var(--g400);font-size:11px;min-width:70px">${c.cod}</span>
+      <span style="flex:1">${escHtml(c.nome)}</span>
+      <span style="font-weight:600;color:var(--navy)">${R$(valorAtual)}</span>
+      ${existente?'':'<span style="font-size:10px;background:rgba(28,122,82,.15);color:var(--green);padding:1px 7px;border-radius:10px">nova conta</span>'}
+    </label>`;
+  });
+  g('lista-import-desp-grupo').innerHTML = html;
+  g('modal-import-desp-grupo').style.display='flex';
+}
+
+function fecharModalImportarDespesasGrupo(){
+  g('modal-import-desp-grupo').style.display='none';
+}
+
+function marcarTodasContasImport(valor){
+  Object.keys(_importSelecoes).forEach(cod=>_importSelecoes[cod]=valor);
+  g('lista-import-desp-grupo').querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=valor);
+}
+
+function confirmarImportarDespesasGrupo(){
+  const contas = contasImportaveis();
+  const existentesPorCod = {};
+  S.despesas.forEach(d=>{ if(d.cod) existentesPorCod[d.cod]=d; });
+
+  let atualizadas=0, criadas=0, desmarcadas=0;
+  contas.forEach(c=>{
+    const marcado = !!_importSelecoes[c.cod];
+    const existente = existentesPorCod[c.cod];
+    if(marcado){
+      const valor = valorContaEmpresaMesRateado('sociedade', c.cod, currentComp);
+      if(existente){
+        existente.val = valor;
+        existente.importAuto = true;
+        atualizadas++;
+      } else {
+        S.despesas.push({
+          id:'D'+pad(nD++), cod:c.cod, cat:c.nome, grupo:c.grupo, subgrupo:c.subgrupo,
+          val:valor, criterio:'faturamento', fixo:true, importAuto:true
+        });
+        criadas++;
+      }
+    } else if(existente){
+      existente.importAuto = false;
+      desmarcadas++;
+    }
+  });
+
+  fecharModalImportarDespesasGrupo();
+  renderDespTabela(); renderDespTurma(); save();
+  showToast(`✅ Importação concluída: ${atualizadas} atualizada(s), ${criadas} nova(s)${desmarcadas?`, ${desmarcadas} marcada(s) como manual`:''}.`);
 }
 
 function delDespesa(id){
@@ -5391,6 +5516,10 @@ function despRowHtml(d){
         ${tOpts}
       </select>
     </td>
+    <td class="tc" style="width:60px">
+      <input type="checkbox" ${d.importAuto?'checked':''} ${d.cod?'':'disabled'} title="${d.cod?'Atualizar automaticamente ao importar do Resultado do Grupo':'Precisa de um código de conta pra poder importar'}"
+        onchange="updDesp('${d.id}','importAuto',this.checked)">
+    </td>
     <td class="tc" style="width:44px">
       <button class="btn-icon" onclick="delDespesa('${d.id}')" title="Excluir">🗑️</button>
     </td>
@@ -5398,15 +5527,15 @@ function despRowHtml(d){
 }
 
 function despGroupHeaderHtml(label){
-  return `<tr><td colspan="5" style="background:var(--navy);color:var(--gold-lt);font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;padding:8px 12px">${label}</td></tr>`;
+  return `<tr><td colspan="6" style="background:var(--navy);color:var(--gold-lt);font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;padding:8px 12px">${label}</td></tr>`;
 }
 function despSubtotalHtml(label,val){
   return `<tr><td colspan="2" style="background:var(--g100);font-size:11px;color:var(--g600);padding:5px 12px;text-align:right;font-style:italic">Subtotal — ${label}</td>
-    <td style="background:var(--g100);font-weight:700;color:var(--navy)" class="mono tr">${N$(val)}</td><td style="background:var(--g100)"></td><td style="background:var(--g100)"></td></tr>`;
+    <td style="background:var(--g100);font-weight:700;color:var(--navy)" class="mono tr">${N$(val)}</td><td style="background:var(--g100)"></td><td style="background:var(--g100)"></td><td style="background:var(--g100)"></td></tr>`;
 }
 function despGroupTotalHtml(label,val){
   return `<tr><td colspan="2" style="background:var(--navy-mid);color:#fff;font-weight:700;font-size:11.5px;padding:6px 12px;text-align:right">Total ${label}</td>
-    <td style="background:var(--navy-mid);color:var(--gold-lt);font-weight:700" class="mono tr">${N$(val)}</td><td style="background:var(--navy-mid)"></td><td style="background:var(--navy-mid)"></td></tr>`;
+    <td style="background:var(--navy-mid);color:var(--gold-lt);font-weight:700" class="mono tr">${N$(val)}</td><td style="background:var(--navy-mid)"></td><td style="background:var(--navy-mid)"></td><td style="background:var(--navy-mid)"></td></tr>`;
 }
 
 function renderDespTabela(){
@@ -5414,7 +5543,7 @@ function renderDespTabela(){
   g('lbl-total-desp').textContent=R$(tot);
   const tb=g('tb-desp');
   if(!S.despesas.length){
-    tb.innerHTML=`<tr><td colspan="5" class="tc" style="padding:40px;color:var(--g400)">Nenhuma despesa cadastrada. Clique em "+ Nova Despesa" ou "🔄 Restaurar Contas Padrão".</td></tr>`;
+    tb.innerHTML=`<tr><td colspan="6" class="tc" style="padding:40px;color:var(--g400)">Nenhuma despesa cadastrada. Clique em "+ Nova Despesa" ou "🔄 Restaurar Contas Padrão".</td></tr>`;
     return;
   }
 
