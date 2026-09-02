@@ -427,25 +427,6 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
       </div>
     </div>
   </div>
-  <div class="sb-comp">
-    <div class="sb-footer-label">Competência</div>
-    <input type="month" id="comp-input-sb" onchange="trocarCompetencia(this.value)" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:4px;padding:5px 9px;font-size:12.5px;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;margin-bottom:8px;">
-    <div style="font-size:11px;font-weight:700;color:var(--gold-lt);text-align:center;background:rgba(196,147,63,.15);border-radius:4px;padding:4px 0;margin-bottom:8px;letter-spacing:.3px;" id="comp-badge-sb">—</div>
-    <div style="display:flex;flex-direction:column;gap:5px;">
-      <button class="btn-tiny" onclick="salvarCompetencia()">💾 Salvar mês</button>
-      <button class="btn-tiny" onclick="abrirCopyModal()">📋 Copiar mês anterior</button>
-      <button class="btn-tiny" style="background:rgba(191,51,39,.18);color:#ffb4ac" onclick="zerarEReimportarMesAnterior()" title="Apaga tudo do mês atual e traz novamente todos os dados do mês anterior (funcionários, grade, turmas e despesas)">♻️ Zerar e reimportar mês anterior</button>
-    </div>
-  </div>
-  <div class="sb-footer">
-    <div class="sb-footer-label">Backup</div>
-    <div class="btn-pair">
-      <button class="btn-tiny" onclick="exportarJSON()">⬇️ Exportar</button>
-      <button class="btn-tiny" onclick="document.getElementById('fi').click()">⬆️ Importar</button>
-    </div>
-    <input type="file" id="fi" accept=".json" style="display:none" onchange="importarJSON(event)">
-    <button class="btn-tiny" id="btn-migrar-nuvem" style="display:none;margin-top:6px" onclick="migrarDadosDoNavegador()" title="Envia uma única vez os dados salvos neste navegador para a nuvem">☁️ Importar dados deste navegador</button>
-  </div>
   <div class="sb-user-box">
     <div class="sb-cloud-status" id="cloud-status">—</div>
     <div class="sb-user-name" id="user-badge">—</div>
@@ -474,6 +455,22 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
 
 <!-- ═══════════════ MAIN ═══════════════════ -->
 <main class="main" style="display:none">
+
+<div id="comp-topbar" style="display:flex;background:var(--navy);border-bottom:1px solid var(--navy-mid);padding:6px 24px;align-items:center;gap:10px;flex-wrap:wrap;font-size:11px;color:rgba(255,255,255,.8)">
+  <span style="font-weight:600;color:#fff;font-size:11px">Competência:</span>
+  <input type="month" id="comp-input-sb" onchange="trocarCompetencia(this.value)" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:4px;padding:3px 7px;font-size:11px;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;">
+  <span style="font-size:10.5px;font-weight:700;color:var(--gold-lt);background:rgba(196,147,63,.18);border-radius:4px;padding:3px 8px;letter-spacing:.3px" id="comp-badge-sb">—</span>
+  <button class="btn-tiny" onclick="salvarCompetencia()">💾 Salvar mês</button>
+  <button class="btn-tiny" onclick="abrirCopyModal()">📋 Copiar mês anterior</button>
+  <button class="btn-tiny" style="background:rgba(191,51,39,.18);color:#ffb4ac" onclick="zerarEReimportarMesAnterior()" title="Apaga tudo do mês atual e traz novamente todos os dados do mês anterior (funcionários, grade, turmas e despesas)">♻️ Zerar e reimportar mês anterior</button>
+  <span style="margin-left:auto;display:flex;align-items:center;gap:8px">
+    <button class="btn-tiny" onclick="exportarJSON()">⬇️ Exportar</button>
+    <button class="btn-tiny" onclick="document.getElementById('fi').click()">⬆️ Importar</button>
+    <input type="file" id="fi" accept=".json" style="display:none" onchange="importarJSON(event)">
+    <button class="btn-tiny" id="btn-migrar-nuvem" style="display:none" onclick="migrarDadosDoNavegador()" title="Envia uma única vez os dados salvos neste navegador para a nuvem">☁️ Importar deste navegador</button>
+  </span>
+</div>
+
 
 <!-- ╔══════════════════════════════════════╗
      ║  FUNCIONÁRIOS                        ║
@@ -1346,102 +1343,135 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
     </div>
 
     <div id="sim-conteudo" style="display:none">
+      <div class="subtab-row">
+        <button type="button" class="subtab-btn active" id="subtab-btn-sim-reajustes" onclick="mudarModoSim('reajustes')">⚙️ Reajustes</button>
+        <button type="button" class="subtab-btn" id="subtab-btn-sim-func" onclick="mudarModoSim('func')">👥 Funcionários</button>
+        <button type="button" class="subtab-btn" id="subtab-btn-sim-grade" onclick="mudarModoSim('grade')">🗓️ Grade Horária</button>
+        <button type="button" class="subtab-btn" id="subtab-btn-sim-desp" onclick="mudarModoSim('desp')">📋 Despesas</button>
+        <button type="button" class="subtab-btn" id="subtab-btn-sim-turmas" onclick="mudarModoSim('turmas')">🎓 Turmas</button>
+        <button type="button" class="subtab-btn" id="subtab-btn-sim-resultado" onclick="mudarModoSim('resultado')">📊 Resultado &amp; Equilíbrio</button>
+      </div>
+
       <!-- Reajustes -->
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-hdr"><span class="card-title">Reajustes para 2027</span></div>
-        <div class="card-body" style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;padding:16px 18px">
-          <div>
-            <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">% REAJUSTE DE FOLHA (salários)</label>
-            <input type="number" step="0.1" id="sim-reaj-folha" value="0" style="width:110px;padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px">
+      <div id="sim-painel-reajustes">
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">Reajustes para 2027</span></div>
+          <div class="card-body" style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;padding:16px 18px">
+            <div>
+              <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">% REAJUSTE DE FOLHA (salários)</label>
+              <input type="number" step="0.1" id="sim-reaj-folha" value="0" style="width:110px;padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px">
+            </div>
+            <div>
+              <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">% REAJUSTE DE ALUGUEL</label>
+              <input type="number" step="0.1" id="sim-reaj-aluguel" value="0" style="width:110px;padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px">
+            </div>
+            <div>
+              <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">% REAJUSTE DEMAIS DESPESAS</label>
+              <input type="number" step="0.1" id="sim-reaj-despesas" value="0" style="width:110px;padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px">
+            </div>
+            <div>
+              <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">% REAJUSTE DE MENSALIDADE</label>
+              <input type="number" step="0.1" id="sim-reaj-mensalidade" value="0" style="width:110px;padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px">
+            </div>
+            <button class="btn btn-primary" onclick="aplicarReajustesSim()">✅ Aplicar Reajustes</button>
+            <div style="font-size:10.5px;color:var(--g400);flex-basis:100%">Os % são aplicados sobre os valores atuais da simulação (pode aplicar mais de uma vez, cada aplicação soma em cima do resultado anterior — use "Copiar dados atuais" pra reiniciar do zero).</div>
           </div>
-          <div>
-            <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">% REAJUSTE DE ALUGUEL</label>
-            <input type="number" step="0.1" id="sim-reaj-aluguel" value="0" style="width:110px;padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px">
-          </div>
-          <div>
-            <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">% REAJUSTE DEMAIS DESPESAS</label>
-            <input type="number" step="0.1" id="sim-reaj-despesas" value="0" style="width:110px;padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px">
-          </div>
-          <div>
-            <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">% REAJUSTE DE MENSALIDADE</label>
-            <input type="number" step="0.1" id="sim-reaj-mensalidade" value="0" style="width:110px;padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px">
-          </div>
-          <button class="btn btn-primary" onclick="aplicarReajustesSim()">✅ Aplicar Reajustes</button>
-          <div style="font-size:10.5px;color:var(--g400);flex-basis:100%">Os % são aplicados sobre os valores atuais da simulação (pode aplicar mais de uma vez, cada aplicação soma em cima do resultado anterior — use "Copiar dados atuais" pra reiniciar do zero).</div>
         </div>
       </div>
 
       <!-- Funcionários da simulação -->
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-hdr" style="display:flex;justify-content:space-between;align-items:center">
-          <span class="card-title">Funcionários — 2027</span>
-          <button class="btn btn-ghost btn-sm" onclick="simAddFunc()">➕ Adicionar Funcionário</button>
-        </div>
-        <div class="tbl-wrap tbl-scroll">
-          <table class="zebra">
-            <thead><tr>
-              <th>Nome</th><th>Regime</th><th class="tr">Salário</th><th class="tr">% Encargos</th>
-              <th class="tr">VT</th><th class="tr">VR</th><th class="tr">Plano Saúde</th><th class="tr">Outros</th>
-              <th class="tr" style="background:var(--navy-mid)">Custo Total</th><th></th>
-            </tr></thead>
-            <tbody id="tb-sim-func"></tbody>
-          </table>
+      <div id="sim-painel-func" style="display:none">
+        <div class="card">
+          <div class="card-hdr" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+            <span class="card-title">Funcionários — 2027</span>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="text" id="sim-func-busca" placeholder="🔎 Buscar por nome ou função..." oninput="renderSimFunc()" style="padding:7px 10px;border:1px solid var(--g200);border-radius:6px;font-size:12.5px;min-width:220px">
+              <button class="btn btn-ghost btn-sm" onclick="simAddFunc()">➕ Adicionar Funcionário</button>
+            </div>
+          </div>
+          <div class="tbl-wrap tbl-scroll">
+            <table class="zebra">
+              <thead><tr>
+                <th>Nome</th><th>Função / Disciplina</th><th>Regime</th><th class="tr">Salário</th><th class="tr">% Encargos</th>
+                <th class="tr">VT</th><th class="tr">VR</th><th class="tr">Plano Saúde</th><th class="tr">Outros</th>
+                <th class="tr" style="background:var(--navy-mid)">Custo Total</th><th></th>
+              </tr></thead>
+              <tbody id="tb-sim-func"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       <!-- Grade horária da simulação -->
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-hdr"><span class="card-title">Grade Horária — 2027 (horas de cada professor por turma)</span></div>
-        <div class="tbl-wrap tbl-scroll">
-          <table class="zebra">
-            <thead><tr id="thead-sim-grade"></tr></thead>
-            <tbody id="tb-sim-grade"></tbody>
-          </table>
+      <div id="sim-painel-grade" style="display:none">
+        <div class="card">
+          <div class="card-hdr" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+            <span class="card-title">Grade Horária — 2027</span>
+            <div style="display:flex;gap:8px;align-items:center">
+              <select id="sim-grade-turma-filtro" onchange="renderSimGrade()" style="padding:7px 10px;border:1px solid var(--g200);border-radius:6px;font-size:12.5px">
+                <option value="">Todas as turmas (matriz completa)</option>
+              </select>
+              <input type="text" id="sim-grade-busca" placeholder="🔎 Buscar por nome ou função..." oninput="renderSimGrade()" style="padding:7px 10px;border:1px solid var(--g200);border-radius:6px;font-size:12.5px;min-width:220px">
+            </div>
+          </div>
+          <div style="padding:10px 18px 0;font-size:11px;color:var(--g400)" id="sim-grade-hint">Selecione uma turma no filtro pra ver rapidamente quem dá aula nela, com salário e carga horária.</div>
+          <div class="tbl-wrap tbl-scroll">
+            <table class="zebra">
+              <thead><tr id="thead-sim-grade"></tr></thead>
+              <tbody id="tb-sim-grade"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       <!-- Despesas da simulação -->
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-hdr" style="display:flex;justify-content:space-between;align-items:center">
-          <span class="card-title">Despesas Operacionais — 2027</span>
-          <button class="btn btn-ghost btn-sm" onclick="simAddDesp()">➕ Adicionar Despesa</button>
-        </div>
-        <div class="tbl-wrap tbl-scroll">
-          <table class="zebra">
-            <thead><tr><th>Descrição</th><th class="tr">Valor Mensal</th><th>Critério de Rateio</th><th></th></tr></thead>
-            <tbody id="tb-sim-desp"></tbody>
-          </table>
+      <div id="sim-painel-desp" style="display:none">
+        <div class="card">
+          <div class="card-hdr" style="display:flex;justify-content:space-between;align-items:center">
+            <span class="card-title">Despesas Operacionais — 2027</span>
+            <button class="btn btn-ghost btn-sm" onclick="simAddDesp()">➕ Adicionar Despesa</button>
+          </div>
+          <div class="tbl-wrap tbl-scroll">
+            <table class="zebra">
+              <thead><tr><th>Descrição</th><th class="tr">Valor Mensal</th><th>Critério de Rateio</th><th></th></tr></thead>
+              <tbody id="tb-sim-desp"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       <!-- Turmas da simulação -->
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-hdr" style="display:flex;justify-content:space-between;align-items:center">
-          <span class="card-title">Turmas — 2027 (alunos e mensalidade projetados)</span>
-          <button class="btn btn-ghost btn-sm" onclick="simAddTurma()">➕ Adicionar Turma</button>
-        </div>
-        <div class="tbl-wrap tbl-scroll">
-          <table class="zebra">
-            <thead><tr><th>Turma</th><th class="tr">Nº Alunos</th><th class="tr">Receita Mensal (turma)</th><th class="tr">Valor Hora-Aula</th><th></th></tr></thead>
-            <tbody id="tb-sim-turmas"></tbody>
-          </table>
+      <div id="sim-painel-turmas" style="display:none">
+        <div class="card">
+          <div class="card-hdr" style="display:flex;justify-content:space-between;align-items:center">
+            <span class="card-title">Turmas — 2027 (alunos e mensalidade projetados)</span>
+            <button class="btn btn-ghost btn-sm" onclick="simAddTurma()">➕ Adicionar Turma</button>
+          </div>
+          <div class="tbl-wrap tbl-scroll">
+            <table class="zebra">
+              <thead><tr><th>Turma</th><th class="tr">Nº Alunos</th><th class="tr">Receita Mensal (turma)</th><th class="tr">Valor Hora-Aula</th><th></th></tr></thead>
+              <tbody id="tb-sim-turmas"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       <!-- Resultado & Ponto de Equilíbrio -->
-      <div class="card">
-        <div class="card-hdr"><span class="card-title">Resultado & Ponto de Equilíbrio — 2027 (projetado)</span></div>
-        <div class="tbl-wrap tbl-scroll">
-          <table class="zebra">
-            <thead><tr>
-              <th>Turma</th><th class="tr">Alunos</th><th class="tr">Custo Pessoal</th><th class="tr">Desp. Operac.</th>
-              <th class="tr" style="background:var(--g100)">Custo Total</th><th class="tr">Receita Projetada</th>
-              <th class="tr" style="min-width:120px">Resultado</th>
-              <th class="tr">Alunos p/ Equilíbrio</th><th class="tr">Mensalidade p/ Equilíbrio</th>
-            </tr></thead>
-            <tbody id="tb-sim-resultado"></tbody>
-            <tfoot id="tf-sim-resultado"></tfoot>
-          </table>
+      <div id="sim-painel-resultado" style="display:none">
+        <div class="card">
+          <div class="card-hdr"><span class="card-title">Resultado &amp; Ponto de Equilíbrio — 2027 (projetado)</span></div>
+          <div class="tbl-wrap tbl-scroll">
+            <table class="zebra">
+              <thead><tr>
+                <th>Turma</th><th class="tr">Alunos</th><th class="tr">Custo Pessoal</th><th class="tr">Desp. Operac.</th>
+                <th class="tr" style="background:var(--g100)">Custo Total</th><th class="tr">Receita Projetada</th>
+                <th class="tr" style="min-width:120px">Resultado</th>
+                <th class="tr">Alunos p/ Equilíbrio</th><th class="tr">Mensalidade p/ Equilíbrio</th>
+              </tr></thead>
+              <tbody id="tb-sim-resultado"></tbody>
+              <tfoot id="tf-sim-resultado"></tfoot>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -2811,6 +2841,7 @@ function copiarParaSimulacao(){
   nSimF = SIM.funcs.length+1; nSimT = SIM.turmas.length+1; nSimD = SIM.despesas.length+1;
   g('sim-vazio').style.display='none';
   g('sim-conteudo').style.display='';
+  mudarModoSim('reajustes');
   renderSimulacao();
   showToast('✅ Dados de 2026 copiados para a simulação.');
 }
@@ -2857,6 +2888,7 @@ function renderSimulacao(){
   }
   g('sim-vazio').style.display='none';
   g('sim-conteudo').style.display='';
+  popularFiltroTurmaSimGrade();
   renderSimFunc();
   renderSimGrade();
   renderSimDesp();
@@ -2864,9 +2896,18 @@ function renderSimulacao(){
   renderSimResultado();
 }
 
+function mudarModoSim(modo){
+  const modos = ['reajustes','func','grade','desp','turmas','resultado'];
+  modos.forEach(m=>{
+    g('sim-painel-'+m).style.display = (m===modo) ? '' : 'none';
+    g('subtab-btn-sim-'+m).classList.toggle('active', m===modo);
+  });
+  if(modo==='grade') popularFiltroTurmaSimGrade();
+}
+
 /* ---------- Funcionários (simulação) ---------- */
 function simAddFunc(){
-  SIM.funcs.push({id:'SF'+pad(nSimF++), nome:'Novo funcionário', regime:'MENSALISTA', sal:0, pctEnc:0, vt:0, vr:0, ps:0, out:0, ativo:true});
+  SIM.funcs.push({id:'SF'+pad(nSimF++), nome:'Novo funcionário', disc:'', regime:'MENSALISTA', sal:0, pctEnc:0, vt:0, vr:0, ps:0, out:0, ativo:true});
   renderSimulacao();
 }
 function simDelFunc(id){
@@ -2878,20 +2919,27 @@ function simDelFunc(id){
 function simSetFuncField(id, field, val){
   const f = SIM.funcs.find(x=>x.id===id);
   if(!f) return;
-  if(field==='nome' || field==='regime') f[field]=val;
+  if(field==='nome' || field==='regime' || field==='disc') f[field]=val;
   else f[field] = parseFloat(val)||0;
   renderSimulacao();
 }
 function renderSimFunc(){
   const tb = g('tb-sim-func');
+  const busca = (gS('sim-func-busca')||'').toLowerCase();
+  const lista = SIM.funcs.filter(f=>!busca || (f.nome||'').toLowerCase().includes(busca) || (f.disc||'').toLowerCase().includes(busca));
   if(!SIM.funcs.length){
-    tb.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--g400);padding:24px">Nenhum funcionário na simulação.</td></tr>';
+    tb.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--g400);padding:24px">Nenhum funcionário na simulação.</td></tr>';
     return;
   }
-  tb.innerHTML = SIM.funcs.map(f=>{
+  if(!lista.length){
+    tb.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--g400);padding:24px">Nenhum funcionário encontrado pra essa busca.</td></tr>';
+    return;
+  }
+  tb.innerHTML = lista.map(f=>{
     const b = calcBreakdown(f);
     return `<tr>
       <td><input type="text" value="${escHtml(f.nome||'')}" style="width:100%;min-width:140px" onchange="simSetFuncField('${f.id}','nome',this.value)"></td>
+      <td><input type="text" value="${escHtml(f.disc||'')}" placeholder="Ex: Professor de Matemática" style="width:100%;min-width:160px" onchange="simSetFuncField('${f.id}','disc',this.value)"></td>
       <td>
         <select style="font-size:12px;padding:4px 6px" onchange="simSetFuncField('${f.id}','regime',this.value)">
           <option value="MENSALISTA" ${f.regime==='MENSALISTA'?'selected':''}>Mensalista</option>
@@ -2911,26 +2959,69 @@ function renderSimFunc(){
   }).join('');
 }
 
-/* ---------- Grade horária (simulação) — matriz func x turma ---------- */
+/* ---------- Grade horária (simulação) — matriz func x turma, com filtro por turma ---------- */
 function simSetGrade(fId, tId, val){
   if(!SIM.grade[fId]) SIM.grade[fId]={};
   SIM.grade[fId][tId] = parseFloat(val)||0;
   renderSimResultado();
 }
+function popularFiltroTurmaSimGrade(){
+  const sel = g('sim-grade-turma-filtro');
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Todas as turmas (matriz completa)</option>' +
+    SIM.turmas.map(t=>`<option value="${t.id}" ${t.id===atual?'selected':''}>${escHtml(t.nome)}</option>`).join('');
+}
 function renderSimGrade(){
   const thead = g('thead-sim-grade');
   const tb = g('tb-sim-grade');
+  const hint = g('sim-grade-hint');
   if(!SIM.funcs.length || !SIM.turmas.length){
     thead.innerHTML = '<th>Professor</th>';
     tb.innerHTML = '<tr><td style="text-align:center;color:var(--g400);padding:24px">Cadastre funcionários e turmas na simulação primeiro.</td></tr>';
     return;
   }
-  thead.innerHTML = '<th style="min-width:160px">Professor</th>' + SIM.turmas.map(t=>`<th class="tr">${escHtml(t.nome)}</th>`).join('') + '<th class="tr" style="background:var(--g100)">Total h</th>';
-  tb.innerHTML = SIM.funcs.map(f=>{
+  const turmaFiltro = gS('sim-grade-turma-filtro');
+  const busca = (gS('sim-grade-busca')||'').toLowerCase();
+  const funcsFiltrados = SIM.funcs.filter(f=>!busca || (f.nome||'').toLowerCase().includes(busca) || (f.disc||'').toLowerCase().includes(busca));
+
+  if(turmaFiltro){
+    // Modo "quem está nessa turma": nome, função, horas, salário
+    const turma = SIM.turmas.find(t=>t.id===turmaFiltro);
+    hint.textContent = `Mostrando só quem tem carga horária em "${turma?turma.nome:''}" — ordenado por mais horas primeiro.`;
+    thead.innerHTML = '<th style="min-width:160px">Professor</th><th>Função / Disciplina</th><th class="tr">Horas nesta turma</th><th class="tr">Salário</th><th class="tr" style="background:var(--g100)">Custo Total</th>';
+    const linhas = funcsFiltrados
+      .map(f=>({ f, horas: +((SIM.grade[f.id]||{})[turmaFiltro]||0) }))
+      .filter(x=>x.horas>0)
+      .sort((a,b)=>b.horas-a.horas);
+    if(!linhas.length){
+      tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--g400);padding:24px">Nenhum professor com carga horária nessa turma ainda.</td></tr>';
+      return;
+    }
+    tb.innerHTML = linhas.map(({f,horas})=>{
+      const b = calcBreakdown(f);
+      return `<tr>
+        <td style="font-weight:500">${escHtml(f.nome)}</td>
+        <td style="color:var(--g600)">${escHtml(f.disc||'—')}</td>
+        <td class="tr">${horas} h</td>
+        <td class="tr">${R$(f.sal||0)}</td>
+        <td class="tr" style="background:var(--g100);font-weight:600">${R$(b.total)}</td>
+      </tr>`;
+    }).join('');
+    return;
+  }
+
+  // Modo matriz completa (todas as turmas), com filtro de busca por nome/função
+  hint.textContent = 'Selecione uma turma no filtro pra ver rapidamente quem dá aula nela, com salário e carga horária.';
+  thead.innerHTML = '<th style="min-width:160px">Professor</th><th style="min-width:140px">Função</th>' + SIM.turmas.map(t=>`<th class="tr">${escHtml(t.nome)}</th>`).join('') + '<th class="tr" style="background:var(--g100)">Total h</th>';
+  if(!funcsFiltrados.length){
+    tb.innerHTML = '<tr><td colspan="' + (SIM.turmas.length+3) + '" style="text-align:center;color:var(--g400);padding:24px">Nenhum funcionário encontrado pra essa busca.</td></tr>';
+    return;
+  }
+  tb.innerHTML = funcsFiltrados.map(f=>{
     const gh = SIM.grade[f.id]||{};
     const totH = SIM.turmas.reduce((a,t)=>a+(+(gh[t.id]||0)),0);
     const cels = SIM.turmas.map(t=>`<td class="tr"><input type="number" min="0" step="1" value="${gh[t.id]||''}" placeholder="0" style="width:56px;text-align:right" onchange="simSetGrade('${f.id}','${t.id}',this.value)"></td>`).join('');
-    return `<tr><td style="font-weight:500">${escHtml(f.nome)}</td>${cels}<td class="tr" style="background:var(--g100);font-weight:600">${totH} h</td></tr>`;
+    return `<tr><td style="font-weight:500">${escHtml(f.nome)}</td><td style="color:var(--g600);font-size:11.5px">${escHtml(f.disc||'—')}</td>${cels}<td class="tr" style="background:var(--g100);font-weight:600">${totH} h</td></tr>`;
   }).join('');
 }
 
@@ -4286,6 +4377,8 @@ function abrirNavGroupDoTab(tab){
   if(el) el.classList.remove('collapsed');
 }
 
+const TABS_COM_COMPETENCIA = ['funcionarios','grade','turmas','custo','despesas','resultado','historico','saldos'];
+
 function goTab(tab,el){
   if(currentRole!=='coordenacao' && TABS_SOMENTE_COORDENACAO.includes(tab)) return;
   document.querySelectorAll('.tab-section').forEach(x=>x.classList.remove('active'));
@@ -4293,6 +4386,7 @@ function goTab(tab,el){
   g('tab-'+tab).classList.add('active');
   el.classList.add('active');
   abrirNavGroupDoTab(tab);
+  g('comp-topbar').style.display = TABS_COM_COMPETENCIA.includes(tab) ? 'flex' : 'none';
   if(tab==='grade')      renderGrade();
   if(tab==='turmas')     renderTurmas();
   if(tab==='custo')      renderCusto();
