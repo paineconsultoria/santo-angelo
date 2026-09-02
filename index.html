@@ -510,6 +510,12 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
                   <option value="ESTAGIARIO">Estagiário (sem 13º)</option>
                 </select>
               </div>
+              <div class="form-group"><label>Critério de Rateio</label>
+                <select id="f-criterio-rateio" onchange="renderAlocacao()" title="Como o custo desse funcionário é dividido entre as turmas">
+                  <option value="horas">🗓️ Por Grade Horária (padrão)</option>
+                  <option value="faturamento">📊 Por Faturamento das Turmas</option>
+                </select>
+              </div>
             </div>
             <div class="sub-hdr">💰 Remuneração</div>
             <div class="form-row">
@@ -2937,7 +2943,7 @@ function mudarModoSim(modo){
 
 /* ---------- Funcionários (simulação) ---------- */
 function simAddFunc(){
-  SIM.funcs.push({id:'SF'+pad(nSimF++), nome:'Novo funcionário', disc:'', regime:'MENSALISTA', sal:0, pctEnc:0, vt:0, vr:0, ps:0, out:0, ativo:true});
+  SIM.funcs.push({id:'SF'+pad(nSimF++), nome:'Novo funcionário', disc:'', regime:'MENSALISTA', criterioRateio:'horas', sal:0, pctEnc:0, vt:0, vr:0, ps:0, out:0, ativo:true});
   renderSimulacao();
 }
 function simDelFunc(id){
@@ -2949,7 +2955,7 @@ function simDelFunc(id){
 function simSetFuncField(id, field, val){
   const f = SIM.funcs.find(x=>x.id===id);
   if(!f) return;
-  if(field==='nome' || field==='regime' || field==='disc') f[field]=val;
+  if(field==='nome' || field==='regime' || field==='disc' || field==='criterioRateio') f[field]=val;
   else f[field] = parseFloat(val)||0;
   renderSimulacao();
 }
@@ -2964,32 +2970,32 @@ function renderSimFunc(){
   if(turmaFiltro){
     lista = base
       .map(f=>({ f, horas: +((SIM.grade[f.id]||{})[turmaFiltro]||0), rateio: custoFuncNaTurma(f, turmaFiltro, SIM) }))
-      .filter(x=>x.horas>0);
+      .filter(x=>x.horas>0 || x.rateio>0);
     lista = sortedList(lista, 'sim-func', {
-      nome:x=>x.f.nome||'', disc:x=>x.f.disc||'', regime:x=>x.f.regime||'',
+      nome:x=>x.f.nome||'', disc:x=>x.f.disc||'', regime:x=>x.f.regime||'', criterio:x=>x.f.criterioRateio||'horas',
       sal:x=>+(x.f.sal||0), horas:x=>x.horas, rateio:x=>x.rateio,
       total:x=>calcBreakdown(x.f).total,
     });
     if(!sortState['sim-func']) lista.sort((a,b)=>b.horas-a.horas);
   } else {
     lista = sortedList(base, 'sim-func', {
-      nome:f=>f.nome||'', disc:f=>f.disc||'', regime:f=>f.regime||'',
+      nome:f=>f.nome||'', disc:f=>f.disc||'', regime:f=>f.regime||'', criterio:f=>f.criterioRateio||'horas',
       sal:f=>+(f.sal||0), total:f=>calcBreakdown(f).total,
     });
   }
 
   const colHoras = turmaFiltro ? thSort('sim-func','horas','Horas nesta turma','style="background:var(--gold);color:var(--navy)"') : '';
   const colRateio = turmaFiltro ? thSort('sim-func','rateio','Rateio Alocado','style="background:var(--gold);color:var(--navy)"') : '';
-  thead.innerHTML = `${thSort('sim-func','nome','Nome')}${thSort('sim-func','disc','Função / Disciplina')}${thSort('sim-func','regime','Regime')}${thSort('sim-func','sal','Salário')}<th class="tr">% Encargos</th>
+  thead.innerHTML = `${thSort('sim-func','nome','Nome')}${thSort('sim-func','disc','Função / Disciplina')}${thSort('sim-func','regime','Regime')}${thSort('sim-func','criterio','Critério de Rateio')}${thSort('sim-func','sal','Salário')}<th class="tr">% Encargos</th>
     <th class="tr">VT</th><th class="tr">VR</th><th class="tr">Plano Saúde</th><th class="tr">Outros</th>
     ${colHoras}${colRateio}${thSort('sim-func','total','Custo Total','style="background:var(--navy-mid)"')}<th></th>`;
 
   if(!SIM.funcs.length){
-    tb.innerHTML = `<tr><td colspan="${turmaFiltro?13:11}" style="text-align:center;color:var(--g400);padding:24px">Nenhum funcionário na simulação.</td></tr>`;
+    tb.innerHTML = `<tr><td colspan="${turmaFiltro?14:12}" style="text-align:center;color:var(--g400);padding:24px">Nenhum funcionário na simulação.</td></tr>`;
     return;
   }
   if(!lista.length){
-    tb.innerHTML = `<tr><td colspan="${turmaFiltro?13:11}" style="text-align:center;color:var(--g400);padding:24px">${turmaFiltro?'Nenhum funcionário com carga horária nessa turma.':'Nenhum funcionário encontrado pra essa busca.'}</td></tr>`;
+    tb.innerHTML = `<tr><td colspan="${turmaFiltro?14:12}" style="text-align:center;color:var(--g400);padding:24px">${turmaFiltro?'Nenhum funcionário com carga horária ou rateio nessa turma.':'Nenhum funcionário encontrado pra essa busca.'}</td></tr>`;
     return;
   }
   tb.innerHTML = lista.map(item=>{
@@ -3007,6 +3013,12 @@ function renderSimFunc(){
           <option value="MENSALISTA" ${f.regime==='MENSALISTA'?'selected':''}>Mensalista</option>
           <option value="HORISTA" ${f.regime==='HORISTA'?'selected':''}>Horista</option>
           <option value="ESTAGIARIO" ${f.regime==='ESTAGIARIO'?'selected':''}>Estagiário</option>
+        </select>
+      </td>
+      <td>
+        <select style="font-size:12px;padding:4px 6px" onchange="simSetFuncField('${f.id}','criterioRateio',this.value)" title="Como o custo desse funcionário é dividido entre as turmas">
+          <option value="horas" ${(f.criterioRateio||'horas')==='horas'?'selected':''}>🗓️ Grade Horária</option>
+          <option value="faturamento" ${f.criterioRateio==='faturamento'?'selected':''}>📊 Faturamento</option>
         </select>
       </td>
       <td class="tr"><input type="text" inputmode="decimal" value="${f.sal?N$(f.sal):''}" style="width:90px;text-align:right" oninput="maskMoneyInput(this)" onchange="simSetFuncField('${f.id}','sal',unmaskMoneyInput(this.value))"></td>
@@ -3082,27 +3094,30 @@ function renderRateioFunc(){
   }
 
   const turma = S.turmas.find(t=>t.id===turmaFiltro);
-  hint.textContent = `Mostrando só quem tem carga horária em "${turma?turma.nome:''}" — clique nos títulos das colunas pra ordenar.`;
+  hint.textContent = `Mostrando quem tem carga horária ou rateio por faturamento em "${turma?turma.nome:''}" — clique nos títulos das colunas pra ordenar.`;
   thead.innerHTML = thSort('rateiofunc','nome','Nome') + thSort('rateiofunc','disc','Função / Disciplina') + thSort('rateiofunc','horas','Horas nesta turma','style="background:var(--gold);color:var(--navy)"') + thSort('rateiofunc','sal','Salário') + thSort('rateiofunc','rateio','Rateio Alocado','style="background:var(--gold);color:var(--navy)"') + thSort('rateiofunc','total','Custo Total','style="background:var(--navy-mid)"');
 
   let linhas = funcsFiltrados
     .map(f=>({ f, horas: +((S.grade[f.id]||{})[turmaFiltro]||0), rateio: custoFuncNaTurma(f, turmaFiltro, S) }))
-    .filter(x=>x.horas>0);
+    .filter(x=>x.horas>0 || x.rateio>0);
   linhas = sortedList(linhas, 'rateiofunc', {
     nome:x=>x.f.nome||'', disc:x=>x.f.disc||'', horas:x=>x.horas, sal:x=>+(x.f.sal||0), rateio:x=>x.rateio, total:x=>calcBreakdown(x.f).total,
   });
-  if(!sortState['rateiofunc']) linhas.sort((a,b)=>b.horas-a.horas);
+  if(!sortState['rateiofunc']) linhas.sort((a,b)=>b.rateio-a.rateio);
 
   if(!linhas.length){
-    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--g400);padding:24px">Nenhum funcionário com carga horária nessa turma ainda.</td></tr>';
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--g400);padding:24px">Nenhum funcionário alocado nessa turma ainda.</td></tr>';
     return;
   }
   tb.innerHTML = linhas.map(({f,horas,rateio})=>{
     const b = calcBreakdown(f);
+    const porFat = f.criterioRateio==='faturamento';
+    const badge = porFat ? ' <span class="badge" style="background:var(--gold);color:var(--navy)">📊 FAT</span>' : '';
+    const horasTxt = porFat ? '<span style="color:var(--g400);font-weight:400">— (rateio por faturamento)</span>' : `${horas} h`;
     return `<tr>
-      <td style="font-weight:500">${escHtml(f.nome)}</td>
+      <td style="font-weight:500">${escHtml(f.nome)}${badge}</td>
       <td style="color:var(--g600)">${escHtml(f.disc||'—')}</td>
-      <td class="tr" style="background:#fdf6e8;font-weight:700;color:var(--navy)">${horas} h</td>
+      <td class="tr" style="background:#fdf6e8;font-weight:700;color:var(--navy)">${horasTxt}</td>
       <td class="tr">${R$(f.sal||0)}</td>
       <td class="tr" style="background:#fdf6e8;font-weight:700;color:var(--navy)">${R$(rateio)}</td>
       <td class="tr" style="background:var(--g100);font-weight:600">${R$(b.total)}</td>
@@ -3125,7 +3140,7 @@ function renderSimGrade(){
   if(turmaFiltro){
     // Modo "quem está nessa turma": nome, função, horas, salário
     const turma = SIM.turmas.find(t=>t.id===turmaFiltro);
-    hint.textContent = `Mostrando só quem tem carga horária em "${turma?turma.nome:''}" — clique nos títulos das colunas pra ordenar.`;
+    hint.textContent = `Mostrando quem tem carga horária lançada em "${turma?turma.nome:''}" — funcionários configurados para ratear por faturamento não aparecem aqui (veja em "Funcionários" ou "Rateio por Turma"). Clique nos títulos das colunas pra ordenar.`;
     thead.innerHTML = thSort('sim-grade','nome','Professor') + thSort('sim-grade','disc','Função / Disciplina') + thSort('sim-grade','horas','Horas nesta turma') + thSort('sim-grade','sal','Salário') + thSort('sim-grade','total','Custo Total','style="background:var(--g100)"');
     let linhas = funcsFiltrados
       .map(f=>({ f, horas: +((SIM.grade[f.id]||{})[turmaFiltro]||0) }))
@@ -3904,17 +3919,25 @@ function exportarHistoricoComparativoExcel(){
 }
 
 
-function custoPessoalPorTurmaOf(hs){
-  const r={};
-  hs.turmas.forEach(t=>r[t.id]=0);
-  hs.funcs.filter(f=>f.ativo!==false).forEach(f=>{
-    const ct=custoFunc(f);
+// Calcula o "peso" de rateio de um funcionário em cada turma, de acordo com o
+// critério escolhido (f.criterioRateio):
+//  - 'faturamento': peso = receita da turma (rec) — usado pra pessoal administrativo/geral,
+//    cujo custo não está ligado a horas de aula específicas.
+//  - 'horas' (padrão): peso = horas da grade (× valor/hora se horista) — comportamento original.
+function pesoPorTurmaDoFunc(f, hs){
+  const pesoPorTurma={};
+  let totPeso=0;
+  if(f.criterioRateio==='faturamento'){
+    hs.turmas.forEach(t=>{
+      const peso=+(t.rec||0);
+      pesoPorTurma[t.id]=peso;
+      totPeso+=peso;
+    });
+  } else {
     const gh=hs.grade[f.id]||{};
     // Horistas: peso = horas × valor_hr_aula (custo real por turma)
     // Não-horistas: peso = apenas horas (salário fixo rateado proporcional às horas)
     const isHorista=(f.regime==='HORISTA');
-    const pesoPorTurma={};
-    let totPeso=0;
     hs.turmas.forEach(t=>{
       const h=+(gh[t.id]||0);
       const hra=+(t.hra||0);
@@ -3922,6 +3945,16 @@ function custoPessoalPorTurmaOf(hs){
       pesoPorTurma[t.id]=peso;
       totPeso+=peso;
     });
+  }
+  return {pesoPorTurma, totPeso};
+}
+
+function custoPessoalPorTurmaOf(hs){
+  const r={};
+  hs.turmas.forEach(t=>r[t.id]=0);
+  hs.funcs.filter(f=>f.ativo!==false).forEach(f=>{
+    const ct=custoFunc(f);
+    const {pesoPorTurma, totPeso} = pesoPorTurmaDoFunc(f, hs);
     if(totPeso===0) return;
     hs.turmas.forEach(t=>{
       const peso=pesoPorTurma[t.id];
@@ -3936,17 +3969,10 @@ function custoPessoalPorTurmaOf(hs){
 // nos filtros por turma (Simulação e Cadastros) pra mostrar o rateio de cada pessoa.
 function custoFuncNaTurma(f, turmaId, hs){
   const ct = custoFunc(f);
-  const gh = hs.grade[f.id]||{};
-  const isHorista = (f.regime==='HORISTA');
-  let totPeso=0, pesoTurma=0;
-  hs.turmas.forEach(t=>{
-    const h=+(gh[t.id]||0);
-    const hra=+(t.hra||0);
-    const peso = isHorista && hra>0 ? h*hra : h;
-    totPeso+=peso;
-    if(t.id===turmaId) pesoTurma=peso;
-  });
-  if(totPeso===0 || pesoTurma===0) return 0;
+  const {pesoPorTurma, totPeso} = pesoPorTurmaDoFunc(f, hs);
+  if(totPeso===0) return 0;
+  const pesoTurma = pesoPorTurma[turmaId]||0;
+  if(pesoTurma===0) return 0;
   return (pesoTurma/totPeso)*ct;
 }
 
@@ -4588,6 +4614,7 @@ function abrirFormFunc(id=null){
   g('f-nome').value=f?.nome||'';
   g('f-disc').value=f?.disc||'';
   g('f-regime').value=f?.regime||'MENSALISTA';
+  g('f-criterio-rateio').value=f?.criterioRateio||'horas';
   g('f-sal').value=f?.sal?N$(f.sal):'';
   g('f-hc').value=f?.hc||220;
   g('f-grat').value=f?.grat?N$(f.grat):'';
@@ -4724,7 +4751,7 @@ function renderAlocacao(){
 function salvarFunc(){
   const nome=gS('f-nome');
   if(!nome){alert('Informe o nome do funcionário.');return;}
-  const d={nome,disc:gS('f-disc'),regime:gS('f-regime'),
+  const d={nome,disc:gS('f-disc'),regime:gS('f-regime'),criterioRateio:gS('f-criterio-rateio')||'horas',
     sal:gN('f-sal'),hc:gN('f-hc'),grat:gN('f-grat'),pctEnc:gN('f-enc'),he:gN('f-he'),
     vt:gN('f-vt'),vr:gN('f-vr'),ps:gN('f-ps'),out:gN('f-out')};
   if(editFId){
@@ -4839,7 +4866,7 @@ function renderFunc(){
       <td class="mono" style="color:var(--g400);font-size:10.5px">${f.id}</td>
       <td style="font-weight:500">${f.nome}${isAtivo?'':' <span style="font-size:9.5px;font-weight:700;color:var(--red);border:1px solid var(--red);border-radius:8px;padding:1px 6px;margin-left:4px">INATIVO</span>'}</td>
       <td style="color:var(--g600);max-width:160px;overflow:hidden;text-overflow:ellipsis">${f.disc||'—'}</td>
-      <td>${regimeBadge[f.regime]||f.regime}</td>
+      <td>${regimeBadge[f.regime]||f.regime}${f.criterioRateio==='faturamento'?' <span class="badge" style="background:var(--gold);color:var(--navy)" title="Custo rateado pelo faturamento de cada turma, não pela grade horária">📊 FAT</span>':''}</td>
       <td class="mono tr">${N$(b.sal)}</td>
       <td class="mono tr" style="color:${b.he>0?'var(--navy)':'var(--g400)'}">${b.he>0?N$(b.he):'—'}</td>
       <td class="mono tr">${N$(b.enc)}</td>
@@ -5156,8 +5183,9 @@ function renderCusto(){
     <td class="mono tr">${N$(totAlocado)}</td>
     <td></td><td></td></tr>`;
 
-  // Não alocados (apenas funcionários ativos)
-  const na=ativos.filter(f=>horasFunc(f.id)===0);
+  // Não alocados (apenas funcionários ativos e que usam o critério padrão de horas —
+  // quem está marcado para ratear por faturamento não precisa de horas na grade)
+  const na=ativos.filter(f=>f.criterioRateio!=='faturamento' && horasFunc(f.id)===0);
   g('tb-nao-aloc').innerHTML=na.length
     ?na.map(f=>`<tr>
         <td class="mono" style="font-size:10.5px;color:var(--g400)">${f.id}</td>
@@ -5166,7 +5194,7 @@ function renderCusto(){
         <td class="mono tr neg">${R$(custoFunc(f))}</td>
         <td style="color:var(--gold);font-size:11.5px">Lance na aba Rateio de Despesas</td>
       </tr>`).join('')
-    :`<tr><td colspan="5" class="tc" style="padding:22px;color:var(--green)">✅ Todos os funcionários têm horas alocadas na grade.</td></tr>`;
+    :`<tr><td colspan="5" class="tc" style="padding:22px;color:var(--green)">✅ Todos os funcionários têm horas alocadas na grade (ou estão configurados para ratear por faturamento).</td></tr>`;
 }
 
 /* ═══════════════════════════════════════════════════════
