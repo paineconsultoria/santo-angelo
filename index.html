@@ -1384,18 +1384,17 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
         <div class="card">
           <div class="card-hdr" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
             <span class="card-title">Funcionários — 2027</span>
-            <div style="display:flex;gap:8px;align-items:center">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <select id="sim-func-turma-filtro" onchange="renderSimFunc()" style="padding:7px 10px;border:1px solid var(--g200);border-radius:6px;font-size:12.5px">
+                <option value="">Todas as turmas</option>
+              </select>
               <input type="text" id="sim-func-busca" placeholder="🔎 Buscar por nome ou função..." oninput="renderSimFunc()" style="padding:7px 10px;border:1px solid var(--g200);border-radius:6px;font-size:12.5px;min-width:220px">
               <button class="btn btn-ghost btn-sm" onclick="simAddFunc()">➕ Adicionar Funcionário</button>
             </div>
           </div>
           <div class="tbl-wrap tbl-scroll">
             <table class="zebra">
-              <thead><tr>
-                <th>Nome</th><th>Função / Disciplina</th><th>Regime</th><th class="tr">Salário</th><th class="tr">% Encargos</th>
-                <th class="tr">VT</th><th class="tr">VR</th><th class="tr">Plano Saúde</th><th class="tr">Outros</th>
-                <th class="tr" style="background:var(--navy-mid)">Custo Total</th><th></th>
-              </tr></thead>
+              <thead><tr id="thead-sim-func"></tr></thead>
               <tbody id="tb-sim-func"></tbody>
             </table>
           </div>
@@ -2888,7 +2887,7 @@ function renderSimulacao(){
   }
   g('sim-vazio').style.display='none';
   g('sim-conteudo').style.display='';
-  popularFiltroTurmaSimGrade();
+  popularFiltrosTurmaSim();
   renderSimFunc();
   renderSimGrade();
   renderSimDesp();
@@ -2902,7 +2901,7 @@ function mudarModoSim(modo){
     g('sim-painel-'+m).style.display = (m===modo) ? '' : 'none';
     g('subtab-btn-sim-'+m).classList.toggle('active', m===modo);
   });
-  if(modo==='grade') popularFiltroTurmaSimGrade();
+  if(modo==='grade' || modo==='func') popularFiltrosTurmaSim();
 }
 
 /* ---------- Funcionários (simulação) ---------- */
@@ -2924,19 +2923,37 @@ function simSetFuncField(id, field, val){
   renderSimulacao();
 }
 function renderSimFunc(){
+  const thead = g('thead-sim-func');
   const tb = g('tb-sim-func');
   const busca = (gS('sim-func-busca')||'').toLowerCase();
-  const lista = SIM.funcs.filter(f=>!busca || (f.nome||'').toLowerCase().includes(busca) || (f.disc||'').toLowerCase().includes(busca));
+  const turmaFiltro = gS('sim-func-turma-filtro');
+
+  let lista = SIM.funcs.filter(f=>!busca || (f.nome||'').toLowerCase().includes(busca) || (f.disc||'').toLowerCase().includes(busca));
+  if(turmaFiltro){
+    lista = lista
+      .map(f=>({ f, horas: +((SIM.grade[f.id]||{})[turmaFiltro]||0) }))
+      .filter(x=>x.horas>0)
+      .sort((a,b)=>b.horas-a.horas);
+  }
+
+  const colHoras = turmaFiltro ? '<th class="tr" style="background:var(--gold);color:var(--navy)">Horas nesta turma</th>' : '';
+  thead.innerHTML = `<th>Nome</th><th>Função / Disciplina</th><th>Regime</th><th class="tr">Salário</th><th class="tr">% Encargos</th>
+    <th class="tr">VT</th><th class="tr">VR</th><th class="tr">Plano Saúde</th><th class="tr">Outros</th>
+    ${colHoras}<th class="tr" style="background:var(--navy-mid)">Custo Total</th><th></th>`;
+
   if(!SIM.funcs.length){
-    tb.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--g400);padding:24px">Nenhum funcionário na simulação.</td></tr>';
+    tb.innerHTML = `<tr><td colspan="${turmaFiltro?12:11}" style="text-align:center;color:var(--g400);padding:24px">Nenhum funcionário na simulação.</td></tr>`;
     return;
   }
   if(!lista.length){
-    tb.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--g400);padding:24px">Nenhum funcionário encontrado pra essa busca.</td></tr>';
+    tb.innerHTML = `<tr><td colspan="${turmaFiltro?12:11}" style="text-align:center;color:var(--g400);padding:24px">${turmaFiltro?'Nenhum funcionário com carga horária nessa turma.':'Nenhum funcionário encontrado pra essa busca.'}</td></tr>`;
     return;
   }
-  tb.innerHTML = lista.map(f=>{
+  tb.innerHTML = lista.map(item=>{
+    const f = turmaFiltro ? item.f : item;
+    const horas = turmaFiltro ? item.horas : null;
     const b = calcBreakdown(f);
+    const colHorasCel = turmaFiltro ? `<td class="tr" style="background:#fdf6e8;font-weight:700;color:var(--navy)">${horas} h</td>` : '';
     return `<tr>
       <td><input type="text" value="${escHtml(f.nome||'')}" style="width:100%;min-width:140px" onchange="simSetFuncField('${f.id}','nome',this.value)"></td>
       <td><input type="text" value="${escHtml(f.disc||'')}" placeholder="Ex: Professor de Matemática" style="width:100%;min-width:160px" onchange="simSetFuncField('${f.id}','disc',this.value)"></td>
@@ -2953,6 +2970,7 @@ function renderSimFunc(){
       <td class="tr"><input type="text" inputmode="decimal" value="${f.vr?N$(f.vr):''}" style="width:80px;text-align:right" oninput="maskMoneyInput(this)" onchange="simSetFuncField('${f.id}','vr',unmaskMoneyInput(this.value))"></td>
       <td class="tr"><input type="text" inputmode="decimal" value="${f.ps?N$(f.ps):''}" style="width:80px;text-align:right" oninput="maskMoneyInput(this)" onchange="simSetFuncField('${f.id}','ps',unmaskMoneyInput(this.value))"></td>
       <td class="tr"><input type="text" inputmode="decimal" value="${f.out?N$(f.out):''}" style="width:80px;text-align:right" oninput="maskMoneyInput(this)" onchange="simSetFuncField('${f.id}','out',unmaskMoneyInput(this.value))"></td>
+      ${colHorasCel}
       <td class="tr" style="background:var(--g100);font-weight:700">${R$(b.total)}</td>
       <td><button class="btn-icon" onclick="simDelFunc('${f.id}')" title="Excluir">🗑️</button></td>
     </tr>`;
@@ -2965,12 +2983,20 @@ function simSetGrade(fId, tId, val){
   SIM.grade[fId][tId] = parseFloat(val)||0;
   renderSimResultado();
 }
-function popularFiltroTurmaSimGrade(){
-  const sel = g('sim-grade-turma-filtro');
-  const atual = sel.value;
-  sel.innerHTML = '<option value="">Todas as turmas (matriz completa)</option>' +
-    SIM.turmas.map(t=>`<option value="${t.id}" ${t.id===atual?'selected':''}>${escHtml(t.nome)}</option>`).join('');
+function popularFiltrosTurmaSim(){
+  const opts = '<option value="">Todas as turmas</option>' + SIM.turmas.map(t=>`<option value="${t.id}">${escHtml(t.nome)}</option>`).join('');
+  const optsGrade = '<option value="">Todas as turmas (matriz completa)</option>' + SIM.turmas.map(t=>`<option value="${t.id}">${escHtml(t.nome)}</option>`).join('');
+  ['sim-func-turma-filtro'].forEach(id=>{
+    const sel = g(id); const atual = sel.value;
+    sel.innerHTML = opts;
+    if([...sel.options].some(o=>o.value===atual)) sel.value = atual;
+  });
+  const selG = g('sim-grade-turma-filtro'); const atualG = selG.value;
+  selG.innerHTML = optsGrade;
+  if([...selG.options].some(o=>o.value===atualG)) selG.value = atualG;
 }
+// mantém o nome antigo funcionando (compatibilidade com chamadas já existentes)
+function popularFiltroTurmaSimGrade(){ popularFiltrosTurmaSim(); }
 function renderSimGrade(){
   const thead = g('thead-sim-grade');
   const tb = g('tb-sim-grade');
