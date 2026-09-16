@@ -609,6 +609,11 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
       <div class="page-title">Grade Horária</div>
       <div class="page-desc">Horas/aula por funcionário em cada turma — base do rateio de custo de pessoal</div>
     </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="exportarGradeExcel(S,'Grade Horária')">⬇️ Exportar Excel</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('fi-import-grade-real').click()">⬆️ Importar Excel</button>
+      <input type="file" id="fi-import-grade-real" accept=".xlsx" style="display:none" onchange="importarGradeExcel(event, S, renderGrade)">
+    </div>
   </div>
   <div class="content">
     <div class="alert alert-info">
@@ -1475,11 +1480,14 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
         <div class="card">
           <div class="card-hdr" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
             <span class="card-title">Grade Horária — 2027</span>
-            <div style="display:flex;gap:8px;align-items:center">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <select id="sim-grade-turma-filtro" onchange="renderSimGrade()" style="padding:7px 10px;border:1px solid var(--g200);border-radius:6px;font-size:12.5px">
                 <option value="">Todas as turmas (matriz completa)</option>
               </select>
               <input type="text" id="sim-grade-busca" placeholder="🔎 Buscar por nome ou função..." oninput="renderSimGrade()" style="padding:7px 10px;border:1px solid var(--g200);border-radius:6px;font-size:12.5px;min-width:220px">
+              <button class="btn btn-ghost btn-sm" onclick="exportarGradeExcel(SIM,'Simulação 2027')">⬇️ Exportar Excel</button>
+              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('fi-import-grade-sim').click()">⬆️ Importar Excel</button>
+              <input type="file" id="fi-import-grade-sim" accept=".xlsx" style="display:none" onchange="importarGradeExcel(event, SIM, renderSimulacao)">
             </div>
           </div>
           <div style="padding:10px 18px 0;font-size:11px;color:var(--g400)" id="sim-grade-hint">Selecione uma turma no filtro pra ver rapidamente quem dá aula nela, com salário e carga horária.</div>
@@ -3152,6 +3160,89 @@ function renderRateioFunc(){
     </tr>`;
   }).join('');
 }
+/* ═══════════════════════════════════════════════════════
+   EXPORTAR / IMPORTAR GRADE HORÁRIA EM EXCEL
+   Funciona tanto pra SIM (Simulação 2027) quanto pra S (dados reais) —
+   basta passar o objeto de estado certo (hs) e, na importação, uma
+   função de callback pra re-renderizar a tela depois de aplicar.
+═══════════════════════════════════════════════════════ */
+function normalizaTexto(s){
+  return (s||'').toString().trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+
+function exportarGradeExcel(hs, label){
+  if(typeof XLSX==='undefined'){ alert('Biblioteca de exportação não carregou. Verifique sua conexão e tente novamente.'); return; }
+  if(!hs.funcs.length || !hs.turmas.length){ alert('Cadastre funcionários e turmas antes de exportar.'); return; }
+  const header = ['Professor','Função', ...hs.turmas.map(t=>t.nome)];
+  const aoa = [header];
+  hs.funcs.forEach(f=>{
+    const gh = hs.grade[f.id]||{};
+    aoa.push([f.nome||'', f.disc||'', ...hs.turmas.map(t=>+(gh[t.id]||0))]);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:32},{wch:26}, ...hs.turmas.map(()=>({wch:12}))];
+  ws['!freeze'] = {xSplit:2, ySplit:1};
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Grade Horária');
+  XLSX.writeFile(wb, `${label.replace(/[^\w\- ]/g,'')}_Grade_Horaria.xlsx`);
+}
+
+function importarGradeExcel(ev, hs, callback){
+  const file = ev.target.files[0];
+  if(!file) return;
+  if(typeof XLSX==='undefined'){ alert('Biblioteca de importação não carregou. Verifique sua conexão e tente novamente.'); ev.target.value=''; return; }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const aoa = XLSX.utils.sheet_to_json(ws, {header:1});
+      if(!aoa.length || aoa[0].length<3){ alert('Não reconheci o formato do arquivo. Use o Excel exportado por esta tela, sem mudar o cabeçalho.'); ev.target.value=''; return; }
+
+      const header = aoa[0];
+      const turmaColunas = header.slice(2).map((nomeCol,i)=>{
+        const t = hs.turmas.find(t=>normalizaTexto(t.nome)===normalizaTexto(nomeCol));
+        return { idx: 2+i, turmaId: t?t.id:null, nomeCol };
+      });
+      const turmasNaoEncontradas = turmaColunas.filter(c=>!c.turmaId).map(c=>c.nomeCol);
+
+      let atualizados=0, criados=0;
+      const funcsNaoEncontrados = [];
+      for(let r=1; r<aoa.length; r++){
+        const linha = aoa[r];
+        if(!linha || !linha[0]) continue;
+        const nome = String(linha[0]).trim();
+        let f = hs.funcs.find(x=>normalizaTexto(x.nome)===normalizaTexto(nome));
+        if(!f){
+          funcsNaoEncontrados.push(nome);
+          continue;
+        }
+        if(!hs.grade[f.id]) hs.grade[f.id]={};
+        turmaColunas.forEach(c=>{
+          if(!c.turmaId) return;
+          const val = parseFloat(linha[c.idx]);
+          hs.grade[f.id][c.turmaId] = isNaN(val) ? 0 : val;
+        });
+        atualizados++;
+      }
+
+      let msg = `✅ Grade horária atualizada: ${atualizados} funcionário(s).`;
+      if(funcsNaoEncontrados.length) msg += `\n\n⚠️ ${funcsNaoEncontrados.length} nome(s) não encontrado(s) no sistema (verifique se o nome bate exatamente):\n- ${funcsNaoEncontrados.slice(0,15).join('\n- ')}${funcsNaoEncontrados.length>15?'\n- ...':''}`;
+      if(turmasNaoEncontradas.length) msg += `\n\n⚠️ ${turmasNaoEncontradas.length} turma(s) da planilha não encontrada(s) no sistema:\n- ${turmasNaoEncontradas.join('\n- ')}`;
+      alert(msg);
+
+      callback();
+      if(typeof save === 'function' && hs === S) save();
+    }catch(err){
+      console.error(err);
+      alert('Não consegui ler esse arquivo. Confirme que é um .xlsx exportado por esta mesma tela.');
+    }
+    ev.target.value = '';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+
 function renderSimGrade(){
   const thead = g('thead-sim-grade');
   const tb = g('tb-sim-grade');
