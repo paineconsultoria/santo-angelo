@@ -183,8 +183,8 @@ table.zebra tbody tr:hover > td{background:rgba(229,164,56,.09) !important;}
 .comp-bar .comp-sep{width:1px;height:20px;background:rgba(255,255,255,.15);}
 .comp-btn{padding:5px 13px;font-size:11.5px;font-weight:600;border-radius:7px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;transition:all .14s;}
 .comp-btn:hover{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.4);}
-.comp-btn.danger{border-color:rgba(191,51,39,.5);color:#f87171;}
-.comp-btn.danger:hover{background:rgba(191,51,39,.2);}
+.comp-btn.danger{border-color:rgba(193,58,43,.5);color:#f87171;}
+.comp-btn.danger:hover{background:rgba(193,58,43,.2);}
 .hist-months{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px;}
 .hist-chip{padding:5px 13px;border-radius:16px;font-size:11.5px;font-weight:600;background:var(--g100);border:1px solid var(--g200);color:var(--navy);cursor:pointer;transition:all .13s;}
 .hist-chip:hover{background:var(--gold-pale);border-color:var(--gold);}
@@ -890,8 +890,8 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
         Traz o valor já rateado da <strong>Sociedade</strong> (aba Resultado do Grupo → Visualização) pra competência atual. As contas de <strong>Pessoal e Encargos</strong> ficam de fora por padrão — o custo de pessoal já é calculado pela Grade Horária. Desmarque o que não quiser trazer.
       </div>
       <div style="display:flex;gap:10px;margin-bottom:12px">
-        <button class="btn-tiny" onclick="marcarTodasContasImport(true)">☑️ Marcar todas</button>
-        <button class="btn-tiny" onclick="marcarTodasContasImport(false)">⬜ Desmarcar todas</button>
+        <button class="btn btn-ghost btn-sm" onclick="marcarTodasContasImport(true)">☑️ Marcar todas</button>
+        <button class="btn btn-ghost btn-sm" onclick="marcarTodasContasImport(false)">⬜ Desmarcar todas</button>
       </div>
       <div id="lista-import-desp-grupo" style="max-height:50vh;overflow-y:auto;border:1px solid var(--g200);border-radius:6px"></div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:14px;border-top:1px solid var(--g200)">
@@ -1175,8 +1175,8 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
           <label style="display:block;font-size:10.5px;font-weight:700;color:var(--g600);margin-bottom:5px">ATÉ</label>
           <select id="grupo-mes-ate" onchange="renderResultadoGrupo()" style="padding:8px 10px;border:1px solid var(--g200);border-radius:6px;font-size:13px"></select>
         </div>
-        <button class="btn-tiny" onclick="preencherOrcadoMedia()" style="height:37px" title="Preenche o orçado de julho a dezembro com a média de janeiro a junho (só onde ainda está vazio)">🔄 Gerar orçado jul-dez (média jan-jun)</button>
-        <button class="btn-tiny" onclick="recarregarDadosPlanilhas()" style="height:37px" title="Repreenche jan-jun/2026 com os valores originais das planilhas enviadas">📥 Recarregar dados das planilhas (jan-jun)</button>
+        <button class="btn btn-ghost btn-sm" onclick="preencherOrcadoMedia()" title="Preenche o orçado de julho a dezembro com a média de janeiro a junho (só onde ainda está vazio)">🔄 Gerar orçado jul-dez (média jan-jun)</button>
+        <button class="btn btn-ghost btn-sm" onclick="recarregarDadosPlanilhas()" title="Repreenche jan-jun/2026 com os valores originais das planilhas enviadas">📥 Recarregar dados das planilhas (jan-jun)</button>
         <div id="grupo-hint" style="font-size:11px;color:var(--g400);margin-left:auto;align-self:center"></div>
       </div>
     </div>
@@ -1667,7 +1667,7 @@ function mostrarAvisoErro(msg){
   if(!b){
     b = document.createElement('div');
     b.id = 'erro-banner';
-    b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#bf3327;color:#fff;padding:11px 18px;font-size:13px;font-weight:600;z-index:9999;display:flex;justify-content:space-between;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,.3);';
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#C13A2B;color:#fff;padding:11px 18px;font-size:13px;font-weight:600;z-index:9999;display:flex;justify-content:space-between;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,.3);';
     document.body.appendChild(b);
   }
   b.innerHTML = `<span>⚠️ ${msg} — o valor pode não ter sido salvo. Verifique sua conexão e preencha esse campo novamente antes de sair da página.</span><button onclick="this.parentElement.remove()" style="background:none;border:1px solid rgba(255,255,255,.6);color:#fff;border-radius:7px;padding:4px 12px;cursor:pointer;font-size:12px;flex-shrink:0">Fechar</button>`;
