@@ -4,109 +4,115 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Custo por Turma — Gestão Pedagógica Mensal</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --navy:        #182640;
-  --navy-mid:    #1e3058;
-  --navy-light:  #263d72;
-  --gold:        #c4933f;
-  --gold-lt:     #e0b86a;
-  --gold-pale:   #fdf3e0;
+  --navy:        #16224A;
+  --navy-mid:    #1C2E5E;
+  --navy-light:  #2E4488;
+  --gold:        #E5A438;
+  --gold-lt:     #F3C572;
+  --gold-dk:     #A86E1B;
+  --gold-pale:   #FDF1DD;
   --white:       #ffffff;
-  --bg:          #f6f5f2;
-  --g100:        #eeece8;
-  --g200:        #dedbd5;
-  --g400:        #9b9790;
-  --g600:        #5a5855;
-  --g800:        #2c2b28;
-  --red:         #bf3327;
-  --red-lt:      #fcecea;
-  --green:       #1c7a52;
-  --green-lt:    #e6f5ee;
+  --bg:          #F7F6F2;
+  --g100:        #EFEDE7;
+  --g200:        #DEDAD1;
+  --g400:        #9B9689;
+  --g600:        #58544B;
+  --g800:        #292620;
+  --red:         #C13A2B;
+  --red-lt:      #FBEAE7;
+  --green:       #1D7A52;
+  --green-lt:    #E6F5ED;
+  --radius:      10px;
+  --radius-sm:   7px;
+  --shadow-sm:   0 1px 2px rgba(22,34,74,.06), 0 1px 1px rgba(22,34,74,.04);
+  --shadow-md:   0 4px 14px rgba(22,34,74,.10), 0 1px 3px rgba(22,34,74,.06);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--g800);min-height:100vh;display:flex;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--g800);min-height:100vh;display:flex;-webkit-font-smoothing:antialiased;}
+h1,h2,h3,.font-display{font-family:'Manrope',sans-serif;}
 
 /* ── SIDEBAR ─────────────────────────────────────────── */
-.sidebar{width:230px;min-width:230px;background:var(--navy);display:flex;flex-direction:column;position:fixed;height:100vh;overflow-y:auto;z-index:100;}
-.sb-header{padding:22px 18px 18px;border-bottom:1px solid rgba(255,255,255,.08);}
-.sb-logo{font-family:'Playfair Display',serif;font-size:15px;color:var(--gold-lt);line-height:1.35;}
+.sidebar{width:238px;min-width:238px;background:var(--navy);display:flex;flex-direction:column;position:fixed;height:100vh;overflow-y:auto;z-index:100;}
+.sb-header{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sb-logo{font-family:'Manrope',sans-serif;font-weight:700;font-size:16px;color:var(--gold-lt);line-height:1.35;}
 .sb-sub{font-size:10px;color:var(--g400);margin-top:3px;letter-spacing:.8px;text-transform:uppercase;}
-.sb-nav{padding:12px 0;flex:1;}
-.nav-group-label{font-size:9px;color:var(--g400);letter-spacing:1.2px;text-transform:uppercase;padding:14px 18px 5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;}
+.sb-nav{padding:14px 0;flex:1;}
+.nav-group-label{font-size:9.5px;color:var(--g400);letter-spacing:1.1px;text-transform:uppercase;padding:15px 20px 6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;}
 .nav-group-label:hover{color:var(--gold-lt);}
 .nav-group-chevron{font-size:9px;transition:transform .18s;}
 .nav-group.collapsed .nav-group-chevron{transform:rotate(-90deg);}
 .nav-group-items{overflow:hidden;max-height:600px;transition:max-height .22s ease;}
 .nav-group.collapsed .nav-group-items{max-height:0;}
-.nav-item{display:flex;align-items:center;gap:9px;padding:9px 18px;color:rgba(255,255,255,.55);cursor:pointer;font-size:12.5px;font-weight:400;transition:all .14s;border-left:3px solid transparent;}
-.nav-item:hover{color:#fff;background:rgba(255,255,255,.05);}
-.nav-item.active{color:var(--gold-lt);background:rgba(196,147,63,.12);border-left-color:var(--gold);font-weight:500;}
-.nav-icon{font-size:15px;width:18px;text-align:center;}
-.subtab-row{display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--g200)}
-.subtab-btn{padding:9px 18px;font-size:12.5px;font-weight:600;color:var(--g400);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;transition:all .14s;}
-.subtab-btn:hover{color:var(--navy);}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 20px;color:rgba(255,255,255,.6);cursor:pointer;font-size:13px;font-weight:500;transition:all .14s;border-left:3px solid transparent;}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,.06);}
+.nav-item.active{color:var(--gold-lt);background:rgba(229,164,56,.14);border-left-color:var(--gold);font-weight:600;}
+.nav-icon{font-size:16px;width:19px;text-align:center;}
+.subtab-row{display:flex;gap:4px;margin-bottom:18px;border-bottom:2px solid var(--g200)}
+.subtab-btn{padding:11px 20px;font-size:13px;font-weight:700;color:var(--g400);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-2px;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;transition:all .14s;border-radius:6px 6px 0 0;}
+.subtab-btn:hover{color:var(--navy);background:var(--g100);}
 .subtab-btn.active{color:var(--navy);border-bottom-color:var(--gold);}
-.sb-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);}
-.sb-comp{padding:12px 18px;border-top:1px solid rgba(255,255,255,.08);}
+.sb-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);}
+.sb-comp{padding:14px 20px;border-top:1px solid rgba(255,255,255,.08);}
 .sb-comp input[type=month]:focus{outline:none;border-color:var(--gold);}
-.sb-footer-label{font-size:9px;color:var(--g400);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;}
-.btn-pair{display:flex;gap:7px;}
-.btn-tiny{flex:1;padding:6px 8px;font-size:11px;font-family:'IBM Plex Sans',sans-serif;font-weight:500;border:1px solid rgba(255,255,255,.12);border-radius:4px;background:rgba(255,255,255,.04);color:rgba(255,255,255,.6);cursor:pointer;transition:all .14s;text-align:center;}
+.sb-footer-label{font-size:9.5px;color:var(--g400);letter-spacing:.8px;text-transform:uppercase;margin-bottom:9px;}
+.btn-pair{display:flex;gap:8px;}
+.btn-tiny{flex:1;padding:8px 13px;font-size:12px;font-family:'Inter',sans-serif;font-weight:600;border:1px solid rgba(255,255,255,.14);border-radius:var(--radius-sm);background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);cursor:pointer;transition:all .14s;text-align:center;white-space:nowrap;}
 .btn-tiny:hover{background:rgba(255,255,255,.1);color:#fff;}
 
 /* ── MAIN ─────────────────────────────────────────────── */
-.main{margin-left:230px;flex:1;min-height:100vh;display:flex;flex-direction:column;}
-.page-hdr{background:var(--white);border-bottom:1px solid var(--g200);padding:18px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
-.page-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--navy);}
-.page-desc{font-size:12px;color:var(--g400);margin-top:2px;}
-.content{padding:24px 28px;flex:1;}
+.main{margin-left:238px;flex:1;min-height:100vh;display:flex;flex-direction:column;}
+.page-hdr{background:var(--white);border-bottom:1px solid var(--g200);padding:20px 30px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.page-title{font-family:'Manrope',sans-serif;font-weight:800;font-size:23px;color:var(--navy);letter-spacing:-.2px;}
+.page-desc{font-size:12.5px;color:var(--g400);margin-top:3px;}
+.content{padding:26px 30px;flex:1;}
 .tab-section{display:none;}
 .tab-section.active{display:block;}
 
 /* ── CARDS ─────────────────────────────────────────────── */
-.card{background:var(--white);border:1px solid var(--g200);border-radius:8px;overflow:hidden;margin-bottom:20px;}
-.card-hdr{padding:13px 18px;background:var(--g100);border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between;}
-.card-title{font-size:12px;font-weight:600;color:var(--navy);letter-spacing:.3px;text-transform:uppercase;}
-.card-body{padding:18px;}
+.card{background:var(--white);border:1px solid var(--g200);border-radius:var(--radius);overflow:hidden;margin-bottom:22px;box-shadow:var(--shadow-sm);}
+.card-hdr{padding:15px 20px;background:var(--g100);border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.card-title{font-size:12.5px;font-weight:700;color:var(--navy);letter-spacing:.3px;text-transform:uppercase;}
+.card-body{padding:20px;}
 
 /* ── FORM ─────────────────────────────────────────────── */
-.form-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:13px;margin-bottom:13px;}
-.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-bottom:14px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
 .form-group.span2{grid-column:span 2;}
 .form-group.span3{grid-column:span 3;}
-label{font-size:10px;font-weight:600;color:var(--g600);letter-spacing:.5px;text-transform:uppercase;}
-input,select{padding:7px 10px;border:1px solid var(--g200);border-radius:4px;font-size:12.5px;font-family:'IBM Plex Sans',sans-serif;color:var(--g800);background:var(--white);transition:border-color .14s;width:100%;}
-input:focus,select:focus{outline:none;border-color:var(--navy);}
+label{font-size:10.5px;font-weight:600;color:var(--g600);letter-spacing:.4px;text-transform:uppercase;}
+input,select{padding:10px 13px;border:1px solid var(--g200);border-radius:var(--radius-sm);font-size:13.5px;font-family:'Inter',sans-serif;color:var(--g800);background:var(--white);transition:border-color .14s,box-shadow .14s;width:100%;}
+input:focus,select:focus{outline:none;border-color:var(--navy-light);box-shadow:0 0 0 3px rgba(46,68,136,.14);}
 input[type="number"]{font-family:'IBM Plex Mono',monospace;}
-.sub-hdr{margin:0 -18px;padding:9px 18px;margin-bottom:13px;font-size:10px;color:var(--navy);font-weight:700;text-transform:uppercase;letter-spacing:.6px;background:var(--gold-pale);border-top:1px solid #f0e0c0;border-bottom:1px solid #f0e0c0;}
+.sub-hdr{margin:0 -18px;padding:10px 18px;margin-bottom:14px;font-size:10.5px;color:var(--navy);font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:var(--gold-pale);border-top:1px solid #f0ddb8;border-bottom:1px solid #f0ddb8;}
 
 /* ── BUTTONS ─────────────────────────────────────────── */
-.btn{padding:8px 16px;border:none;border-radius:4px;font-size:12.5px;font-weight:500;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;transition:all .14s;}
-.btn-primary{background:var(--navy);color:#fff;}
-.btn-primary:hover{background:var(--navy-light);}
-.btn-gold{background:var(--gold);color:var(--navy);}
-.btn-gold:hover{background:var(--gold-lt);}
-.btn-ghost{background:transparent;border:1px solid var(--g200);color:var(--g600);}
-.btn-ghost:hover{background:var(--g100);}
-.btn-icon{background:transparent;border:none;color:var(--g400);cursor:pointer;padding:3px 5px;border-radius:3px;font-size:13px;line-height:1;}
+.btn{padding:11px 22px;border:none;border-radius:var(--radius-sm);font-size:13.5px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:all .16s ease;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:var(--navy);color:#fff;box-shadow:var(--shadow-sm);}
+.btn-primary:hover{background:var(--navy-light);box-shadow:var(--shadow-md);transform:translateY(-1px);}
+.btn-gold{background:var(--gold);color:var(--navy);box-shadow:var(--shadow-sm);}
+.btn-gold:hover{background:var(--gold-lt);box-shadow:var(--shadow-md);transform:translateY(-1px);}
+.btn-ghost{background:var(--white);border:1.5px solid var(--g200);color:var(--g600);}
+.btn-ghost:hover{background:var(--g100);border-color:var(--g400);color:var(--navy);}
+.btn-icon{background:transparent;border:none;color:var(--g400);cursor:pointer;padding:6px 8px;border-radius:6px;font-size:14px;line-height:1;transition:all .14s;}
 .btn-icon:hover{color:var(--red);background:var(--red-lt);}
-.btn-sm{padding:5px 12px;font-size:11px;}
+.btn-sm{padding:8px 16px;font-size:12.5px;}
 
 /* ── TABLES ─────────────────────────────────────────── */
 .tbl-wrap{overflow-x:auto;}
 .tbl-wrap table thead th{position:sticky;top:0;z-index:5;box-shadow:0 1px 0 rgba(0,0,0,.15);}
 .tbl-wrap.tbl-scroll{max-height:70vh;overflow-y:auto;}
-table{width:100%;border-collapse:collapse;font-size:12.5px;}
-th{background:var(--navy);color:rgba(255,255,255,.82);padding:9px 11px;text-align:left;font-size:10.5px;font-weight:600;letter-spacing:.5px;white-space:nowrap;}
-td{padding:8px 11px;border-bottom:1px solid var(--g100);color:inherit;white-space:nowrap;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:var(--navy);color:rgba(255,255,255,.88);padding:11px 13px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.4px;white-space:nowrap;}
+td{padding:10px 13px;border-bottom:1px solid var(--g100);color:inherit;white-space:nowrap;}
 tbody{color:var(--g800);}
 tbody tr:hover td{background:#f8f8f5;}
 tfoot td{background:var(--navy);color:#fff;font-weight:600;padding:10px 11px;}
 table.zebra tbody tr:nth-child(odd) > td{background:#ffffff;}
-table.zebra tbody tr:nth-child(even) > td{background:#eaf3fb;}
-table.zebra tbody tr:hover > td{background:#f8f8f5 !important;}
+table.zebra tbody tr:nth-child(even) > td{background:rgba(22,34,74,.035);}
+table.zebra tbody tr:hover > td{background:rgba(229,164,56,.09) !important;}
 .mono{font-family:'IBM Plex Mono',monospace;}
 .tr{text-align:right;}
 .tc{text-align:center;}
@@ -114,7 +120,7 @@ table.zebra tbody tr:hover > td{background:#f8f8f5 !important;}
 /* ── BADGES ──────────────────────────────────────────── */
 .badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;}
 .b-navy{background:var(--navy);color:var(--gold-lt);}
-.b-gold{background:var(--gold-pale);color:#7a5200;}
+.b-gold{background:var(--gold-pale);color:#8a5a10;}
 .b-blue{background:#e0e8ff;color:#2d4db0;}
 .b-yellow{background:#fef8e0;color:#8a6200;}
 .pos{color:var(--green);}
@@ -122,7 +128,7 @@ table.zebra tbody tr:hover > td{background:#f8f8f5 !important;}
 
 /* ── KPI CARDS ───────────────────────────────────────── */
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;margin-bottom:20px;}
-.kpi{background:var(--white);border:1px solid var(--g200);border-radius:8px;padding:14px 16px;border-top:3px solid var(--g200);}
+.kpi{background:var(--white);border:1px solid var(--g200);border-radius:var(--radius);padding:16px 18px;border-top:3px solid var(--g200);box-shadow:var(--shadow-sm);}
 .kpi.gold{border-top-color:var(--gold);}
 .kpi.pos{border-top-color:var(--green);}
 .kpi.neg{border-top-color:var(--red);}
@@ -144,8 +150,8 @@ table.zebra tbody tr:hover > td{background:#f8f8f5 !important;}
 .grade-tbl .grade-in{width:52px;padding:3px 5px;border:1px solid transparent;background:transparent;font-size:11px;text-align:center;font-family:'IBM Plex Mono',monospace;}
 .grade-tbl .grade-in:focus{border-color:var(--gold);background:var(--white);outline:none;}
 .grade-tbl .grade-in:not([value=""]):not([value="0"]){font-weight:600;color:var(--navy);}
-.grade-tbl .total-col{background:rgba(24,38,64,.06)!important;font-weight:600;font-family:'IBM Plex Mono',monospace;}
-.grade-tbl .col-total-row{background:rgba(24,38,64,.04)!important;}
+.grade-tbl .total-col{background:rgba(22,34,74,.06)!important;font-weight:600;font-family:'IBM Plex Mono',monospace;}
+.grade-tbl .col-total-row{background:rgba(22,34,74,.04)!important;}
 
 /* ── CRITERIA BOX ────────────────────────────────────── */
 .criteria-box{background:var(--white);border:1px solid var(--g200);border-radius:8px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:flex-start;gap:30px;flex-wrap:wrap;}
@@ -158,7 +164,7 @@ table.zebra tbody tr:hover > td{background:#f8f8f5 !important;}
 /* ── ALERT ───────────────────────────────────────────── */
 .alert{padding:11px 15px;border-radius:6px;font-size:12.5px;margin-bottom:16px;border:1px solid;}
 .alert-info{background:#edf3fc;color:#1a3b70;border-color:#c5d6f0;}
-.alert-warn{background:#fdf8ea;color:#7a5200;border-color:#f0dea0;}
+.alert-warn{background:#fdf8ea;color:#8a5a10;border-color:#f0dea0;}
 
 /* ── PROGRESS BAR ────────────────────────────────────── */
 .bar-bg{height:3px;background:var(--g200);border-radius:2px;margin-top:4px;}
@@ -171,11 +177,11 @@ table.zebra tbody tr:hover > td{background:#f8f8f5 !important;}
 /* ── COMPETÊNCIA BAR ─────────────────────────────────── */
 .comp-bar{background:var(--navy-mid);border-bottom:2px solid var(--gold);padding:9px 28px 9px 260px;display:flex;align-items:center;gap:14px;font-size:12px;color:rgba(255,255,255,.7);position:sticky;top:0;z-index:50;}
 .comp-bar label{font-size:10px;font-weight:700;color:var(--gold-lt);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;}
-.comp-bar input[type=month]{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:4px;padding:4px 10px;font-size:12.5px;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;}
+.comp-bar input[type=month]{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:7px;padding:4px 10px;font-size:12.5px;font-family:'Inter',sans-serif;cursor:pointer;}
 .comp-bar input[type=month]:focus{outline:none;border-color:var(--gold);}
 .comp-bar .comp-badge{background:var(--gold);color:var(--navy);font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:.3px;}
 .comp-bar .comp-sep{width:1px;height:20px;background:rgba(255,255,255,.15);}
-.comp-btn{padding:5px 13px;font-size:11.5px;font-weight:600;border-radius:4px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);cursor:pointer;font-family:'IBM Plex Sans',sans-serif;white-space:nowrap;transition:all .14s;}
+.comp-btn{padding:5px 13px;font-size:11.5px;font-weight:600;border-radius:7px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;transition:all .14s;}
 .comp-btn:hover{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.4);}
 .comp-btn.danger{border-color:rgba(191,51,39,.5);color:#f87171;}
 .comp-btn.danger:hover{background:rgba(191,51,39,.2);}
@@ -186,7 +192,7 @@ table.zebra tbody tr:hover > td{background:#f8f8f5 !important;}
 .copy-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;}
 .copy-modal.open{display:flex;}
 .copy-box{background:#fff;border-radius:10px;padding:28px;width:420px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.3);}
-.copy-box h3{font-family:'Playfair Display',serif;font-size:17px;color:var(--navy);margin-bottom:6px;}
+.copy-box h3{font-family:'Manrope',sans-serif;font-size:17px;color:var(--navy);margin-bottom:6px;}
 .copy-box p{font-size:12.5px;color:var(--g600);margin-bottom:18px;line-height:1.5;}
 .copy-month-list{max-height:220px;overflow-y:auto;border:1px solid var(--g200);border-radius:6px;margin-bottom:18px;}
 .copy-month-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--g100);cursor:pointer;transition:background .12s;}
@@ -203,12 +209,13 @@ table.zebra tbody tr:hover > td{background:#f8f8f5 !important;}
 .cost-preview-val{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:var(--navy);}
 
 /* ── DEMONSTRATIVO DE CUSTO ──────────────────────────── */
-.form-demo-grid{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start;}
+.form-demo-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,360px);gap:22px;align-items:start;}
+@media (max-width: 880px){ .form-demo-grid{grid-template-columns:minmax(0,1fr);} }
 .demo-col{display:flex;flex-direction:column;position:sticky;top:20px;max-height:calc(100vh - 40px);overflow-y:auto;}
 .demo-aloc-turma{font-weight:600;color:var(--navy);}
 .demo-aloc-pct{font-size:10.5px;color:var(--g400);font-weight:400;}
-.demo-aloc-bar-wrap{height:5px;background:var(--g100);border-radius:3px;margin-top:4px;overflow:hidden;}
-.demo-aloc-bar{height:5px;background:var(--gold);border-radius:3px;transition:width .3s;}
+.demo-aloc-bar-wrap{height:5px;background:var(--g100);border-radius:6px;margin-top:4px;overflow:hidden;}
+.demo-aloc-bar{height:5px;background:var(--gold);border-radius:6px;transition:width .3s;}
 .demo-box{background:var(--g100);border:1px solid var(--g200);border-radius:8px;overflow:visible;flex-shrink:0;}
 .demo-box-hdr{background:var(--navy);padding:11px 14px;display:flex;align-items:center;gap:8px;}
 .demo-box-hdr span{font-size:11px;font-weight:700;color:var(--gold-lt);text-transform:uppercase;letter-spacing:.6px;}
@@ -218,7 +225,7 @@ table.zebra tbody tr:hover > td{background:#f8f8f5 !important;}
 .demo-lbl{color:var(--g600);line-height:1.3;}
 .demo-lbl small{display:block;font-size:10px;color:var(--g400);font-style:italic;margin-top:1px;}
 .demo-val{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--g800);white-space:nowrap;min-width:100px;}
-.demo-sec td{background:rgba(196,147,63,.12);font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gold);padding:4px 12px!important;border-bottom:1px solid rgba(196,147,63,.2)!important;}
+.demo-sec td{background:rgba(229,164,56,.12);font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gold);padding:4px 12px!important;border-bottom:1px solid rgba(229,164,56,.2)!important;}
 .demo-sub .demo-lbl{padding-left:14px;font-size:11.5px;}
 .demo-subtot td{background:var(--g200);}
 .demo-subtot .demo-lbl{font-weight:600;color:var(--navy);}
@@ -276,16 +283,16 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
 /* ── GRADE 5-COL GRID ────────────────────────────────── */
 .grade-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:16px 18px;}
 .grade-cell{background:var(--white);border:1px solid var(--g200);border-radius:6px;overflow:hidden;transition:border-color .14s,box-shadow .14s;}
-.grade-cell:hover{border-color:var(--gold);box-shadow:0 2px 8px rgba(196,147,63,.15);}
-.grade-cell.has-hours{border-color:var(--navy);background:rgba(24,38,64,.03);}
+.grade-cell:hover{border-color:var(--gold);box-shadow:0 2px 8px rgba(229,164,56,.15);}
+.grade-cell.has-hours{border-color:var(--navy);background:rgba(22,34,74,.03);}
 .grade-cell-hdr{padding:7px 10px;background:var(--g100);border-bottom:1px solid var(--g200);font-size:10.5px;font-weight:700;color:var(--navy);line-height:1.3;}
 .grade-cell.has-hours .grade-cell-hdr{background:var(--navy);color:var(--gold-lt);}
 .grade-cell-id{font-size:9px;font-weight:400;color:var(--g400);display:block;font-family:'IBM Plex Mono',monospace;}
 .grade-cell.has-hours .grade-cell-id{color:rgba(255,255,255,.5);}
 .grade-cell-body{padding:8px 10px;display:flex;align-items:center;gap:6px;}
 .grade-cell-body label{font-size:10px;color:var(--g600);white-space:nowrap;}
-.grade-num-in{width:100%;padding:6px 8px;border:1px solid var(--g200);border-radius:4px;font-size:14px;font-family:'IBM Plex Mono',monospace;font-weight:600;text-align:center;color:var(--navy);background:var(--white);transition:border-color .14s;}
-.grade-num-in:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(196,147,63,.2);}
+.grade-num-in{width:100%;padding:6px 8px;border:1px solid var(--g200);border-radius:7px;font-size:14px;font-family:'IBM Plex Mono',monospace;font-weight:600;text-align:center;color:var(--navy);background:var(--white);transition:border-color .14s;}
+.grade-num-in:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(229,164,56,.2);}
 .grade-num-in:not([value=""]):not([value="0"]){color:var(--navy);}
 .saldo-resumo{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;}
 .dash-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;}
@@ -317,7 +324,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
 .var-pos{color:#16a34a;font-weight:600;}
 .var-neg{color:#dc2626;font-weight:600;}
 .grade-hra-tag{font-size:9px;color:var(--g400);padding:1px 6px;background:var(--g100);border-radius:8px;white-space:nowrap;}
-.grade-cell.has-hours .grade-hra-tag{background:rgba(24,38,64,.1);color:var(--navy);}
+.grade-cell.has-hours .grade-hra-tag{background:rgba(22,34,74,.1);color:var(--navy);}
 .grade-total-bar{margin:14px 18px;padding:10px 14px;background:var(--navy);border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
 .grade-total-bar span{font-size:11px;color:rgba(255,255,255,.7);}
 .grade-total-val{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;color:var(--gold-lt);}
@@ -325,16 +332,16 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
 
 /* ── LOGIN ────────────────────────────────────────────── */
 .login-overlay{display:none;position:fixed;inset:0;background:var(--navy);z-index:999;align-items:center;justify-content:center;}
-.login-box{background:var(--white);border-radius:12px;padding:36px 34px 30px;width:100%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.35);}
-.login-logo{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--navy);text-align:center;}
-.login-sub{font-size:11.5px;color:var(--g400);text-align:center;margin-bottom:22px;}
-.login-label{display:block;font-size:11px;font-weight:600;color:var(--g600);margin:12px 0 5px;}
-.login-input{width:100%;padding:9px 11px;border:1px solid var(--g200);border-radius:6px;font-size:13.5px;font-family:'IBM Plex Sans',sans-serif;}
-.login-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(196,147,63,.2);}
-.login-error{color:var(--red);font-size:11.5px;min-height:16px;margin-top:8px;}
-.login-btn{width:100%;margin-top:8px;padding:10px;background:var(--navy);color:var(--gold-lt);border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s;}
-.login-btn:hover{background:var(--navy-light);}
-.login-btn:disabled{opacity:.6;cursor:default;}
+.login-box{background:var(--white);border-radius:14px;padding:40px 36px 34px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.35);border-top:4px solid var(--gold);}
+.login-logo{font-family:'Manrope',sans-serif;font-size:24px;font-weight:800;color:var(--navy);text-align:center;}
+.login-sub{font-size:12px;color:var(--g400);text-align:center;margin-bottom:26px;}
+.login-label{display:block;font-size:11px;font-weight:700;color:var(--g600);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.4px;}
+.login-input{width:100%;padding:11px 13px;border:1px solid var(--g200);border-radius:7px;font-size:14px;font-family:'Inter',sans-serif;}
+.login-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(229,164,56,.2);}
+.login-error{color:var(--red);font-size:12px;min-height:16px;margin-top:9px;}
+.login-btn{width:100%;margin-top:10px;padding:13px;background:var(--navy);color:var(--gold-lt);border:none;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer;transition:all .16s;}
+.login-btn:hover{background:var(--navy-light);transform:translateY(-1px);box-shadow:var(--shadow-md);}
+.login-btn:disabled{opacity:.6;cursor:default;transform:none;box-shadow:none;}
 .sb-user-box{padding:10px 14px;border-top:1px solid rgba(255,255,255,.1);}
 .sb-user-name{font-size:11.5px;color:#fff;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sb-user-role{font-size:10px;color:var(--gold-lt);margin-bottom:6px;}
@@ -347,6 +354,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
 <!-- ═══════════════ LOGIN ═══════════════ -->
 <div id="login-overlay" class="login-overlay">
   <form class="login-box" onsubmit="doLogin(event)">
+    <div style="font-size:11px;font-weight:700;color:var(--gold-dk);text-align:center;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px">Colégio Santo Ângelo</div>
     <div class="login-logo">Custo por Turma</div>
     <div class="login-sub">Gestão Pedagógica · Mensal</div>
     <label class="login-label">E-mail</label>
@@ -361,6 +369,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
 <!-- ═══════════════ SIDEBAR ═══════════════ -->
 <nav class="sidebar" style="display:none">
   <div class="sb-header">
+    <div style="font-size:9.5px;font-weight:700;color:var(--gold-lt);letter-spacing:1.1px;text-transform:uppercase;margin-bottom:4px;opacity:.85">Colégio Santo Ângelo</div>
     <div class="sb-logo">Custo por Turma</div>
     <div class="sb-sub">Gestão Pedagógica · Mensal</div>
   </div>
@@ -459,14 +468,14 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
 <!-- ═══════════════ MAIN ═══════════════════ -->
 <main class="main" style="display:none">
 
-<div id="comp-topbar" style="display:flex;background:var(--navy);border-bottom:1px solid var(--navy-mid);padding:6px 24px;align-items:center;gap:10px;flex-wrap:wrap;font-size:11px;color:rgba(255,255,255,.8)">
-  <span style="font-weight:600;color:#fff;font-size:11px">Competência:</span>
-  <input type="month" id="comp-input-sb" onchange="trocarCompetencia(this.value)" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:4px;padding:3px 7px;font-size:11px;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;">
-  <span style="font-size:10.5px;font-weight:700;color:var(--gold-lt);background:rgba(196,147,63,.18);border-radius:4px;padding:3px 8px;letter-spacing:.3px" id="comp-badge-sb">—</span>
+<div id="comp-topbar" style="display:flex;background:var(--navy);border-bottom:1px solid var(--navy-mid);padding:10px 26px;align-items:center;gap:11px;flex-wrap:wrap;font-size:12px;color:rgba(255,255,255,.8)">
+  <span style="font-weight:700;color:#fff;font-size:12px">Competência:</span>
+  <input type="month" id="comp-input-sb" onchange="trocarCompetencia(this.value)" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:7px;padding:6px 10px;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;">
+  <span style="font-size:11px;font-weight:700;color:var(--gold-lt);background:rgba(229,164,56,.18);border-radius:7px;padding:5px 10px;letter-spacing:.3px" id="comp-badge-sb">—</span>
   <button class="btn-tiny" onclick="salvarCompetencia()">💾 Salvar mês</button>
   <button class="btn-tiny" onclick="abrirCopyModal()">📋 Copiar mês anterior</button>
-  <button class="btn-tiny" style="background:rgba(191,51,39,.18);color:#ffb4ac" onclick="zerarEReimportarMesAnterior()" title="Apaga tudo do mês atual e traz novamente todos os dados do mês anterior (funcionários, grade, turmas e despesas)">♻️ Zerar e reimportar mês anterior</button>
-  <span style="margin-left:auto;display:flex;align-items:center;gap:8px">
+  <button class="btn-tiny" style="background:rgba(193,58,43,.18);color:#ffb4ac" onclick="zerarEReimportarMesAnterior()" title="Apaga tudo do mês atual e traz novamente todos os dados do mês anterior (funcionários, grade, turmas e despesas)">♻️ Zerar e reimportar mês anterior</button>
+  <span style="margin-left:auto;display:flex;align-items:center;gap:9px">
     <button class="btn-tiny" onclick="exportarJSON()">⬇️ Exportar</button>
     <button class="btn-tiny" onclick="document.getElementById('fi').click()">⬆️ Importar</button>
     <input type="file" id="fi" accept=".json" style="display:none" onchange="importarJSON(event)">
@@ -851,7 +860,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
               <th class="sortable" onclick="sortTable('desp-turma','nome')">Turma<span class="sort-arrow"></span></th>
               <th class="sortable tr" onclick="sortTable('desp-turma','rec')">Receita<span class="sort-arrow"></span></th>
               <th class="tr">% Receita</th>
-              <th class="tr" style="background:rgba(196,147,63,.25)">📊 Faturamento</th>
+              <th class="tr" style="background:rgba(229,164,56,.25)">📊 Faturamento</th>
               <th class="tr" style="background:rgba(38,61,114,.35)">🔢 Nº Turmas</th>
               <th class="tr" style="background:rgba(28,122,82,.35)">🎯 Turma Direta</th>
               <th class="sortable tr" style="background:var(--navy-mid)" onclick="sortTable('desp-turma','total')">Total Despesas<span class="sort-arrow"></span></th>
@@ -1661,7 +1670,7 @@ function mostrarAvisoErro(msg){
     b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#bf3327;color:#fff;padding:11px 18px;font-size:13px;font-weight:600;z-index:9999;display:flex;justify-content:space-between;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,.3);';
     document.body.appendChild(b);
   }
-  b.innerHTML = `<span>⚠️ ${msg} — o valor pode não ter sido salvo. Verifique sua conexão e preencha esse campo novamente antes de sair da página.</span><button onclick="this.parentElement.remove()" style="background:none;border:1px solid rgba(255,255,255,.6);color:#fff;border-radius:4px;padding:4px 12px;cursor:pointer;font-size:12px;flex-shrink:0">Fechar</button>`;
+  b.innerHTML = `<span>⚠️ ${msg} — o valor pode não ter sido salvo. Verifique sua conexão e preencha esse campo novamente antes de sair da página.</span><button onclick="this.parentElement.remove()" style="background:none;border:1px solid rgba(255,255,255,.6);color:#fff;border-radius:7px;padding:4px 12px;cursor:pointer;font-size:12px;flex-shrink:0">Fechar</button>`;
 }
 
 function applyRoleGate(role){
@@ -2582,7 +2591,7 @@ function renderModalRateioMeses(){
     rows += `<tr>
       <td>${MESES_NOMES[m-1]}</td>
       <td>
-        <select onchange="setRateioTipo('${codigo}','${comp}',this.value)" style="padding:4px 6px;border:1px solid var(--g200);border-radius:4px;font-size:11.5px">
+        <select onchange="setRateioTipo('${codigo}','${comp}',this.value)" style="padding:4px 6px;border:1px solid var(--g200);border-radius:7px;font-size:11.5px">
           <option value="" ${!cfg.tipo?'selected':''}>Sem rateio</option>
           <option value="faturamento" ${cfg.tipo==='faturamento'?'selected':''}>Por faturamento</option>
           <option value="manual" ${cfg.tipo==='manual'?'selected':''}>Manual</option>
@@ -2590,7 +2599,7 @@ function renderModalRateioMeses(){
       </td>
       ${EMPRESAS_GRUPO.map(e=>{
         if(isManual){
-          return `<td class="tr"><input type="number" step="0.01" value="${cfg[e.id]||0}" style="width:64px;text-align:right;border:1px solid var(--g200);border-radius:4px;padding:3px 5px" onchange="setRateioPct('${codigo}','${comp}','${e.id}',this.value)"></td>`;
+          return `<td class="tr"><input type="number" step="0.01" value="${cfg[e.id]||0}" style="width:64px;text-align:right;border:1px solid var(--g200);border-radius:7px;padding:3px 5px" onchange="setRateioPct('${codigo}','${comp}','${e.id}',this.value)"></td>`;
         }
         if(cfg.tipo==='faturamento'){
           return `<td class="tr" style="color:var(--g400)">${PC(pctFat[e.id])}</td>`;
@@ -2774,7 +2783,7 @@ function renderPreenchimento(){
         return `<td class="tr"${cor?` style="color:${cor}"`:''}>${val===null?'—':PC(val)}</td>`;
       }
       if(editable && !readonly){
-        return `<td class="tr"><input type="text" inputmode="decimal" value="${N$(val||0)}" style="width:110px;text-align:right;border:1px solid var(--g200);border-radius:4px;padding:4px 6px;font-family:'IBM Plex Mono',monospace" oninput="maskMoneyInput(this)" onchange="setResultadoField('${emp}','${mm.comp}','${field}',unmaskMoneyInput(this.value))"></td>`;
+        return `<td class="tr"><input type="text" inputmode="decimal" value="${N$(val||0)}" style="width:110px;text-align:right;border:1px solid var(--g200);border-radius:7px;padding:4px 6px;font-family:'IBM Plex Mono',monospace" oninput="maskMoneyInput(this)" onchange="setResultadoField('${emp}','${mm.comp}','${field}',unmaskMoneyInput(this.value))"></td>`;
       }
       return `<td class="tr"${cor?` style="color:${cor}"`:''}>${R$(val)}</td>`;
     }).join('');
@@ -2825,7 +2834,7 @@ function renderPreenchimento(){
     } else {
       const cels = row.vals.map((v,i)=>{
         if(!readonly){
-          return `<td class="tr"><input type="text" inputmode="decimal" value="${N$(v||0)}" style="width:100px;text-align:right;border:1px solid var(--g200);border-radius:4px;padding:3px 5px;font-family:'IBM Plex Mono',monospace;font-size:11.5px" oninput="maskMoneyInput(this)" onchange="setContaValor('${emp}','${row.cod}','${meses[i].comp}',unmaskMoneyInput(this.value))"></td>`;
+          return `<td class="tr"><input type="text" inputmode="decimal" value="${N$(v||0)}" style="width:100px;text-align:right;border:1px solid var(--g200);border-radius:7px;padding:3px 5px;font-family:'IBM Plex Mono',monospace;font-size:11.5px" oninput="maskMoneyInput(this)" onchange="setContaValor('${emp}','${row.cod}','${meses[i].comp}',unmaskMoneyInput(this.value))"></td>`;
         }
         return `<td class="tr">${R$(v)}</td>`;
       }).join('');
@@ -3550,7 +3559,7 @@ function renderDashboard(){
       <td><span style="font-family:'IBM Plex Mono',monospace;color:var(--g400);margin-right:6px;font-size:11px">${r.cod}</span>${r.nome}</td>
       <td class="tr">${R$(r.total)}</td>
       <td class="tr">${PC(pct)}</td>
-      <td><div style="background:var(--g100);border-radius:4px;height:14px;overflow:hidden"><div style="width:${barPct}%;background:var(--gold);height:100%"></div></div></td>
+      <td><div style="background:var(--g100);border-radius:7px;height:14px;overflow:hidden"><div style="width:${barPct}%;background:var(--gold);height:100%"></div></div></td>
     </tr>`;
   }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--g400);padding:16px">Sem despesas registradas nesse período</td></tr>';
 
@@ -3564,8 +3573,8 @@ function renderDashboard(){
   chartReceitaDespesa = new Chart(ctx1, {
     type:'bar',
     data:{ labels, datasets:[
-      {label:'Receita', data:serieR, backgroundColor:'#c4933f'},
-      {label:'Despesa', data:serieD, backgroundColor:'#182640'}
+      {label:'Receita', data:serieR, backgroundColor:'#E5A438'},
+      {label:'Despesa', data:serieD, backgroundColor:'#16224A'}
     ]},
     options:{ responsive:true, plugins:{legend:{position:'bottom'}}, scales:{y:{beginAtZero:true}} }
   });
@@ -3580,7 +3589,7 @@ function renderDashboard(){
   chartMargem = new Chart(ctx3, {
     type:'line',
     data:{ labels, datasets:[
-      {label:'Margem Líquida (%)', data:serieMargem, borderColor:'#c4933f', backgroundColor:'rgba(196,147,63,.15)', tension:.25, fill:true, spanGaps:true}
+      {label:'Margem Líquida (%)', data:serieMargem, borderColor:'#E5A438', backgroundColor:'rgba(229,164,56,.15)', tension:.25, fill:true, spanGaps:true}
     ]},
     options:{ responsive:true, plugins:{legend:{position:'bottom'}}, scales:{y:{ticks:{callback:v=>v+'%'}}} }
   });
@@ -4247,17 +4256,17 @@ function renderSbAplicRows(){
     <tbody>
     ${sbAplicRows.map((r,i)=>`<tr style="background:${i%2===0?'#fff':'#eaf3fb'}">
       <td style="padding:4px 6px">
-        <input list="dl-empresas-aplic" id="sb-ae-emp-${r.id}" value="${r.empresa}" placeholder="Empresa" style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:4px;padding:4px 7px">
+        <input list="dl-empresas-aplic" id="sb-ae-emp-${r.id}" value="${r.empresa}" placeholder="Empresa" style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:7px;padding:4px 7px">
         <datalist id="dl-empresas-aplic">${EMPRESAS_APLIC.map(e=>`<option value="${e}">`).join('')}</datalist>
       </td>
       <td style="padding:4px 6px">
-        <input list="dl-aplicacoes" id="sb-ae-apl-${r.id}" value="${r.aplicacao}" placeholder="Aplicação" style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:4px;padding:4px 7px">
+        <input list="dl-aplicacoes" id="sb-ae-apl-${r.id}" value="${r.aplicacao}" placeholder="Aplicação" style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:7px;padding:4px 7px">
         <datalist id="dl-aplicacoes">${APLICACOES.map(a=>`<option value="${a}">`).join('')}</datalist>
       </td>
       <td style="padding:4px 6px">
         <input type="text" inputmode="decimal" id="sb-ae-sal-${r.id}" placeholder="0,00" oninput="maskMoneyInput(this)"
           value="${(()=>{const s=sbEditMes?(saldoBancario[sbEditMes]?.aplicacoes?.find(x=>x.id===r.id)?.saldo):null; return s?N$(s):'';})()}"
-          style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:4px;padding:4px 7px;text-align:right">
+          style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:7px;padding:4px 7px;text-align:right">
       </td>
       <td style="padding:4px 2px;text-align:center">
         <button onclick="removeSbRow(sbAplicRows,'${r.id}',renderSbAplicRows)" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;padding:2px 4px">✕</button>
@@ -4281,13 +4290,13 @@ function renderSbContaRows(){
     <tbody>
     ${sbContaRows.map((r,i)=>`<tr style="background:${i%2===0?'#fff':'#eaf3fb'}">
       <td style="padding:4px 6px">
-        <input list="dl-empresas-cc" id="sb-cc-emp-${r.id}" value="${r.empresa}" placeholder="Empresa" style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:4px;padding:4px 7px">
+        <input list="dl-empresas-cc" id="sb-cc-emp-${r.id}" value="${r.empresa}" placeholder="Empresa" style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:7px;padding:4px 7px">
         <datalist id="dl-empresas-cc">${EMPRESAS_CC.map(e=>`<option value="${e}">`).join('')}</datalist>
       </td>
       <td style="padding:4px 6px">
         <input type="text" inputmode="decimal" id="sb-cc-sal-${r.id}" placeholder="0,00" oninput="maskMoneyInput(this)"
           value="${(()=>{const s=sbEditMes?(saldoBancario[sbEditMes]?.contas?.find(x=>x.id===r.id)?.saldo):null; return s?N$(s):'';})()}"
-          style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:4px;padding:4px 7px;text-align:right">
+          style="width:100%;font-size:12px;border:1px solid var(--g200);border-radius:7px;padding:4px 7px;text-align:right">
       </td>
       <td style="padding:4px 2px;text-align:center">
         <button onclick="removeSbRow(sbContaRows,'${r.id}',renderSbContaRows)" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;padding:2px 4px">✕</button>
@@ -4915,7 +4924,7 @@ function renderAlocacao(){
 
   panel.style.display='block';
   const notaMulti = f.rateioEmpresas && pctSociedadeDoFunc(f)<100
-    ? `<tr><td colspan="2" style="padding:6px 16px;font-size:11px;color:var(--gold-dk,#7a5200);background:#fdf6e8">🏢 Esse funcionário atende outras empresas também — só ${pctSociedadeDoFunc(f)}% do custo (fatia da Sociedade) entra nesse rateio.</td></tr>`
+    ? `<tr><td colspan="2" style="padding:6px 16px;font-size:11px;color:var(--gold-dk,#8a5a10);background:#fdf6e8">🏢 Esse funcionário atende outras empresas também — só ${pctSociedadeDoFunc(f)}% do custo (fatia da Sociedade) entra nesse rateio.</td></tr>`
     : '';
   tbl.innerHTML=
     notaMulti+
@@ -5644,7 +5653,7 @@ function updDesp(id,field,val){
 }
 
 const crLabel={
-  faturamento:'<span style="font-size:10px;background:rgba(196,147,63,.15);color:#7a5200;padding:1px 7px;border-radius:10px;font-weight:600">📊 Faturamento</span>',
+  faturamento:'<span style="font-size:10px;background:rgba(229,164,56,.15);color:#8a5a10;padding:1px 7px;border-radius:10px;font-weight:600">📊 Faturamento</span>',
   turmas:     '<span style="font-size:10px;background:rgba(38,61,114,.12);color:var(--navy);padding:1px 7px;border-radius:10px;font-weight:600">🔢 Nº Turmas</span>'
 };
 
