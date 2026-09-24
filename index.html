@@ -784,7 +784,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
       <div style="padding:10px 18px 0;font-size:11px;color:var(--g400)">✏️ edita nome/grupo/subcategoria (e o código, se ainda não tiver valor lançado em nenhum mês/empresa). Contas de <strong>Pessoal e Encargos</strong> ficam de fora do Rateio de Despesas — esse custo já vem da Grade Horária.</div>
       <div class="tbl-wrap tbl-scroll">
         <table class="zebra">
-          <thead><tr><th>Código</th><th>Grupo</th><th>Subgrupo</th><th>Nome da Conta</th><th style="width:90px"></th></tr></thead>
+          <thead><tr><th style="width:120px">Código</th><th>Nome da Conta</th><th style="width:150px"></th></tr></thead>
           <tbody id="tb-planocontas"></tbody>
         </table>
       </div>
@@ -3330,38 +3330,53 @@ function popularFiltroTurmaRateioFunc(){
 function renderPlanoContasTab(){
   const tb = g('tb-planocontas');
   const busca = normalizaTexto(gS('planocontas-busca')||'');
-  let curGrupo=null, curSub=null;
-  const linhas = [];
+
+  // Monta a árvore grupo > subgrupo > contas, já filtrando pela busca
+  const grupos = []; // [{nome, subs:[{nome, contas:[row,...]}]}]
+  let curGrupoObj=null, curSubObj=null;
   getPlanoContas().forEach(row=>{
-    if(row.lvl==='grupo') curGrupo=row.nome;
-    else if(row.lvl==='subgrupo') curSub=row.nome;
-    else if(row.lvl==='conta'){
+    if(row.lvl==='grupo'){
+      curGrupoObj = {nome:row.nome, subs:[]};
+      grupos.push(curGrupoObj);
+      curSubObj = null;
+    } else if(row.lvl==='subgrupo'){
+      curSubObj = {nome:row.nome, contas:[]};
+      if(curGrupoObj) curGrupoObj.subs.push(curSubObj);
+    } else if(row.lvl==='conta'){
       if(busca && !normalizaTexto(row.cod).includes(busca) && !normalizaTexto(row.nome).includes(busca)) return;
-      linhas.push({...row, grupo:curGrupo, subgrupo:curSub});
+      if(curSubObj) curSubObj.contas.push(row);
     }
   });
-  if(!linhas.length){
-    tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--g400);padding:24px">Nenhuma conta encontrada.</td></tr>';
-    return;
-  }
-  tb.innerHTML = linhas.map(row=>{
-    const ehEdicaoDeBase = row.custom && row.origemBase;
-    const ehContaNova = row.custom && !row.origemBase;
-    const delBtn = ehContaNova ? ` <span title="Excluir esta conta customizada" style="cursor:pointer;color:var(--red)" onclick="excluirContaCustom('${row.cod}')">✕ excluir</span>` : '';
-    const restaurarBtn = ehEdicaoDeBase ? ` <span title="Restaurar nome/grupo/subgrupo originais (os valores já lançados não mudam)" style="cursor:pointer;color:var(--g400)" onclick="excluirContaCustom('${row.cod}')">↺ restaurar</span>` : '';
-    const editadaBadge = ehEdicaoDeBase ? ' <span title="Editada por você" style="color:var(--navy-light);font-size:10px">✎</span>' : '';
-    const customBadge = ehContaNova ? ' <span title="Conta customizada" style="color:var(--gold);font-size:10px">＋</span>' : '';
-    return `<tr>
-      <td class="mono" style="color:var(--g400)">${row.cod}</td>
-      <td style="font-size:11.5px;color:var(--g600)">${escHtml(row.grupo||'')}</td>
-      <td style="font-size:11.5px;color:var(--g600)">${escHtml(row.subgrupo||'')}</td>
-      <td style="font-weight:500">${escHtml(row.nome)}${customBadge}${editadaBadge}</td>
-      <td style="font-size:11px;white-space:nowrap">
-        <span title="Editar esta conta" style="cursor:pointer;color:var(--navy-light)" onclick="abrirModalEditarConta('${row.cod}')">✏️ editar</span>
-        ${delBtn}${restaurarBtn}
-      </td>
-    </tr>`;
-  }).join('');
+
+  let html = '';
+  let totalContas = 0;
+  grupos.forEach(grupo=>{
+    const subsComConta = grupo.subs.filter(s=>s.contas.length);
+    if(!subsComConta.length) return; // grupo inteiro sem resultado na busca — não mostra
+    html += `<tr style="background:var(--navy)"><td colspan="3" style="font-weight:700;color:#fff;padding:9px 13px">${escHtml(grupo.nome)}</td></tr>`;
+    subsComConta.forEach(sub=>{
+      html += `<tr style="background:var(--g100)"><td colspan="3" style="font-weight:600;padding:7px 13px 7px 26px;color:var(--g600)">${escHtml(sub.nome)}</td></tr>`;
+      sub.contas.forEach(row=>{
+        totalContas++;
+        const ehEdicaoDeBase = row.custom && row.origemBase;
+        const ehContaNova = row.custom && !row.origemBase;
+        const delBtn = ehContaNova ? ` <span title="Excluir esta conta customizada" style="cursor:pointer;color:var(--red)" onclick="excluirContaCustom('${row.cod}')">✕ excluir</span>` : '';
+        const restaurarBtn = ehEdicaoDeBase ? ` <span title="Restaurar nome/grupo/subgrupo originais (os valores já lançados não mudam)" style="cursor:pointer;color:var(--g400)" onclick="excluirContaCustom('${row.cod}')">↺ restaurar</span>` : '';
+        const editadaBadge = ehEdicaoDeBase ? ' <span title="Editada por você" style="color:var(--navy-light);font-size:10px">✎</span>' : '';
+        const customBadge = ehContaNova ? ' <span title="Conta customizada" style="color:var(--gold);font-size:10px">＋</span>' : '';
+        html += `<tr>
+          <td class="mono" style="color:var(--g400);padding-left:26px">${row.cod}</td>
+          <td style="font-weight:500">${escHtml(row.nome)}${customBadge}${editadaBadge}</td>
+          <td style="font-size:11px;white-space:nowrap">
+            <span title="Editar esta conta" style="cursor:pointer;color:var(--navy-light)" onclick="abrirModalEditarConta('${row.cod}')">✏️ editar</span>
+            ${delBtn}${restaurarBtn}
+          </td>
+        </tr>`;
+      });
+    });
+  });
+
+  tb.innerHTML = totalContas ? html : '<tr><td colspan="3" style="text-align:center;color:var(--g400);padding:24px">Nenhuma conta encontrada.</td></tr>';
 }
 
 function renderRateioFunc(){
