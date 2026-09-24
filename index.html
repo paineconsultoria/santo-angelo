@@ -391,6 +391,9 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
         <div class="nav-item" data-tab="rateiofunc" onclick="goTab('rateiofunc',this)">
           <span class="nav-icon">🔎</span><span>Rateio por Turma</span>
         </div>
+        <div class="nav-item" data-tab="planocontas" onclick="goTab('planocontas',this)">
+          <span class="nav-icon">📖</span><span>Plano de Contas</span>
+        </div>
       </div>
     </div>
     <div class="nav-group" id="navgrp-analise">
@@ -753,6 +756,36 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
         <table class="zebra">
           <thead><tr id="thead-rateiofunc"></tr></thead>
           <tbody id="tb-rateiofunc"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════╗
+     ║  PLANO DE CONTAS (único, usado no      ║
+     ║  Rateio de Despesas e no Resultado do  ║
+     ║  Grupo)                                ║
+     ╚══════════════════════════════════════╝ -->
+<div id="tab-planocontas" class="tab-section">
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">Plano de Contas</div>
+      <div class="page-desc">Estrutura única de contas de despesa — edite aqui e o resultado aparece igual no Rateio de Despesas e no Resultado do Grupo</div>
+    </div>
+    <button class="btn btn-gold" onclick="abrirModalNovaConta()">➕ Nova Conta</button>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div class="card-hdr" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <span class="card-title">Contas de Despesa</span>
+        <input type="text" id="planocontas-busca" placeholder="🔎 Buscar por código ou nome..." oninput="renderPlanoContasTab()" style="padding:7px 10px;border:1px solid var(--g200);border-radius:6px;font-size:12.5px;min-width:240px">
+      </div>
+      <div style="padding:10px 18px 0;font-size:11px;color:var(--g400)">✏️ edita nome/grupo/subcategoria (e o código, se ainda não tiver valor lançado em nenhum mês/empresa). Contas de <strong>Pessoal e Encargos</strong> ficam de fora do Rateio de Despesas — esse custo já vem da Grade Horária.</div>
+      <div class="tbl-wrap tbl-scroll">
+        <table class="zebra">
+          <thead><tr><th>Código</th><th>Grupo</th><th>Subgrupo</th><th>Nome da Conta</th><th style="width:90px"></th></tr></thead>
+          <tbody id="tb-planocontas"></tbody>
         </table>
       </div>
     </div>
@@ -2653,7 +2686,7 @@ async function salvarNovaConta(){
       }
     }
     fecharModalNovaConta();
-    renderResultadoGrupo();
+    renderContasEmTodasTelas();
     showToast('✅ Conta atualizada.');
     return;
   }
@@ -2674,8 +2707,15 @@ async function salvarNovaConta(){
   }
 
   fecharModalNovaConta();
-  renderResultadoGrupo();
+  renderContasEmTodasTelas();
   showToast(`✅ Conta "${cod}" criada! Já disponível para preenchimento nas 4 empresas${entrouNoRateio?' e adicionada ao Rateio de Despesas da Sociedade':''}.`);
+}
+
+// Atualiza todas as telas que mostram o plano de contas, depois de criar/editar/excluir uma conta.
+function renderContasEmTodasTelas(){
+  if(typeof renderResultadoGrupo==='function') renderResultadoGrupo();
+  if(typeof renderPlanoContasTab==='function') renderPlanoContasTab();
+  if(typeof renderDespTabela==='function') renderDespTabela();
 }
 
 async function excluirContaCustom(cod){
@@ -2687,7 +2727,7 @@ async function excluirContaCustom(cod){
   if(!confirm(msg)) return;
   CONTAS_CUSTOM = CONTAS_CUSTOM.filter(c=>c.cod!==cod);
   await cloudDeleteContaCustom(cod);
-  renderResultadoGrupo();
+  renderContasEmTodasTelas();
   showToast(ehEdicaoDeBase ? '↺ Conta restaurada ao padrão original.' : '🗑️ Conta removida das telas.');
 }
 
@@ -3281,6 +3321,47 @@ function popularFiltroTurmaRateioFunc(){
   const atual = sel.value;
   sel.innerHTML = '<option value="">Todas as turmas</option>' + S.turmas.map(t=>`<option value="${t.id}">${escHtml(t.nome)}</option>`).join('');
   if([...sel.options].some(o=>o.value===atual)) sel.value = atual;
+}
+
+/* ═══════════════════════════════════════════════════════
+   PLANO DE CONTAS — tela única de edição, usada tanto pelo
+   Rateio de Despesas quanto pelo Resultado do Grupo
+═══════════════════════════════════════════════════════ */
+function renderPlanoContasTab(){
+  const tb = g('tb-planocontas');
+  const busca = normalizaTexto(gS('planocontas-busca')||'');
+  let curGrupo=null, curSub=null;
+  const linhas = [];
+  getPlanoContas().forEach(row=>{
+    if(row.lvl==='grupo') curGrupo=row.nome;
+    else if(row.lvl==='subgrupo') curSub=row.nome;
+    else if(row.lvl==='conta'){
+      if(busca && !normalizaTexto(row.cod).includes(busca) && !normalizaTexto(row.nome).includes(busca)) return;
+      linhas.push({...row, grupo:curGrupo, subgrupo:curSub});
+    }
+  });
+  if(!linhas.length){
+    tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--g400);padding:24px">Nenhuma conta encontrada.</td></tr>';
+    return;
+  }
+  tb.innerHTML = linhas.map(row=>{
+    const ehEdicaoDeBase = row.custom && row.origemBase;
+    const ehContaNova = row.custom && !row.origemBase;
+    const delBtn = ehContaNova ? ` <span title="Excluir esta conta customizada" style="cursor:pointer;color:var(--red)" onclick="excluirContaCustom('${row.cod}')">✕ excluir</span>` : '';
+    const restaurarBtn = ehEdicaoDeBase ? ` <span title="Restaurar nome/grupo/subgrupo originais (os valores já lançados não mudam)" style="cursor:pointer;color:var(--g400)" onclick="excluirContaCustom('${row.cod}')">↺ restaurar</span>` : '';
+    const editadaBadge = ehEdicaoDeBase ? ' <span title="Editada por você" style="color:var(--navy-light);font-size:10px">✎</span>' : '';
+    const customBadge = ehContaNova ? ' <span title="Conta customizada" style="color:var(--gold);font-size:10px">＋</span>' : '';
+    return `<tr>
+      <td class="mono" style="color:var(--g400)">${row.cod}</td>
+      <td style="font-size:11.5px;color:var(--g600)">${escHtml(row.grupo||'')}</td>
+      <td style="font-size:11.5px;color:var(--g600)">${escHtml(row.subgrupo||'')}</td>
+      <td style="font-weight:500">${escHtml(row.nome)}${customBadge}${editadaBadge}</td>
+      <td style="font-size:11px;white-space:nowrap">
+        <span title="Editar esta conta" style="cursor:pointer;color:var(--navy-light)" onclick="abrirModalEditarConta('${row.cod}')">✏️ editar</span>
+        ${delBtn}${restaurarBtn}
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 function renderRateioFunc(){
@@ -4875,7 +4956,7 @@ function custoDespPorTurma(){
    NAVIGATION
 ═══════════════════════════════════════════════════════ */
 const TAB_TO_NAVGROUP = {
-  funcionarios:'cadastros', grade:'cadastros', turmas:'cadastros', rateiofunc:'cadastros',
+  funcionarios:'cadastros', grade:'cadastros', turmas:'cadastros', rateiofunc:'cadastros', planocontas:'cadastros',
   custo:'analise', despesas:'analise', resultado:'analise', historico:'analise', saldos:'analise',
   grupo:'grupo', dashboard:'grupo',
   sim2027:'planejamento',
@@ -4906,6 +4987,7 @@ function goTab(tab,el){
   if(tab==='grade')      renderGrade();
   if(tab==='turmas')     renderTurmas();
   if(tab==='rateiofunc') renderRateioFunc();
+  if(tab==='planocontas') renderPlanoContasTab();
   if(tab==='custo')      renderCusto();
   if(tab==='despesas')   renderDespTurma();
   if(tab==='resultado')  renderResultado();
@@ -5552,134 +5634,42 @@ function renderCusto(){
    PLANO DE CONTAS PADRÃO (extraído do Balancete para Rateio
    de Despesas) — grupo → subgrupo → conta, na ordem oficial.
 ═══════════════════════════════════════════════════════ */
-const CONTAS_PADRAO=[
-  // 1. Pessoal e Encargos
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Remuneração e Rescisões',cod:'2.01.001',cat:'Salários e ordenados'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Remuneração e Rescisões',cod:'2.01.008',cat:'Férias indenizadas'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Remuneração e Rescisões',cod:'2.01.009',cat:'13º Salário'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Remuneração e Rescisões',cod:'2.01.010',cat:'FGTS indenizado (multa)'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Remuneração e Rescisões',cod:'2.01.011',cat:'Bolsa de estágio'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Remuneração e Rescisões',cod:'2.01.017',cat:'Gratificação'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Remuneração e Rescisões',cod:'2.01.020',cat:'Rescisão contratual'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Encargos e Benefícios',cod:'2.01.002',cat:'INSS'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Encargos e Benefícios',cod:'2.01.003',cat:'FGTS'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Encargos e Benefícios',cod:'2.01.004',cat:'Vale transporte'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Encargos e Benefícios',cod:'2.01.005',cat:'Vale refeição'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Encargos e Benefícios',cod:'2.01.006',cat:'Plano de saúde'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Encargos e Benefícios',cod:'2.01.016',cat:'Plano Odontológico'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Encargos e Benefícios',cod:'2.01.018',cat:'Convênio Farmácia'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Encargos e Benefícios',cod:'2.01.019',cat:'Auxílio transporte'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Encargos e Benefícios',cod:'2.01.021',cat:'Uniformes'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Outras Despesas de Pessoal',cod:'2.01.013',cat:'Treinamento/curso/capacitação de pessoal'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Outras Despesas de Pessoal',cod:'2.01.014',cat:'Exames Médicos'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Outras Despesas de Pessoal',cod:'2.01.015',cat:'Ajuda de custos'},
-  {grupo:'1. Pessoal e Encargos',subgrupo:'Outras Despesas de Pessoal',cod:'2.01.022',cat:'Segunda chamada de provas'},
-  // 2. Despesas Operacionais e Administrativas
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Utilidades (Água, Luz, Telefone e Internet)',cod:'2.02.001',cat:'Energia elétrica'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Utilidades (Água, Luz, Telefone e Internet)',cod:'2.02.002',cat:'Água e esgoto'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Utilidades (Água, Luz, Telefone e Internet)',cod:'2.02.003',cat:'Telefone fixo'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Utilidades (Água, Luz, Telefone e Internet)',cod:'2.02.004',cat:'Telefone celular'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Utilidades (Água, Luz, Telefone e Internet)',cod:'2.02.005',cat:'Internet'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Manutenção e Conservação',cod:'2.02.019',cat:'Jardinagem'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Manutenção e Conservação',cod:'2.02.021',cat:'Manutenção de equip. de informática'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Manutenção e Conservação',cod:'2.02.022',cat:'Manutenção de equipamentos'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Manutenção e Conservação',cod:'2.02.023',cat:'Manutenção de veículos'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Manutenção e Conservação',cod:'2.02.024.01',cat:'Elétrica'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Manutenção e Conservação',cod:'2.02.024.02',cat:'Hidráulica'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Manutenção e Conservação',cod:'2.02.024.03',cat:'Pintura'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Manutenção e Conservação',cod:'2.02.024.04',cat:'Piscina'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Manutenção e Conservação',cod:'2.02.024.05',cat:'Conservação e reparos'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Materiais e Suprimentos',cod:'2.02.025',cat:'Material de expediente'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Materiais e Suprimentos',cod:'2.02.026',cat:'Material de informática'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Materiais e Suprimentos',cod:'2.02.027',cat:'Material de limpeza'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Materiais e Suprimentos',cod:'2.02.028',cat:'Material de sinalização visual'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Materiais e Suprimentos',cod:'2.02.031',cat:'Medicamentos'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Materiais e Suprimentos',cod:'2.02.039',cat:'Móveis / Utensílios'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Materiais e Suprimentos',cod:'2.02.052',cat:'Material de uso e consumo'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Materiais e Suprimentos',cod:'2.02.053',cat:'Máquinas e equipamentos'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Alimentação, Cantina e Copa',cod:'2.02.007',cat:'Refeição de funcionários'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Alimentação, Cantina e Copa',cod:'2.02.038',cat:'Cantina Revenda'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Alimentação, Cantina e Copa',cod:'2.02.040.01',cat:'Açougue'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Alimentação, Cantina e Copa',cod:'2.02.040.02',cat:'Frutas e Verduras'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Alimentação, Cantina e Copa',cod:'2.02.040.03',cat:'Gás'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Alimentação, Cantina e Copa',cod:'2.02.040.04',cat:'Mercado'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Alimentação, Cantina e Copa',cod:'2.02.040.05',cat:'Material de copa e cozinha'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Alimentação, Cantina e Copa',cod:'2.02.040.06',cat:'Material cozinha experimental'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Alimentação, Cantina e Copa',cod:'2.02.054',cat:'Máquina Café Médio'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.013',cat:'Material didático'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.016',cat:'Festas/Brindes/Confraternizações'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.029',cat:'Material esportivo'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.030',cat:'Material pedagógico'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.048',cat:'Passeio'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.049.01',cat:'Festa Junina'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.049.02',cat:'Mostra de dança'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.049.03',cat:'Mostra de teatro'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.049.05',cat:'Formatura Fundamental II'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.049.07',cat:'Eventos - material uso geral'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.049.08',cat:'Eventos médio'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.049.09',cat:'Eventos gerais'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.049.10',cat:'Eventos/Competições'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.050.01',cat:'Dia das mães'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.050.02',cat:'Dia dos pais'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.050.05',cat:'Dia do Professor'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.050.06',cat:'Páscoa'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.055',cat:'Despesas com alunos'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Pedagógico, Eventos e Atividades com Alunos',cod:'2.02.058',cat:'Projetos Educacionais'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Serviços Profissionais e Terceirizados',cod:'2.02.018',cat:'Honorários contábeis'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Serviços Profissionais e Terceirizados',cod:'2.02.033',cat:'Segurança e vigilância'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Serviços Profissionais e Terceirizados',cod:'2.02.056',cat:'Prestação de Serviços - Aulas extras'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Serviços Profissionais e Terceirizados',cod:'2.02.057',cat:'Honorários Assessoria'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.009',cat:'Combustíveis e lubrificantes'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.010',cat:'Condução/Taxi/Estacionamento/Frete'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.011',cat:'Cópias/Reproduções/Plastificações'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.012',cat:'Correios e malotes'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.014',cat:'Custas legais e cartoriais'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.032',cat:'Propaganda e publicidade'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.034',cat:'Seguro de Vida'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.035',cat:'Software (licença de uso ou aquisição)'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.036',cat:'Viagens'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.046',cat:'Mensalidades/Anuidades/Locação'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Despesas Administrativas Gerais',cod:'2.02.059',cat:'Confecção de Crachás/Carteirinhas'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Outras Despesas Operacionais',cod:'2.02.037',cat:'Cartão de Crédito'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Outras Despesas Operacionais',cod:'2.02.041',cat:'Devolução / Reembolso'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Outras Despesas Operacionais',cod:'2.02.042',cat:'Empréstimo'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Outras Despesas Operacionais',cod:'2.02.043',cat:'Investimentos no Colégio'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Outras Despesas Operacionais',cod:'2.02.045',cat:'Ações Judiciais'},
-  {grupo:'2. Despesas Operacionais e Administrativas',subgrupo:'Outras Despesas Operacionais',cod:'2.02.051',cat:'Retirada de Lucro Distribuído'},
-  // 3. Impostos e Taxas
-  {grupo:'3. Impostos e Taxas',subgrupo:'Impostos e Taxas',cod:'2.03.001',cat:'SIMPLES Nacional'},
-  {grupo:'3. Impostos e Taxas',subgrupo:'Impostos e Taxas',cod:'2.03.002',cat:'ISS'},
-  {grupo:'3. Impostos e Taxas',subgrupo:'Impostos e Taxas',cod:'2.03.004',cat:'COFINS'},
-  {grupo:'3. Impostos e Taxas',subgrupo:'Impostos e Taxas',cod:'2.03.006',cat:'IPTU'},
-  {grupo:'3. Impostos e Taxas',subgrupo:'Impostos e Taxas',cod:'2.03.007',cat:'Sindicais'},
-  {grupo:'3. Impostos e Taxas',subgrupo:'Impostos e Taxas',cod:'2.03.011',cat:'Outros impostos ou taxas'},
-  {grupo:'3. Impostos e Taxas',subgrupo:'Impostos e Taxas',cod:'2.03.012',cat:'PIS'},
-  // 4. Despesas Bancárias
-  {grupo:'4. Despesas Bancárias',subgrupo:'Tarifas Bancárias',cod:'2.04.001',cat:'Tarifas bancárias'},
-  // 5. Empréstimos e Financiamentos
-  {grupo:'5. Empréstimos e Financiamentos',subgrupo:'Empréstimos e Financiamentos',cod:'2.05.01',cat:'EMPRÉSTIMOS MÚTUO'},
-  // 6. Investimentos e Obras
-  {grupo:'6. Investimentos e Obras',subgrupo:'Investimentos e Obras',cod:'2.06',cat:'DESPESAS OBRA TERRENO NOVO'},
-];
-const GRUPO_ORDEM=[...new Set(CONTAS_PADRAO.map(c=>c.grupo))];
+// GRUPO_ORDEM: ordem de exibição dos grupos, derivada do plano de contas único
+// (o mesmo usado no Resultado do Grupo) — não existe mais uma lista separada aqui.
+const GRUPO_ORDEM = PLANO_CONTAS_BASE.filter(r=>r.lvl==='grupo').map(r=>r.nome);
 
-// Cria a lista de despesas zeradas seguindo o plano de contas padrão
+// Retorna todas as contas do plano único (Resultado do Grupo), já com grupo/subgrupo
+// resolvidos — usada tanto pra gerar/restaurar o padrão do Rateio de Despesas quanto
+// pra importação (contasImportaveis, mais abaixo).
+function contasComGrupoSubgrupo(){
+  const plano = getPlanoContas();
+  const linhas = [];
+  let curGrupo=null, curSub=null;
+  plano.forEach(row=>{
+    if(row.lvl==='grupo') curGrupo=row.nome;
+    else if(row.lvl==='subgrupo') curSub=row.nome;
+    else if(row.lvl==='conta') linhas.push({cod:row.cod, nome:row.nome, grupo:curGrupo, subgrupo:curSub});
+  });
+  return linhas;
+}
+
+// Cria a lista de despesas zeradas seguindo o plano de contas único
 function gerarDespesasPadrao(startId){
   let n=startId;
-  return CONTAS_PADRAO.map(c=>({
-    id:'D'+pad(n++), cod:c.cod, cat:c.cat, grupo:c.grupo, subgrupo:c.subgrupo,
+  return contasComGrupoSubgrupo().map(c=>({
+    id:'D'+pad(n++), cod:c.cod, cat:c.nome, grupo:c.grupo, subgrupo:c.subgrupo,
     val:0, criterio:'faturamento', fixo:true, importAuto:c.grupo!=='1. Pessoal e Encargos'
   }));
 }
 
-// Restaura/completa o plano de contas padrão no mês atual, sem apagar
+// Restaura/completa o plano de contas único no mês atual, sem apagar
 // despesas/valores já lançados (só adiciona as contas que ainda não existem).
 function restaurarContasPadrao(){
   const existentes=new Set(S.despesas.filter(d=>d.fixo).map(d=>d.cod));
   let adicionadas=0;
-  CONTAS_PADRAO.forEach(c=>{
+  contasComGrupoSubgrupo().forEach(c=>{
     if(!existentes.has(c.cod)){
-      S.despesas.push({id:'D'+pad(nD++), cod:c.cod, cat:c.cat, grupo:c.grupo, subgrupo:c.subgrupo, val:0, criterio:'faturamento', fixo:true, importAuto:c.grupo!=='1. Pessoal e Encargos'});
+      S.despesas.push({id:'D'+pad(nD++), cod:c.cod, cat:c.nome, grupo:c.grupo, subgrupo:c.subgrupo, val:0, criterio:'faturamento', fixo:true, importAuto:c.grupo!=='1. Pessoal e Encargos'});
       adicionadas++;
     }
   });
@@ -5702,17 +5692,7 @@ let _importSelecoes = {}; // { cod: true/false } — estado temporário do modal
 function contasImportaveis(){
   // Todas as contas do plano do Resultado do Grupo, exceto Pessoal e Encargos
   // (o custo de pessoal já é calculado pela Grade Horária, não deve ser somado 2x)
-  const plano = getPlanoContas();
-  const linhas = [];
-  let curGrupo=null, curSub=null;
-  plano.forEach(row=>{
-    if(row.lvl==='grupo') curGrupo=row.nome;
-    else if(row.lvl==='subgrupo') curSub=row.nome;
-    else if(row.lvl==='conta' && curGrupo!=='1. Pessoal e Encargos'){
-      linhas.push({cod:row.cod, nome:row.nome, grupo:curGrupo, subgrupo:curSub});
-    }
-  });
-  return linhas;
+  return contasComGrupoSubgrupo().filter(c=>c.grupo!=='1. Pessoal e Encargos');
 }
 
 function abrirModalImportarDespesasGrupo(){
