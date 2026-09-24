@@ -1257,7 +1257,14 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
       <button class="btn-icon" style="color:rgba(255,255,255,.7)" onclick="fecharModalNovaConta()">✕</button>
     </div>
     <div style="padding:18px 20px">
-      <div style="font-size:11.5px;color:var(--g400);margin-bottom:14px">A conta criada aqui passa a existir para as 4 empresas automaticamente — cada uma poderá preencher seu próprio valor mês a mês.</div>
+      <div style="font-size:11.5px;color:var(--g400);margin-bottom:14px">A conta criada aqui passa a existir para as 4 empresas automaticamente — cada uma poderá preencher seu próprio valor mês a mês. Se ela não for de Pessoal e Encargos, já entra também no Rateio de Despesas (Custo por Turma) da Sociedade.</div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label>Código da conta</label>
+          <input type="text" id="novaconta-cod" placeholder="Ex: 2.02.061" style="width:100%;font-family:'IBM Plex Mono',monospace">
+          <div style="font-size:10.5px;color:var(--g400);margin-top:4px">Já vem sugerido um código livre — pode trocar pelo código real do seu plano de contas, desde que não repita um já existente.</div>
+        </div>
+      </div>
       <div class="form-row">
         <div class="form-group" style="flex:1">
           <label>Grupo de contas</label>
@@ -2486,6 +2493,7 @@ function abrirModalNovaConta(){
   const gruposUnicos = [];
   PLANO_CONTAS_BASE.forEach(row=>{ if(row.lvl==='grupo' && !gruposUnicos.includes(row.nome)) gruposUnicos.push(row.nome); });
   selGrupo.innerHTML = gruposUnicos.map(nm=>`<option value="${escHtml(nm)}">${escHtml(nm)}</option>`).join('');
+  g('novaconta-cod').value = gerarCodigoCustom();
   g('novaconta-nome').value='';
   g('novaconta-subgrupo-novo').value='';
   g('novaconta-subgrupo-novo-row').style.display='none';
@@ -2521,19 +2529,39 @@ function gerarCodigoCustom(){
   return `NOVA.${String(max+1).padStart(3,'0')}`;
 }
 
+function todosCodigosExistentes(){
+  return new Set(getPlanoContas().filter(r=>r.lvl==='conta').map(r=>r.cod));
+}
+
 async function salvarNovaConta(){
   const grupoNome = gS('novaconta-grupo');
   let subgrupoNome = gS('novaconta-subgrupo');
   if(subgrupoNome==='__novo__') subgrupoNome = gS('novaconta-subgrupo-novo');
   const nome = gS('novaconta-nome');
-  if(!grupoNome || !subgrupoNome || !nome){ alert('Preencha o grupo, a subcategoria e o nome da conta.'); return; }
-  const cod = gerarCodigoCustom();
+  const cod = gS('novaconta-cod').trim();
+  if(!grupoNome || !subgrupoNome || !nome || !cod){ alert('Preencha o código, o grupo, a subcategoria e o nome da conta.'); return; }
+  if(todosCodigosExistentes().has(cod)){
+    alert(`O código "${cod}" já está em uso por outra conta. Escolha outro código.`);
+    return;
+  }
   const nova = {cod, nome, grupoNome, subgrupoNome};
   CONTAS_CUSTOM.push(nova);
   await cloudSaveContaCustom(nova);
+
+  // Já entra no Rateio de Despesas (Custo por Turma) da Sociedade, exceto Pessoal e Encargos
+  // — mesmo critério usado no botão "Importar do Resultado do Grupo".
+  let entrouNoRateio = false;
+  if(grupoNome!=='1. Pessoal e Encargos' && typeof S!=='undefined' && S.despesas && !S.despesas.some(d=>d.cod===cod)){
+    const valor = (typeof valorContaEmpresaMesRateado==='function' && typeof currentComp!=='undefined')
+      ? valorContaEmpresaMesRateado('sociedade', cod, currentComp) : 0;
+    S.despesas.push({id:'D'+pad(nD++), cod, cat:nome, grupo:grupoNome, subgrupo:subgrupoNome, val:valor, criterio:'faturamento', fixo:true, importAuto:true});
+    if(typeof save==='function') save();
+    entrouNoRateio = true;
+  }
+
   fecharModalNovaConta();
   renderResultadoGrupo();
-  showToast('✅ Conta criada! Já disponível para preenchimento nas 4 empresas.');
+  showToast(`✅ Conta "${cod}" criada! Já disponível para preenchimento nas 4 empresas${entrouNoRateio?' e adicionada ao Rateio de Despesas da Sociedade':''}.`);
 }
 
 async function excluirContaCustom(cod){
