@@ -1253,16 +1253,16 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
 <div id="modal-nova-conta" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:flex-start;justify-content:center;padding-top:40px;">
   <div style="background:#fff;border-radius:10px;width:min(560px,96vw);max-height:88vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.22);">
     <div class="demo-box-hdr" style="border-radius:10px 10px 0 0;justify-content:space-between;">
-      <span style="color:#fff;font-weight:600;font-size:13.5px">➕ Nova Conta de Despesa</span>
+      <span style="color:#fff;font-weight:600;font-size:13.5px" id="modal-nova-conta-titulo">➕ Nova Conta de Despesa</span>
       <button class="btn-icon" style="color:rgba(255,255,255,.7)" onclick="fecharModalNovaConta()">✕</button>
     </div>
     <div style="padding:18px 20px">
-      <div style="font-size:11.5px;color:var(--g400);margin-bottom:14px">A conta criada aqui passa a existir para as 4 empresas automaticamente — cada uma poderá preencher seu próprio valor mês a mês. Se ela não for de Pessoal e Encargos, já entra também no Rateio de Despesas (Custo por Turma) da Sociedade.</div>
+      <div style="font-size:11.5px;color:var(--g400);margin-bottom:14px" id="modal-nova-conta-desc">A conta criada aqui passa a existir para as 4 empresas automaticamente — cada uma poderá preencher seu próprio valor mês a mês. Se ela não for de Pessoal e Encargos, já entra também no Rateio de Despesas (Custo por Turma) da Sociedade.</div>
       <div class="form-row">
         <div class="form-group" style="flex:1">
           <label>Código da conta</label>
           <input type="text" id="novaconta-cod" placeholder="Ex: 2.02.061" style="width:100%;font-family:'IBM Plex Mono',monospace">
-          <div style="font-size:10.5px;color:var(--g400);margin-top:4px">Já vem sugerido um código livre — pode trocar pelo código real do seu plano de contas, desde que não repita um já existente.</div>
+          <div style="font-size:10.5px;color:var(--g400);margin-top:4px" id="novaconta-cod-hint">Já vem sugerido um código livre — pode trocar pelo código real do seu plano de contas, desde que não repita um já existente.</div>
         </div>
       </div>
       <div class="form-row">
@@ -1291,7 +1291,7 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
       </div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:14px;border-top:1px solid var(--g200)">
         <button class="btn btn-ghost" onclick="fecharModalNovaConta()">Cancelar</button>
-        <button class="btn btn-primary" onclick="salvarNovaConta()">💾 Criar Conta</button>
+        <button class="btn btn-primary" id="btn-salvar-nova-conta" onclick="salvarNovaConta()">💾 Criar Conta</button>
       </div>
     </div>
   </div>
@@ -2487,20 +2487,67 @@ function mudarModoGrupo(modo){
 /* ═══════════════════════════════════════════════════════
    MODAL — NOVA CONTA DE DESPESA
 ═══════════════════════════════════════════════════════ */
+let editandoContaCod = null; // código ORIGINAL da conta sendo editada (null = modo criação)
+
+function contaTemValoresPreenchidos(cod){
+  return EMPRESAS_GRUPO.some(e=>{
+    const vals = (despesaContas[e.id]||{})[cod];
+    return vals && Object.values(vals).some(v=>+v!==0);
+  });
+}
+
 function abrirModalNovaConta(){
   if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  editandoContaCod = null;
   const selGrupo = g('novaconta-grupo');
   const gruposUnicos = [];
   PLANO_CONTAS_BASE.forEach(row=>{ if(row.lvl==='grupo' && !gruposUnicos.includes(row.nome)) gruposUnicos.push(row.nome); });
   selGrupo.innerHTML = gruposUnicos.map(nm=>`<option value="${escHtml(nm)}">${escHtml(nm)}</option>`).join('');
   g('novaconta-cod').value = gerarCodigoCustom();
+  g('novaconta-cod').disabled = false;
+  g('novaconta-cod-hint').textContent = 'Já vem sugerido um código livre — pode trocar pelo código real do seu plano de contas, desde que não repita um já existente.';
   g('novaconta-nome').value='';
   g('novaconta-subgrupo-novo').value='';
   g('novaconta-subgrupo-novo-row').style.display='none';
+  g('modal-nova-conta-titulo').textContent = '➕ Nova Conta de Despesa';
+  g('modal-nova-conta-desc').textContent = 'A conta criada aqui passa a existir para as 4 empresas automaticamente — cada uma poderá preencher seu próprio valor mês a mês. Se ela não for de Pessoal e Encargos, já entra também no Rateio de Despesas (Custo por Turma) da Sociedade.';
+  g('btn-salvar-nova-conta').textContent = '💾 Criar Conta';
   popularSelectSubgrupoNovaConta();
   g('modal-nova-conta').style.display='flex';
 }
-function fecharModalNovaConta(){ g('modal-nova-conta').style.display='none'; }
+
+function abrirModalEditarConta(cod){
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  const conta = CONTAS_CUSTOM.find(c=>c.cod===cod);
+  if(!conta){ alert('Conta não encontrada.'); return; }
+  editandoContaCod = cod;
+  const selGrupo = g('novaconta-grupo');
+  const gruposUnicos = [];
+  PLANO_CONTAS_BASE.forEach(row=>{ if(row.lvl==='grupo' && !gruposUnicos.includes(row.nome)) gruposUnicos.push(row.nome); });
+  selGrupo.innerHTML = gruposUnicos.map(nm=>`<option value="${escHtml(nm)}">${escHtml(nm)}</option>`).join('');
+  selGrupo.value = conta.grupoNome;
+
+  g('novaconta-cod').value = conta.cod;
+  const temValores = contaTemValoresPreenchidos(cod);
+  g('novaconta-cod').disabled = temValores;
+  g('novaconta-cod-hint').textContent = temValores
+    ? '🔒 O código está travado porque essa conta já tem valores preenchidos em algum mês/empresa — trocar o código faria esses valores desaparecerem da tela. Exclua e recrie do zero se realmente precisar mudar o código.'
+    : 'Essa conta ainda não tem nenhum valor preenchido — pode trocar o código livremente, desde que não repita um já existente.';
+
+  g('novaconta-nome').value = conta.nome;
+  g('novaconta-subgrupo-novo').value='';
+  g('novaconta-subgrupo-novo-row').style.display='none';
+  popularSelectSubgrupoNovaConta();
+  g('novaconta-subgrupo').value = conta.subgrupoNome;
+  toggleNovaSubgrupoInput();
+
+  g('modal-nova-conta-titulo').textContent = '✏️ Editar Conta de Despesa';
+  g('modal-nova-conta-desc').textContent = 'As alterações valem para as 4 empresas. Os valores já preenchidos em cada mês continuam do jeito que estão — só o nome, grupo e subcategoria mudam.';
+  g('btn-salvar-nova-conta').textContent = '💾 Salvar Alterações';
+  g('modal-nova-conta').style.display='flex';
+}
+
+function fecharModalNovaConta(){ g('modal-nova-conta').style.display='none'; editandoContaCod=null; }
 
 function popularSelectSubgrupoNovaConta(){
   const grupoNome = gS('novaconta-grupo');
@@ -2540,10 +2587,43 @@ async function salvarNovaConta(){
   const nome = gS('novaconta-nome');
   const cod = gS('novaconta-cod').trim();
   if(!grupoNome || !subgrupoNome || !nome || !cod){ alert('Preencha o código, o grupo, a subcategoria e o nome da conta.'); return; }
-  if(todosCodigosExistentes().has(cod)){
+
+  const codigosExistentes = todosCodigosExistentes();
+  if(editandoContaCod) codigosExistentes.delete(editandoContaCod); // o código atual da própria conta não conta como duplicado
+  if(codigosExistentes.has(cod)){
     alert(`O código "${cod}" já está em uso por outra conta. Escolha outro código.`);
     return;
   }
+
+  if(editandoContaCod){
+    const conta = CONTAS_CUSTOM.find(c=>c.cod===editandoContaCod);
+    if(!conta){ alert('Conta não encontrada.'); fecharModalNovaConta(); return; }
+    const codMudou = cod !== editandoContaCod;
+    if(codMudou){
+      if(contaTemValoresPreenchidos(editandoContaCod)){
+        alert('Essa conta já tem valores preenchidos — não é possível trocar o código.');
+        g('novaconta-cod').value = editandoContaCod;
+        return;
+      }
+      await cloudDeleteContaCustom(editandoContaCod);
+    }
+    conta.cod = cod; conta.nome = nome; conta.grupoNome = grupoNome; conta.subgrupoNome = subgrupoNome;
+    await cloudSaveContaCustom(conta);
+
+    // mantém o Rateio de Despesas em sincronia (nome/grupo/subgrupo, e código se mudou)
+    if(typeof S!=='undefined' && S.despesas){
+      const d = S.despesas.find(x=>x.cod===editandoContaCod);
+      if(d){
+        d.cod = cod; d.cat = nome; d.grupo = grupoNome; d.subgrupo = subgrupoNome;
+        if(typeof save==='function') save();
+      }
+    }
+    fecharModalNovaConta();
+    renderResultadoGrupo();
+    showToast('✅ Conta atualizada.');
+    return;
+  }
+
   const nova = {cod, nome, grupoNome, subgrupoNome};
   CONTAS_CUSTOM.push(nova);
   await cloudSaveContaCustom(nova);
@@ -2867,8 +2947,9 @@ function renderPreenchimento(){
         return `<td class="tr">${R$(v)}</td>`;
       }).join('');
       const delBtn = (row.custom && readonly) ? ` <span title="Excluir esta conta customizada" style="cursor:pointer;color:var(--red)" onclick="excluirContaCustom('${row.cod}')">✕</span>` : '';
+      const editBtn = (row.custom && readonly) ? ` <span title="Editar esta conta" style="cursor:pointer;color:var(--navy-light)" onclick="abrirModalEditarConta('${row.cod}')">✏️</span>` : '';
       const customBadge = row.custom ? ' <span title="Conta customizada" style="color:var(--gold);font-size:10px">＋</span>' : '';
-      detalheRows += `<tr><td style="padding-left:44px;color:var(--g600);font-size:11.5px"><span style="font-family:'IBM Plex Mono',monospace;color:var(--g400);margin-right:6px">${row.cod}</span>${row.nome}${customBadge}${delBtn}</td>${cels}<td class="tr" style="background:var(--g100)">${R$(totLinha)}</td></tr>`;
+      detalheRows += `<tr><td style="padding-left:44px;color:var(--g600);font-size:11.5px"><span style="font-family:'IBM Plex Mono',monospace;color:var(--g400);margin-right:6px">${row.cod}</span>${row.nome}${customBadge}${editBtn}${delBtn}</td>${cels}<td class="tr" style="background:var(--g100)">${R$(totLinha)}</td></tr>`;
     }
   });
   g('tb-grupo-detalhe').innerHTML = detalheRows;
