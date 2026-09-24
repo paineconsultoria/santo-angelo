@@ -1936,15 +1936,22 @@ const PLANO_CONTAS_BASE = [
   {lvl:'conta',cod:'2.06',nome:'DESPESAS OBRA TERRENO NOVO'},
 ];
 
-// Contas de despesa adicionadas manualmente pelo usuário (ficam disponíveis para as 4 empresas)
-// Cada item: { cod, nome, grupoNome, subgrupoNome }
+// Contas de despesa adicionadas manualmente pelo usuário (ficam disponíveis para as 4 empresas).
+// Cada item: { cod, nome, grupoNome, subgrupoNome, origemBase? }
+// origemBase = código original da conta do plano padrão, quando este item é uma EDIÇÃO
+// de uma conta que já existia (não uma conta nova) — usado pra esconder a linha original
+// e trocar por essa versão editada, sem precisar migrar nenhum valor já lançado.
 let CONTAS_CUSTOM = [];
 
 // Retorna o plano de contas efetivo (base + contas customizadas), já inseridas
 // no grupo/subgrupo corretos, na ordem certa para renderização.
 function getPlanoContas(){
-  if(!CONTAS_CUSTOM.length) return PLANO_CONTAS_BASE;
-  const linhas = PLANO_CONTAS_BASE.map(x=>({...x}));
+  const suprimidos = new Set(CONTAS_CUSTOM.filter(c=>c.origemBase).map(c=>c.origemBase));
+  const base = suprimidos.size
+    ? PLANO_CONTAS_BASE.filter(row=>!(row.lvl==='conta' && suprimidos.has(row.cod)))
+    : PLANO_CONTAS_BASE;
+  if(!CONTAS_CUSTOM.length) return base;
+  const linhas = base.map(x=>({...x}));
   CONTAS_CUSTOM.forEach(c=>{
     let grupoStart=-1, grupoEnd=linhas.length;
     for(let i=0;i<linhas.length;i++){
@@ -1967,7 +1974,7 @@ function getPlanoContas(){
       linhas.splice(grupoEnd,0,{lvl:'subgrupo',cod:null,nome:c.subgrupoNome});
       insertIdx=grupoEnd+1;
     }
-    linhas.splice(insertIdx,0,{lvl:'conta',cod:c.cod,nome:c.nome,custom:true});
+    linhas.splice(insertIdx,0,{lvl:'conta',cod:c.cod,nome:c.nome,custom:true,origemBase:c.origemBase||null});
   });
   return linhas;
 }
@@ -2201,7 +2208,7 @@ async function cloudLoadContasCustom(){
   try{
     const { data, error } = await sb.from('plano_contas_custom').select('*');
     if(error) throw error;
-    CONTAS_CUSTOM = (data||[]).map(r=>({cod:r.codigo, nome:r.nome, grupoNome:r.grupo_nome, subgrupoNome:r.subgrupo_nome}));
+    CONTAS_CUSTOM = (data||[]).map(r=>({cod:r.codigo, nome:r.nome, grupoNome:r.grupo_nome, subgrupoNome:r.subgrupo_nome, origemBase:r.origem_base||null}));
     return true;
   }catch(err){ console.error('Falha ao carregar contas customizadas:', err); return false; }
 }
@@ -2209,7 +2216,7 @@ async function cloudLoadContasCustom(){
 async function cloudSaveContaCustom(c){
   try{
     const { error } = await sb.from('plano_contas_custom').upsert({
-      codigo:c.cod, nome:c.nome, grupo_nome:c.grupoNome, subgrupo_nome:c.subgrupoNome,
+      codigo:c.cod, nome:c.nome, grupo_nome:c.grupoNome, subgrupo_nome:c.subgrupoNome, origem_base:c.origemBase||null,
       updated_by: currentUser ? currentUser.id : null
     }, { onConflict:'codigo' });
     if(error){ console.error(error); setCloudStatus('⚠️ Falha ao salvar conta nova', true); }
@@ -2516,11 +2523,33 @@ function abrirModalNovaConta(){
   g('modal-nova-conta').style.display='flex';
 }
 
+// Acha os dados atuais de exibição de uma conta (base ou customizada), percorrendo
+// o plano de contas efetivo — funciona tanto pras contas originais quanto pras suas.
+function encontrarContaEmPlano(cod){
+  const plano = getPlanoContas();
+  let curGrupo=null, curSub=null;
+  for(const row of plano){
+    if(row.lvl==='grupo') curGrupo=row.nome;
+    else if(row.lvl==='subgrupo') curSub=row.nome;
+    else if(row.lvl==='conta' && row.cod===cod){
+      return {cod:row.cod, nome:row.nome, grupoNome:curGrupo, subgrupoNome:curSub, origemBase: row.origemBase||null};
+    }
+  }
+  return null;
+}
+
+let editandoContaOrigemBase = null; // null = conta puramente nova; senão, código original da conta base sendo editada
+
 function abrirModalEditarConta(cod){
   if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  const conta = CONTAS_CUSTOM.find(c=>c.cod===cod);
+  const conta = encontrarContaEmPlano(cod);
   if(!conta){ alert('Conta não encontrada.'); return; }
   editandoContaCod = cod;
+  // se já existe um registro em CONTAS_CUSTOM pra esse código, usa o origemBase dele (pode ser null=custom pura, ou o código da conta padrão);
+  // se não existe (é uma conta do plano padrão nunca editada), essa própria edição vai "nascer" com origemBase = cod atual.
+  const jaCustom = CONTAS_CUSTOM.find(c=>c.cod===cod);
+  editandoContaOrigemBase = jaCustom ? (jaCustom.origemBase||null) : cod;
+
   const selGrupo = g('novaconta-grupo');
   const gruposUnicos = [];
   PLANO_CONTAS_BASE.forEach(row=>{ if(row.lvl==='grupo' && !gruposUnicos.includes(row.nome)) gruposUnicos.push(row.nome); });
@@ -2531,7 +2560,7 @@ function abrirModalEditarConta(cod){
   const temValores = contaTemValoresPreenchidos(cod);
   g('novaconta-cod').disabled = temValores;
   g('novaconta-cod-hint').textContent = temValores
-    ? '🔒 O código está travado porque essa conta já tem valores preenchidos em algum mês/empresa — trocar o código faria esses valores desaparecerem da tela. Exclua e recrie do zero se realmente precisar mudar o código.'
+    ? '🔒 O código está travado porque essa conta já tem valores preenchidos em algum mês/empresa — trocar o código faria esses valores desaparecerem da tela.'
     : 'Essa conta ainda não tem nenhum valor preenchido — pode trocar o código livremente, desde que não repita um já existente.';
 
   g('novaconta-nome').value = conta.nome;
@@ -2547,7 +2576,7 @@ function abrirModalEditarConta(cod){
   g('modal-nova-conta').style.display='flex';
 }
 
-function fecharModalNovaConta(){ g('modal-nova-conta').style.display='none'; editandoContaCod=null; }
+function fecharModalNovaConta(){ g('modal-nova-conta').style.display='none'; editandoContaCod=null; editandoContaOrigemBase=null; }
 
 function popularSelectSubgrupoNovaConta(){
   const grupoNome = gS('novaconta-grupo');
@@ -2596,8 +2625,7 @@ async function salvarNovaConta(){
   }
 
   if(editandoContaCod){
-    const conta = CONTAS_CUSTOM.find(c=>c.cod===editandoContaCod);
-    if(!conta){ alert('Conta não encontrada.'); fecharModalNovaConta(); return; }
+    let conta = CONTAS_CUSTOM.find(c=>c.cod===editandoContaCod);
     const codMudou = cod !== editandoContaCod;
     if(codMudou){
       if(contaTemValoresPreenchidos(editandoContaCod)){
@@ -2605,9 +2633,15 @@ async function salvarNovaConta(){
         g('novaconta-cod').value = editandoContaCod;
         return;
       }
-      await cloudDeleteContaCustom(editandoContaCod);
+      if(conta) await cloudDeleteContaCustom(editandoContaCod);
     }
-    conta.cod = cod; conta.nome = nome; conta.grupoNome = grupoNome; conta.subgrupoNome = subgrupoNome;
+    if(conta){
+      conta.cod = cod; conta.nome = nome; conta.grupoNome = grupoNome; conta.subgrupoNome = subgrupoNome;
+    } else {
+      // primeira vez que essa conta (do plano padrão) é editada — cria a sobreposição
+      conta = {cod, nome, grupoNome, subgrupoNome, origemBase: editandoContaOrigemBase};
+      CONTAS_CUSTOM.push(conta);
+    }
     await cloudSaveContaCustom(conta);
 
     // mantém o Rateio de Despesas em sincronia (nome/grupo/subgrupo, e código se mudou)
@@ -2645,11 +2679,16 @@ async function salvarNovaConta(){
 }
 
 async function excluirContaCustom(cod){
-  if(!confirm('Excluir esta conta customizada de todas as telas? Os valores já preenchidos ficam salvos no banco, mas deixam de aparecer.')) return;
+  const conta = CONTAS_CUSTOM.find(c=>c.cod===cod);
+  const ehEdicaoDeBase = conta && conta.origemBase;
+  const msg = ehEdicaoDeBase
+    ? 'Restaurar o nome, grupo e subcategoria originais dessa conta? Os valores já lançados em cada mês continuam do jeito que estão.'
+    : 'Excluir esta conta customizada de todas as telas? Os valores já preenchidos ficam salvos no banco, mas deixam de aparecer.';
+  if(!confirm(msg)) return;
   CONTAS_CUSTOM = CONTAS_CUSTOM.filter(c=>c.cod!==cod);
   await cloudDeleteContaCustom(cod);
   renderResultadoGrupo();
-  showToast('🗑️ Conta removida das telas.');
+  showToast(ehEdicaoDeBase ? '↺ Conta restaurada ao padrão original.' : '🗑️ Conta removida das telas.');
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -2946,10 +2985,14 @@ function renderPreenchimento(){
         }
         return `<td class="tr">${R$(v)}</td>`;
       }).join('');
-      const delBtn = (row.custom && readonly) ? ` <span title="Excluir esta conta customizada" style="cursor:pointer;color:var(--red)" onclick="excluirContaCustom('${row.cod}')">✕</span>` : '';
-      const editBtn = (row.custom && readonly) ? ` <span title="Editar esta conta" style="cursor:pointer;color:var(--navy-light)" onclick="abrirModalEditarConta('${row.cod}')">✏️</span>` : '';
-      const customBadge = row.custom ? ' <span title="Conta customizada" style="color:var(--gold);font-size:10px">＋</span>' : '';
-      detalheRows += `<tr><td style="padding-left:44px;color:var(--g600);font-size:11.5px"><span style="font-family:'IBM Plex Mono',monospace;color:var(--g400);margin-right:6px">${row.cod}</span>${row.nome}${customBadge}${editBtn}${delBtn}</td>${cels}<td class="tr" style="background:var(--g100)">${R$(totLinha)}</td></tr>`;
+      const ehEdicaoDeBase = row.custom && row.origemBase;
+      const ehContaNova = row.custom && !row.origemBase;
+      const delBtn = (ehContaNova && readonly) ? ` <span title="Excluir esta conta customizada" style="cursor:pointer;color:var(--red)" onclick="excluirContaCustom('${row.cod}')">✕</span>` : '';
+      const restaurarBtn = (ehEdicaoDeBase && readonly) ? ` <span title="Restaurar nome/grupo/subgrupo originais dessa conta (os valores já lançados não mudam)" style="cursor:pointer;color:var(--g400);font-size:10.5px" onclick="excluirContaCustom('${row.cod}')">↺ restaurar padrão</span>` : '';
+      const editBtn = readonly ? ` <span title="Editar esta conta" style="cursor:pointer;color:var(--navy-light)" onclick="abrirModalEditarConta('${row.cod}')">✏️</span>` : '';
+      const customBadge = ehContaNova ? ' <span title="Conta customizada" style="color:var(--gold);font-size:10px">＋</span>' : '';
+      const editadaBadge = ehEdicaoDeBase ? ' <span title="Nome/grupo/subgrupo editados por você" style="color:var(--navy-light);font-size:10px">✎ editada</span>' : '';
+      detalheRows += `<tr><td style="padding-left:44px;color:var(--g600);font-size:11.5px"><span style="font-family:'IBM Plex Mono',monospace;color:var(--g400);margin-right:6px">${row.cod}</span>${row.nome}${customBadge}${editadaBadge}${editBtn}${delBtn}${restaurarBtn}</td>${cels}<td class="tr" style="background:var(--g100)">${R$(totLinha)}</td></tr>`;
     }
   });
   g('tb-grupo-detalhe').innerHTML = detalheRows;
