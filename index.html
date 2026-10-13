@@ -535,19 +535,36 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
                 <label style="margin:0;cursor:pointer" onclick="document.getElementById('f-multi-empresa').click()">🏢 Esse funcionário atende mais de uma empresa do grupo (rateia o custo entre elas)</label>
               </div>
             </div>
-            <div id="f-multi-empresa-painel" style="display:none;background:var(--g100);border-radius:8px;padding:12px 14px;margin-bottom:13px">
-              <div style="font-size:11px;color:var(--g400);margin-bottom:10px">Defina quanto do custo total desse funcionário pertence a cada empresa. Só a fatia da <strong>Sociedade</strong> entra no cálculo de Custo por Turma. A soma precisa fechar em 100%.</div>
-              <div class="form-row" style="margin-bottom:0">
-                <div class="form-group"><label>% Sociedade</label>
-                  <input type="number" min="0" max="100" step="0.1" id="f-pct-sociedade" value="100" oninput="atualizaSomaRateioEmpresas();previewCusto()"></div>
-                <div class="form-group"><label>% Cantina</label>
-                  <input type="number" min="0" max="100" step="0.1" id="f-pct-cantina" value="0" oninput="atualizaSomaRateioEmpresas();previewCusto()"></div>
-                <div class="form-group"><label>% TMS</label>
-                  <input type="number" min="0" max="100" step="0.1" id="f-pct-tms" value="0" oninput="atualizaSomaRateioEmpresas();previewCusto()"></div>
-                <div class="form-group"><label>% TS</label>
-                  <input type="number" min="0" max="100" step="0.1" id="f-pct-ts" value="0" oninput="atualizaSomaRateioEmpresas();previewCusto()"></div>
+            <div id="f-multi-empresa-painel" style="display:none;background:var(--g100);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px">
+              <div class="form-row" style="margin-bottom:12px">
+                <div class="form-group span2"><label>Como dividir o custo entre as empresas</label>
+                  <select id="f-modo-empresas" onchange="toggleModoEmpresasForm()">
+                    <option value="faturamento">📊 Pelo faturamento de cada empresa (automático, mês a mês)</option>
+                    <option value="manual">✍️ Percentuais fixos (digitar na mão)</option>
+                  </select>
+                </div>
               </div>
-              <div id="f-soma-rateio-empresas" style="font-size:11.5px;font-weight:600;margin-top:6px"></div>
+
+              <div id="f-empresas-fat-box">
+                <div style="font-size:11.5px;color:var(--g600);margin-bottom:10px">Marque as empresas em que esse funcionário trabalha. A divisão é calculada pelo <strong>faturamento (receita realizada)</strong> de cada uma no <strong>Resultado do Grupo</strong>, usando o mês que está aberto — e refeita sozinha nos meses seguintes. Só a fatia da <strong>Sociedade</strong> entra no Custo por Turma.</div>
+                <div id="f-empresas-checks" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"></div>
+                <div id="f-previsao-fat-empresas"></div>
+              </div>
+
+              <div id="f-empresas-manual-box" style="display:none">
+                <div style="font-size:11.5px;color:var(--g600);margin-bottom:10px">Defina quanto do custo total desse funcionário pertence a cada empresa. Só a fatia da <strong>Sociedade</strong> entra no Custo por Turma. A soma precisa fechar em 100%.</div>
+                <div class="form-row" style="margin-bottom:0">
+                  <div class="form-group"><label>% Sociedade</label>
+                    <input type="number" min="0" max="100" step="0.1" id="f-pct-sociedade" value="100" oninput="atualizaSomaRateioEmpresas();previewCusto()"></div>
+                  <div class="form-group"><label>% Cantina</label>
+                    <input type="number" min="0" max="100" step="0.1" id="f-pct-cantina" value="0" oninput="atualizaSomaRateioEmpresas();previewCusto()"></div>
+                  <div class="form-group"><label>% TMS</label>
+                    <input type="number" min="0" max="100" step="0.1" id="f-pct-tms" value="0" oninput="atualizaSomaRateioEmpresas();previewCusto()"></div>
+                  <div class="form-group"><label>% TS</label>
+                    <input type="number" min="0" max="100" step="0.1" id="f-pct-ts" value="0" oninput="atualizaSomaRateioEmpresas();previewCusto()"></div>
+                </div>
+                <div id="f-soma-rateio-empresas" style="font-size:11.5px;font-weight:600;margin-top:6px"></div>
+              </div>
             </div>
             <div class="sub-hdr">💰 Remuneração</div>
             <div class="form-row">
@@ -4106,7 +4123,7 @@ function viewHistMes(comp){
   const HS=d.S;
 
   // Recompute using stored state
-  const cp=custoPessoalPorTurmaOf(HS);
+  const cp=custoPessoalPorTurmaOf(HS, comp);
   const cd=custoDespPorTurmaOf(HS);
 
   let totRec=0,totCP=0,totCD=0;
@@ -4186,7 +4203,7 @@ function metricasTurmaMes(nomeTurma, comp){
   const HS = d.S;
   const t = HS.turmas.find(x=>x.nome===nomeTurma);
   if(!t) return null;
-  const cp = custoPessoalPorTurmaOf(HS);
+  const cp = custoPessoalPorTurmaOf(HS, comp);
   const cd = custoDespPorTurmaOf(HS);
   const rec = +(t.rec||0), al = +(t.alunos||0);
   const cPes = cp[t.id]||0, cDes = cd[t.id]||0;
@@ -4345,11 +4362,11 @@ function pesoPorTurmaDoFunc(f, hs){
   return {pesoPorTurma, totPeso};
 }
 
-function custoPessoalPorTurmaOf(hs){
+function custoPessoalPorTurmaOf(hs, comp){
   const r={};
   hs.turmas.forEach(t=>r[t.id]=0);
   hs.funcs.filter(f=>f.ativo!==false).forEach(f=>{
-    const ct=custoFuncSociedade(f);
+    const ct=custoFuncSociedade(f, comp);
     const {pesoPorTurma, totPeso} = pesoPorTurmaDoFunc(f, hs);
     if(totPeso===0) return;
     hs.turmas.forEach(t=>{
@@ -4363,8 +4380,8 @@ function custoPessoalPorTurmaOf(hs){
 // Quanto do custo de UM funcionário específico é alocado (rateado) numa turma específica.
 // Mesma lógica de peso do custoPessoalPorTurmaOf, mas devolve o valor individual — usado
 // nos filtros por turma (Simulação e Cadastros) pra mostrar o rateio de cada pessoa.
-function custoFuncNaTurma(f, turmaId, hs){
-  const ct = custoFuncSociedade(f);
+function custoFuncNaTurma(f, turmaId, hs, comp){
+  const ct = custoFuncSociedade(f, comp);
   const {pesoPorTurma, totPeso} = pesoPorTurmaDoFunc(f, hs);
   if(totPeso===0) return 0;
   const pesoTurma = pesoPorTurma[turmaId]||0;
@@ -4896,18 +4913,78 @@ function calcBreakdown(f){
 
 function custoFunc(f){ return calcBreakdown(f).total; }
 
+// ── Rateio do custo do funcionário ENTRE as empresas do grupo ───────────────────────
+// f.rateioEmpresas pode ser:
+//   null/ausente                         → 100% Sociedade (padrão)
+//   {modo:'faturamento', empresas:[ids]} → divide pelo faturamento (receita realizada, do
+//                                          Resultado do Grupo) das empresas marcadas, mês a mês
+//   {modo:'manual'|sem modo, sociedade, cantina, tms, ts} → percentuais fixos digitados
+// Observação: registros antigos (sem "modo") são tratados como manual, então nada muda pra eles.
+
+function receitaEmpresaMes(empId, comp){
+  const d = (resultadoGrupo[empId] && resultadoGrupo[empId][comp]) || {};
+  return +d.receitaR || 0;
+}
+
+// Calcula a divisão pelo faturamento entre as empresas "ids" para uma competência.
+// Se o mês pedido ainda não tem faturamento lançado, usa o mês anterior mais recente que tenha
+// (e avisa em compUsada). Se não existir nenhum, divide igualmente (semDados).
+function pctsPorFaturamento(ids, comp){
+  const zero = {sociedade:0,cantina:0,tms:0,ts:0};
+  const total = c => ids.reduce((a,id)=>a+receitaEmpresaMes(id,c),0);
+  let compUsada = comp;
+  if(!(total(comp)>0)){
+    const todas = new Set();
+    ids.forEach(id=>Object.keys(resultadoGrupo[id]||{}).forEach(k=>todas.add(k)));
+    compUsada = [...todas].filter(k=>k<comp && total(k)>0).sort().pop() || null;
+  }
+  const out = {...zero, compPedida:comp, compUsada, semDados:false, receitas:{}};
+  if(!compUsada){
+    out.semDados = true;
+    ids.forEach(id=>{ out[id] = 100/ids.length; out.receitas[id]=0; });
+    return out;
+  }
+  const t = total(compUsada);
+  ids.forEach(id=>{ const r=receitaEmpresaMes(id,compUsada); out.receitas[id]=r; out[id]=r/t*100; });
+  return out;
+}
+
+// Percentuais por empresa do custo de um funcionário numa competência (padrão: a que está aberta)
+function pctsEmpresasDoFunc(f, comp){
+  comp = comp || currentComp;
+  const r = f.rateioEmpresas;
+  if(!r) return {sociedade:100,cantina:0,tms:0,ts:0,modo:'padrao'};
+  if(r.modo==='faturamento'){
+    const ids = (r.empresas||[]).filter(id=>EMPRESAS_GRUPO.some(e=>e.id===id));
+    if(!ids.length) return {sociedade:100,cantina:0,tms:0,ts:0,modo:'padrao'};
+    return {...pctsPorFaturamento(ids, comp), modo:'faturamento', empresas:ids};
+  }
+  return {sociedade:+r.sociedade||0, cantina:+r.cantina||0, tms:+r.tms||0, ts:+r.ts||0, modo:'manual'};
+}
+
 // % do custo total desse funcionário que pertence à Sociedade (as demais empresas ficam de fora
 // do cálculo de Custo por Turma, que é um módulo específico da Sociedade).
-function pctSociedadeDoFunc(f){
-  if(!f.rateioEmpresas) return 100; // sem rateio configurado = 100% Sociedade (comportamento padrão)
-  return +(f.rateioEmpresas.sociedade||0);
+function pctSociedadeDoFunc(f, comp){
+  return pctsEmpresasDoFunc(f, comp).sociedade;
 }
 
 // Custo desse funcionário que deve entrar no rateio por turma — já descontada a fatia
 // das outras empresas do grupo (Cantina/TMS/TS), pra quem atende mais de uma empresa.
-function custoFuncSociedade(f){
-  return custoFunc(f) * pctSociedadeDoFunc(f) / 100;
+function custoFuncSociedade(f, comp){
+  return custoFunc(f) * pctSociedadeDoFunc(f, comp) / 100;
 }
+
+// Texto do selo 🏢 na listagem: explica como o custo está dividido entre as empresas
+function tituloRateioEmpresas(f){
+  const r = pctsEmpresasDoFunc(f);
+  const nome = id => (EMPRESAS_GRUPO.find(e=>e.id===id)||{}).nome || id;
+  const ids = r.modo==='faturamento' ? r.empresas : EMPRESAS_GRUPO.filter(e=>r[e.id]>0).map(e=>e.id);
+  const partes = ids.map(id=>`${nome(id)} ${fmtPctEmp(r[id])}%`).join(' · ');
+  return (r.modo==='faturamento' ? 'Pelo faturamento do mês: ' : 'Percentuais fixos: ') + partes + ' — só a Sociedade entra no Custo por Turma';
+}
+
+// Formata um % de empresa: inteiro quando for redondo, senão 1 casa (ex.: 70 ou 70,2)
+function fmtPctEmp(p){ return Number.isInteger(p) ? String(p) : p.toFixed(1).replace('.',','); }
 
 function horasFunc(fId){
   return Object.values(S.grade[fId]||{}).reduce((a,h)=>a+(+h||0),0);
@@ -5034,24 +5111,93 @@ function abrirFormFunc(id=null){
   g('f-vr').value=f?.vr?N$(f.vr):'';
   g('f-ps').value=f?.ps?N$(f.ps):'';
   g('f-out').value=f?.out?N$(f.out):'';
-  const temMulti = !!(f?.rateioEmpresas);
+  const rEmp = f?.rateioEmpresas;
+  const temMulti = !!rEmp;
   g('f-multi-empresa').checked = temMulti;
   g('f-multi-empresa-painel').style.display = temMulti ? '' : 'none';
-  g('f-pct-sociedade').value = f?.rateioEmpresas?.sociedade ?? 100;
-  g('f-pct-cantina').value = f?.rateioEmpresas?.cantina ?? 0;
-  g('f-pct-tms').value = f?.rateioEmpresas?.tms ?? 0;
-  g('f-pct-ts').value = f?.rateioEmpresas?.ts ?? 0;
-  if(temMulti) atualizaSomaRateioEmpresas();
+  // registros antigos (sem "modo") eram percentuais digitados → continuam como manual
+  const modoEmp = rEmp ? (rEmp.modo==='faturamento' ? 'faturamento' : 'manual') : 'faturamento';
+  g('f-modo-empresas').value = modoEmp;
+  montarChecksEmpresasForm(rEmp && rEmp.modo==='faturamento' ? (rEmp.empresas||[]) : ['sociedade']);
+  g('f-pct-sociedade').value = (rEmp && rEmp.modo!=='faturamento' ? rEmp.sociedade : null) ?? 100;
+  g('f-pct-cantina').value = (rEmp && rEmp.modo!=='faturamento' ? rEmp.cantina : null) ?? 0;
+  g('f-pct-tms').value = (rEmp && rEmp.modo!=='faturamento' ? rEmp.tms : null) ?? 0;
+  g('f-pct-ts').value = (rEmp && rEmp.modo!=='faturamento' ? rEmp.ts : null) ?? 0;
+  if(temMulti) toggleModoEmpresasForm();
   g('form-func').style.display='block';
   previewCusto();
   g('f-nome').focus();
 }
 
+// Monta as caixinhas de empresas (Sociedade primeiro) com as marcadas indicadas
+function montarChecksEmpresasForm(selecionadas){
+  const ordem = [...EMPRESAS_GRUPO].sort((x,y)=> (y.id==='sociedade') - (x.id==='sociedade'));
+  g('f-empresas-checks').innerHTML = ordem.map(e=>`
+    <label style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--g200);border-radius:var(--radius-sm);padding:9px 14px;cursor:pointer;text-transform:none;font-size:13px;letter-spacing:0;font-weight:600;color:var(--g800)">
+      <input type="checkbox" id="f-emp-${e.id}" ${selecionadas.includes(e.id)?'checked':''} onchange="atualizaPrevisaoFaturamentoEmpresas();previewCusto()" style="width:16px;height:16px;padding:0">
+      ${escHtml(e.nome)}
+    </label>`).join('');
+}
+
+function empresasMarcadasNoForm(){
+  return EMPRESAS_GRUPO.filter(e=>{ const el=document.getElementById('f-emp-'+e.id); return el && el.checked; }).map(e=>e.id);
+}
+
+// Lê o rateio entre empresas do formulário: null (desmarcado) ou o objeto a gravar no funcionário
+function lerRateioEmpresasDoForm(){
+  if(!g('f-multi-empresa').checked) return null;
+  if(gS('f-modo-empresas')==='faturamento'){
+    return {modo:'faturamento', empresas: empresasMarcadasNoForm()};
+  }
+  return {modo:'manual', sociedade:gN('f-pct-sociedade'), cantina:gN('f-pct-cantina'), tms:gN('f-pct-tms'), ts:gN('f-pct-ts')};
+}
+
+// Mostra, pra competência aberta, o faturamento de cada empresa marcada e o % resultante
+function atualizaPrevisaoFaturamentoEmpresas(){
+  const box = g('f-previsao-fat-empresas');
+  const ids = empresasMarcadasNoForm();
+  if(!ids.length){
+    box.innerHTML = '<div style="font-size:12px;color:var(--red);font-weight:600">⚠️ Marque pelo menos uma empresa.</div>';
+    return false;
+  }
+  const r = pctsPorFaturamento(ids, currentComp);
+  const nome = id => (EMPRESAS_GRUPO.find(e=>e.id===id)||{}).nome || id;
+  const linhas = ids.map(id=>`
+    <tr>
+      <td style="padding:6px 10px;font-weight:600">${escHtml(nome(id))}</td>
+      <td class="tr" style="padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-size:12px">${R$(r.receitas[id]||0)}</td>
+      <td class="tr" style="padding:6px 10px;font-weight:700;color:var(--navy)">${fmtPctEmp(r[id])}%</td>
+    </tr>`).join('');
+  let aviso = '';
+  if(r.semDados){
+    aviso = `<div style="font-size:11.5px;color:var(--red);margin-top:8px">⚠️ Ainda não há faturamento lançado no Resultado do Grupo para essas empresas. Enquanto isso o custo é dividido igualmente entre elas.</div>`;
+  } else if(r.compUsada !== r.compPedida){
+    aviso = `<div style="font-size:11.5px;color:#8a5a10;margin-top:8px">⚠️ Ainda não há faturamento lançado em ${compLabel(r.compPedida)} — usando ${compLabel(r.compUsada)} por enquanto. Quando você lançar o mês, o % se ajusta sozinho.</div>`;
+  } else {
+    aviso = `<div style="font-size:11.5px;color:var(--g400);margin-top:8px">Faturamento de ${compLabel(r.compUsada)} (Resultado do Grupo). Nos próximos meses o % é recalculado com o faturamento de cada mês.</div>`;
+  }
+  box.innerHTML = `<table style="width:100%;background:#fff;border-radius:var(--radius-sm);overflow:hidden;font-size:13px">
+      <thead><tr><th style="padding:7px 10px">Empresa</th><th class="tr" style="padding:7px 10px">Faturamento do mês</th><th class="tr" style="padding:7px 10px">% do custo</th></tr></thead>
+      <tbody>${linhas}</tbody></table>${aviso}`;
+  return true;
+}
+
+function toggleModoEmpresasForm(){
+  const fat = gS('f-modo-empresas')==='faturamento';
+  g('f-empresas-fat-box').style.display = fat ? '' : 'none';
+  g('f-empresas-manual-box').style.display = fat ? 'none' : '';
+  if(fat) atualizaPrevisaoFaturamentoEmpresas(); else atualizaSomaRateioEmpresas();
+  previewCusto();
+}
+
 function toggleMultiEmpresaForm(){
   const checked = g('f-multi-empresa').checked;
   g('f-multi-empresa-painel').style.display = checked ? '' : 'none';
-  if(checked) atualizaSomaRateioEmpresas();
-  previewCusto();
+  if(checked){
+    // primeira vez: já deixa a Sociedade marcada pra facilitar
+    if(!document.getElementById('f-emp-sociedade')) montarChecksEmpresasForm(['sociedade']);
+    toggleModoEmpresasForm();
+  } else previewCusto();
 }
 
 function atualizaSomaRateioEmpresas(){
@@ -5072,8 +5218,9 @@ function previewCusto(){
     regime:gS('f-regime'), vt:gN('f-vt'), vr:gN('f-vr'), ps:gN('f-ps'), out:gN('f-out')
   };
   const b=calcBreakdown(tmp);
-  const multiAtivo = g('f-multi-empresa').checked;
-  const pctSoc = multiAtivo ? (gN('f-pct-sociedade')||0) : 100;
+  const rEmpForm = lerRateioEmpresasDoForm();
+  const multiAtivo = !!rEmpForm;
+  const pctSoc = multiAtivo ? pctSociedadeDoFunc({rateioEmpresas:rEmpForm}) : 100;
   const pctLabel=`${(b.pct*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}%`;
   const row=(lbl,val,cls='',sub='')=>`<tr class="${cls}">
     <td class="demo-lbl">${lbl}${sub?`<small>${sub}</small>`:''}</td>
@@ -5106,7 +5253,7 @@ function previewCusto(){
       <td class="demo-val">${R$(b.total)}</td>
     </tr>
     ${multiAtivo ? `<tr style="background:#fdf6e8">
-      <td class="demo-lbl" style="font-size:11px">🏢 Fatia da Sociedade (${pctSoc}%) — entra no Custo por Turma</td>
+      <td class="demo-lbl" style="font-size:11px">🏢 Fatia da Sociedade (${fmtPctEmp(pctSoc)}%) — entra no Custo por Turma</td>
       <td class="demo-val" style="font-size:12.5px">${R$(b.total*pctSoc/100)}</td>
     </tr>` : ''}`;
 }
@@ -5173,7 +5320,7 @@ function renderAlocacao(){
 
   panel.style.display='block';
   const notaMulti = f.rateioEmpresas && pctSociedadeDoFunc(f)<100
-    ? `<tr><td colspan="2" style="padding:6px 16px;font-size:11px;color:var(--gold-dk,#8a5a10);background:#fdf6e8">🏢 Esse funcionário atende outras empresas também — só ${pctSociedadeDoFunc(f)}% do custo (fatia da Sociedade) entra nesse rateio.</td></tr>`
+    ? `<tr><td colspan="2" style="padding:6px 16px;font-size:11px;color:var(--gold-dk,#8a5a10);background:#fdf6e8">🏢 Esse funcionário atende outras empresas também — só ${fmtPctEmp(pctSociedadeDoFunc(f))}% do custo (fatia da Sociedade${f.rateioEmpresas.modo==='faturamento'?', pelo faturamento do mês':''}) entra nesse rateio.</td></tr>`
     : '';
   tbl.innerHTML=
     notaMulti+
@@ -5188,14 +5335,17 @@ function renderAlocacao(){
 function salvarFunc(){
   const nome=gS('f-nome');
   if(!nome){alert('Informe o nome do funcionário.');return;}
-  const multiAtivo = g('f-multi-empresa').checked;
-  if(multiAtivo && !atualizaSomaRateioEmpresas()){
-    alert('A soma dos percentuais entre empresas precisa fechar em 100% antes de salvar.');
-    return;
+  const rateioEmpresas = lerRateioEmpresasDoForm();
+  if(rateioEmpresas){
+    if(rateioEmpresas.modo==='faturamento' && !rateioEmpresas.empresas.length){
+      alert('Marque pelo menos uma empresa pra dividir o custo desse funcionário.');
+      return;
+    }
+    if(rateioEmpresas.modo==='manual' && !atualizaSomaRateioEmpresas()){
+      alert('A soma dos percentuais entre empresas precisa fechar em 100% antes de salvar.');
+      return;
+    }
   }
-  const rateioEmpresas = multiAtivo ? {
-    sociedade: gN('f-pct-sociedade'), cantina: gN('f-pct-cantina'), tms: gN('f-pct-tms'), ts: gN('f-pct-ts')
-  } : null;
   const d={nome,disc:gS('f-disc'),regime:gS('f-regime'),criterioRateio:gS('f-criterio-rateio')||'horas',
     sal:gN('f-sal'),hc:gN('f-hc'),grat:gN('f-grat'),pctEnc:gN('f-enc'),he:gN('f-he'),
     vt:gN('f-vt'),vr:gN('f-vr'),ps:gN('f-ps'),out:gN('f-out'),rateioEmpresas};
@@ -5311,7 +5461,7 @@ function renderFunc(){
       <td class="mono" style="color:var(--g400);font-size:10.5px">${f.id}</td>
       <td style="font-weight:500">${f.nome}${isAtivo?'':' <span style="font-size:9.5px;font-weight:700;color:var(--red);border:1px solid var(--red);border-radius:8px;padding:1px 6px;margin-left:4px">INATIVO</span>'}</td>
       <td style="color:var(--g600);max-width:160px;overflow:hidden;text-overflow:ellipsis">${f.disc||'—'}</td>
-      <td>${regimeBadge[f.regime]||f.regime}${f.criterioRateio==='faturamento'?' <span class="badge" style="background:var(--gold);color:var(--navy)" title="Custo rateado pelo faturamento de cada turma, não pela grade horária">📊 FAT</span>':''}${f.rateioEmpresas?` <span class="badge" style="background:var(--navy);color:#fff" title="Custo rateado entre empresas do grupo — só ${pctSociedadeDoFunc(f)}% (Sociedade) entra no Custo por Turma">🏢 ${pctSociedadeDoFunc(f)}% Soc.</span>`:''}</td>
+      <td>${regimeBadge[f.regime]||f.regime}${f.criterioRateio==='faturamento'?' <span class="badge" style="background:var(--gold);color:var(--navy)" title="Custo rateado pelo faturamento de cada turma, não pela grade horária">📊 FAT</span>':''}${f.rateioEmpresas?` <span class="badge" style="background:var(--navy);color:#fff" title="${tituloRateioEmpresas(f)}">🏢 ${fmtPctEmp(pctSociedadeDoFunc(f))}% Soc.</span>`:''}</td>
       <td class="mono tr">${N$(b.sal)}</td>
       <td class="mono tr" style="color:${b.he>0?'var(--navy)':'var(--g400)'}">${b.he>0?N$(b.he):'—'}</td>
       <td class="mono tr">${N$(b.enc)}</td>
