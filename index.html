@@ -1693,12 +1693,58 @@ let editFId=null, editTId=null;
 ═══════════════════════════════════════════════════════ */
 const SUPABASE_URL = 'https://bbjqvhsjktframsakuln.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_h-v8yFRs8mgtnydrXMmniw_3ckD1jxO';
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const _sbBase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Perfil "simulacao": qualquer gravação no banco é bloqueada aqui (segunda trava; a primeira é a RLS do Supabase).
+function _gravacaoBloqueada(){
+  const res = { data:null, error:{ message:'Modo leitura: gravação bloqueada.' } };
+  const p = new Proxy(function(){}, { get:(_,k)=> k==='then' ? (ok)=>ok(res) : ()=>p, apply:()=>p });
+  return p;
+}
+const sb = new Proxy(_sbBase, { get(t, k){
+  if(k === 'from') return (tabela)=>{
+    const q = t.from(tabela);
+    if(typeof currentRole === 'undefined' || currentRole !== 'simulacao') return q;
+    return new Proxy(q, { get(qt, qk){
+      if(['insert','update','upsert','delete'].includes(qk)) return _gravacaoBloqueada;
+      const v = qt[qk]; return typeof v === 'function' ? v.bind(qt) : v;
+    }});
+  };
+  const v = t[k]; return typeof v === 'function' ? v.bind(t) : v;
+}});
 
 const TABS_SOMENTE_COORDENACAO = ['custo','despesas','resultado','historico','saldos','grupo','dashboard','sim2027'];
 
 let currentUser = null;
 let currentRole = 'funcionario';
+
+/* ───────── Perfil "simulacao": vê todas as telas, mas só edita a Simulação 2027 ─────────
+   A Simulação 2027 trabalha só em memória (não grava nada), então segue livre.
+   Para os demais perfis nada muda: estas travas só são instaladas quando o perfil é "simulacao". */
+const ROLE_SIMULACAO = 'simulacao';
+function emModoLeitura(){ return currentRole === ROLE_SIMULACAO; }
+const FUNCOES_EDICAO = ['addDespesa','confirmarImportarDespesasGrupo','copiarRateioMes1ParaTodos','delDespesa','delFunc','delTurma','deleteSaldoMes','excluirContaCustom','executarCopia','importarGradeExcel','importarJSON','limparMesAtual','migrarDadosDoNavegador','preencherOrcadoMedia','recarregarDadosPlanilhas','restaurarContasPadrao','salvarCompetencia','salvarFunc','salvarNovaConta','salvarSaldo','salvarTurma','setContaValor','setGrade','setGradeRefresh','setRateioPct','setRateioTipo','setResultadoField','toggleAtivo','updDesp','zerarEReimportarMesAnterior'];
+let _avisoLeituraTs = 0;
+function avisoModoLeitura(){
+  const agora = Date.now(); if(agora - _avisoLeituraTs < 2500) return; _avisoLeituraTs = agora;
+  try{ showToast('Modo leitura: só a Simulação 2027 pode ser editada.'); }catch(e){}
+}
+function instalarModoLeitura(){
+  FUNCOES_EDICAO.forEach(nome=>{
+    const orig = window[nome];
+    if(typeof orig !== 'function' || orig.__modoLeitura) return;
+    const guard = function(...args){
+      if(emModoLeitura()){ avisoModoLeitura(); try{ refreshActiveTab(); }catch(e){} return; }
+      return orig.apply(this, args);
+    };
+    guard.__modoLeitura = true; window[nome] = guard;
+  });
+  ['save','saveAll','saveSaldoState'].forEach(nome=>{
+    const orig = window[nome];
+    if(typeof orig !== 'function' || orig.__modoLeitura) return;
+    const guard = function(...args){ if(emModoLeitura()) return; return orig.apply(this, args); };
+    guard.__modoLeitura = true; window[nome] = guard;
+  });
+}
 let cloudReady = false;
 
 // Contador de salvamentos em andamento — se o usuário tentar fechar/sair
@@ -1733,7 +1779,7 @@ function mostrarAvisoErro(msg){
 function applyRoleGate(role){
   document.querySelectorAll('.nav-item').forEach(el=>{
     const tab = el.dataset.tab;
-    el.style.display = (role!=='coordenacao' && TABS_SOMENTE_COORDENACAO.includes(tab)) ? 'none' : '';
+    el.style.display = (role!=='coordenacao' && role!==ROLE_SIMULACAO && TABS_SOMENTE_COORDENACAO.includes(tab)) ? 'none' : '';
   });
   const migBtn = g('btn-migrar-nuvem');
   if(migBtn) migBtn.style.display = (role==='coordenacao') ? '' : 'none';
@@ -1768,12 +1814,19 @@ async function onAuthReady(session){
     if(profile){ role = profile.role || role; nome = profile.nome || nome; }
   }catch(e){ console.warn('Não foi possível carregar o perfil:', e); }
   currentRole = role;
+  if(emModoLeitura()) instalarModoLeitura();
   g('login-overlay').style.display = 'none';
   document.querySelector('.sidebar').style.display = '';
   document.querySelector('.main').style.display = '';
   g('user-badge').textContent = nome;
-  g('role-badge').textContent = currentRole==='coordenacao' ? 'Coordenação' : 'Funcionário';
+  g('role-badge').textContent = currentRole==='coordenacao' ? 'Coordenação' : (currentRole===ROLE_SIMULACAO ? 'Simulação (leitura)' : 'Funcionário');
   applyRoleGate(currentRole);
+  if(emModoLeitura()){
+    const av = document.createElement('div');
+    av.style.cssText = 'background:#fff7e0;color:#7a5b00;padding:7px 14px;font-size:12.5px;text-align:center;border-bottom:1px solid #f0d58a';
+    av.textContent = 'Modo leitura: você pode ver todas as telas, mas só a Simulação 2027 permite editar (e ela não altera os dados reais).';
+    document.querySelector('.main').prepend(av);
+  }
   await bootApp();
 }
 
@@ -6255,17 +6308,17 @@ async function bootApp(){
   }catch(e){}
   }
 
-  if(currentRole==='coordenacao'){
+  if(currentRole==='coordenacao' || currentRole===ROLE_SIMULACAO){
     const okGrupo = await cloudLoadResultadoGrupo();
     const okContas = await cloudLoadDespesaContas();
     if(!okGrupo || !okContas){
       mostrarAvisoErro('Falha ao carregar os dados do Resultado do Grupo da nuvem');
     }
-    if(okGrupo && vazioResultadoGrupo()){
+    if(okGrupo && currentRole==='coordenacao' && vazioResultadoGrupo()){
       seedResultadoGrupo();
       await cloudSyncResultadoGrupoAll();
     }
-    if(okContas && vazioDespesaContas()){
+    if(okContas && currentRole==='coordenacao' && vazioDespesaContas()){
       seedDespesaContas();
       await cloudSyncDespesaContasAll();
     }
