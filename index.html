@@ -5122,7 +5122,7 @@ function abrirNavGroupDoTab(tab){
 const TABS_COM_COMPETENCIA = ['funcionarios','grade','turmas','rateiofunc','custo','despesas','resultado','historico','saldos'];
 
 function goTab(tab,el){
-  if(currentRole!=='coordenacao' && TABS_SOMENTE_COORDENACAO.includes(tab)) return;
+  if(currentRole!=='coordenacao' && currentRole!==ROLE_SIMULACAO && TABS_SOMENTE_COORDENACAO.includes(tab)) return;
   document.querySelectorAll('.tab-section').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
   g('tab-'+tab).classList.add('active');
