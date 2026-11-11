@@ -5043,31 +5043,11 @@ function horasFunc(fId){
   return Object.values(S.grade[fId]||{}).reduce((a,h)=>a+(+h||0),0);
 }
 
+// Custo com pessoal por turma do mês aberto. Usa a MESMA regra do Histórico Mensal
+// (custoPessoalPorTurmaOf): só a fatia da Sociedade de cada funcionário entra no rateio
+// (descontando Cantina/TMS/TS) e respeita o critério de rateio do funcionário (grade ou faturamento).
 function custoPessoalPorTurma(){
-  const r={};
-  S.turmas.forEach(t=>r[t.id]=0);
-  S.funcs.filter(f=>f.ativo!==false).forEach(f=>{
-    const ct=custoFunc(f);
-    const gh=S.grade[f.id]||{};
-    // Horistas: peso = horas × valor_hr_aula (custo real por turma)
-    // Não-horistas: peso = apenas horas (salário fixo rateado proporcional às horas)
-    const isHorista=(f.regime==='HORISTA');
-    const pesoPorTurma={};
-    let totPeso=0;
-    S.turmas.forEach(t=>{
-      const h=+(gh[t.id]||0);
-      const hra=+(t.hra||0);
-      const peso = isHorista && hra>0 ? h*hra : h;
-      pesoPorTurma[t.id]=peso;
-      totPeso+=peso;
-    });
-    if(totPeso===0) return;
-    S.turmas.forEach(t=>{
-      const peso=pesoPorTurma[t.id];
-      if(peso>0) r[t.id]=(r[t.id]||0)+(peso/totPeso)*ct;
-    });
-  });
-  return r;
+  return custoPessoalPorTurmaOf(S, currentComp);
 }
 
 function custoDespPorTurma(){
