@@ -347,6 +347,29 @@ th.sortable:not(.asc):not(.desc) .sort-arrow::after{content:'⇅';}
 .sb-user-role{font-size:10px;color:var(--gold-lt);margin-bottom:6px;}
 .sb-cloud-status{font-size:9.5px;color:rgba(255,255,255,.55);margin-bottom:6px;}
 
+
+/* ── Filtros nos cabeçalhos das tabelas ───────────────── */
+.tf-btn{display:inline-block;margin-left:6px;padding:0 4px;border-radius:4px;font-size:10px;line-height:16px;cursor:pointer;opacity:.75;user-select:none;vertical-align:middle;font-weight:700}
+.tf-btn:hover{opacity:1;background:rgba(255,255,255,.25)}
+.tf-btn.on{opacity:1;background:var(--gold);color:var(--navy)}
+.tf-hide{display:none!important}
+.tf-bar{background:var(--gold-pale);border:1px solid var(--gold-lt);border-radius:7px;padding:7px 12px;margin:8px 0;font-size:12px;color:var(--g800)}
+.tf-bar button{margin-left:8px;padding:2px 10px;border:1px solid var(--g200);background:#fff;border-radius:6px;font:600 11.5px 'Inter',sans-serif;cursor:pointer;color:var(--navy)}
+.tf-pop{position:fixed;z-index:3000;display:none;width:290px;background:#fff;color:var(--g800);border:1px solid var(--g200);border-radius:10px;box-shadow:0 14px 36px rgba(22,34,74,.3);padding:11px;font:400 12.5px 'Inter',sans-serif;text-transform:none;letter-spacing:0}
+.tf-ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;font-size:13px}
+.tf-x{border:0;background:none;cursor:pointer;font-size:15px;color:var(--g600)}
+.tf-pr{display:flex;gap:5px;margin:7px 0;flex-wrap:wrap;align-items:center}
+.tf-pop label{font-size:12.5px;font-weight:400;color:var(--g800);letter-spacing:0;text-transform:none}
+.tf-pop input[type=text]{width:auto;padding:5px 8px;border:1px solid var(--g200);border-radius:6px;font:400 12.5px 'Inter',sans-serif;text-align:left;min-width:0;box-shadow:none;color:var(--g800)}
+.tf-pop input[type=checkbox]{width:auto;padding:0;margin:0;border:0;box-shadow:none;flex:none}
+.tf-pop #tf-min,.tf-pop #tf-max{width:84px}
+.tf-pop #tf-q{flex:1;width:auto}
+.tf-b{padding:3px 9px;border:1px solid var(--g200);background:#fff;border-radius:6px;font:600 11.5px 'Inter',sans-serif;cursor:pointer;color:var(--navy)}
+.tf-b:hover{border-color:var(--navy)}.tf-b.on{background:var(--gold);border-color:var(--gold)}
+.tf-pl{max-height:190px;overflow:auto;border:1px solid var(--g200);border-radius:6px;padding:4px}
+.tf-pl label{display:flex;gap:6px;padding:2px 3px;white-space:nowrap;align-items:center;cursor:pointer}
+.tf-note{font-size:11.5px;color:var(--g600);margin:5px 0}
+@media print{.tf-btn,.tf-bar{display:none!important}}
 </style>
 </head>
 <body>
@@ -5043,11 +5066,31 @@ function horasFunc(fId){
   return Object.values(S.grade[fId]||{}).reduce((a,h)=>a+(+h||0),0);
 }
 
-// Custo com pessoal por turma do mês aberto. Usa a MESMA regra do Histórico Mensal
-// (custoPessoalPorTurmaOf): só a fatia da Sociedade de cada funcionário entra no rateio
-// (descontando Cantina/TMS/TS) e respeita o critério de rateio do funcionário (grade ou faturamento).
 function custoPessoalPorTurma(){
-  return custoPessoalPorTurmaOf(S, currentComp);
+  const r={};
+  S.turmas.forEach(t=>r[t.id]=0);
+  S.funcs.filter(f=>f.ativo!==false).forEach(f=>{
+    const ct=custoFunc(f);
+    const gh=S.grade[f.id]||{};
+    // Horistas: peso = horas × valor_hr_aula (custo real por turma)
+    // Não-horistas: peso = apenas horas (salário fixo rateado proporcional às horas)
+    const isHorista=(f.regime==='HORISTA');
+    const pesoPorTurma={};
+    let totPeso=0;
+    S.turmas.forEach(t=>{
+      const h=+(gh[t.id]||0);
+      const hra=+(t.hra||0);
+      const peso = isHorista && hra>0 ? h*hra : h;
+      pesoPorTurma[t.id]=peso;
+      totPeso+=peso;
+    });
+    if(totPeso===0) return;
+    S.turmas.forEach(t=>{
+      const peso=pesoPorTurma[t.id];
+      if(peso>0) r[t.id]=(r[t.id]||0)+(peso/totPeso)*ct;
+    });
+  });
+  return r;
 }
 
 function custoDespPorTurma(){
@@ -6405,6 +6448,218 @@ async function bootApp(){
   sb.auth.onAuthStateChange((event, session)=>{
     if(event === 'SIGNED_OUT'){ location.reload(); }
   });
+})();
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════
+   FILTROS NOS CABEÇALHOS DAS TABELAS (estilo Excel)
+   Cada cabeçalho de tabela ganha um botão ▾ com: filtrar por valores, buscar texto, faixa numérica
+   e (nas tabelas que não têm ordenação própria) ordenar. Funciona em todas as tabelas do sistema,
+   inclusive as que são redesenhadas pelo próprio sistema (o filtro é reaplicado sozinho).
+   Os totais de rodapé que são somas passam a somar só as linhas exibidas. Só muda a visualização:
+   nenhum dado é alterado nem gravado.
+═══════════════════════════════════════════════════════ */
+(function(){
+'use strict';
+if(window.__tfFiltros) return; window.__tfFiltros = true;
+const ST = new Map(), TBL = new Map();
+let POP = null, obs = null, timer = null;
+const pop = document.createElement('div'); pop.id = 'tf-pop'; pop.className = 'tf-pop'; document.body.appendChild(pop);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const NUM_RE = /^[+\-−]?\s*(R\$)?\s*[+\-−]?\s*(\d{1,3}(\.\d{3})+|\d+)(,\d+)?\s*(%|p\.p\.)?$/;
+function parseNum(t){
+  if(!NUM_RE.test(t)) return null;
+  const neg = /^[\s]*[\-−]|[\-−]\s*\d/.test(t);
+  const v = parseFloat(t.replace(/R\$|%|p\.p\.|[\s\u00a0+\-−]/g,'').replace(/\./g,'').replace(',','.'));
+  return isNaN(v) ? null : (neg ? -v : v);
+}
+function cellText(td){
+  if(!td) return '';
+  const inp = td.querySelector('input:not([type=checkbox]):not([type=radio]):not([type=hidden]), select, textarea');
+  let t;
+  if(inp) t = inp.tagName === 'SELECT' ? (inp.selectedOptions[0] ? inp.selectedOptions[0].textContent : inp.value) : inp.value;
+  else {
+    const cb = td.querySelector('input[type=checkbox]');
+    if(cb && !td.textContent.trim()) return cb.checked ? 'Sim' : 'Não';
+    t = td.textContent;
+  }
+  return String(t).replace(/\s+/g,' ').trim();
+}
+function tkey(t){
+  if(t.id) return 'id:' + t.id;
+  const tb = t.tBodies[0]; if(tb && tb.id) return 'tb:' + tb.id;
+  const tab = t.closest('.tab-section'), all = Array.from((tab || document).querySelectorAll('table'));
+  return (tab ? tab.id : 'doc') + '#' + all.indexOf(t);
+}
+function labelOf(th){
+  let s = ''; th.childNodes.forEach(n => { if(n.nodeType === 1 && n.classList.contains('tf-btn')) return; s += n.textContent; });
+  return s.replace(/\s+/g,' ').trim();
+}
+function info(t){
+  if(!t.tHead || !t.tHead.rows.length || !t.tBodies[0]) return null;
+  const hr = t.tHead.rows[t.tHead.rows.length - 1]; if(!hr.cells.length) return null;
+  const cols = []; let c = 0;
+  Array.from(hr.cells).forEach(th => { cols.push({th, idx:c, span:th.colSpan || 1, label:labelOf(th)}); c += th.colSpan || 1; });
+  const tb = t.tBodies[0], rows = Array.from(tb.rows), data = rows.filter(r => r.cells.length === c);
+  return {t, cols, ncols:c, tb, rows, data, flat:data.length === rows.length, sig:cols.map(x => x.label).join('|')};
+}
+function pass(r, idx, c){
+  const tx = cellText(r.cells[idx]);
+  if(c.sel && c.sel.indexOf(tx) < 0) return false;
+  if(c.q && tx.toLowerCase().indexOf(c.q.toLowerCase()) < 0) return false;
+  if(c.min != null || c.max != null){
+    const v = parseNum(tx); if(v == null) return false;
+    if(c.min != null && v < c.min - 1e-9) return false;
+    if(c.max != null && v > c.max + 1e-9) return false;
+  }
+  return true;
+}
+function apply(t){
+  const I = info(t); if(!I) return;
+  const key = tkey(t); TBL.set(key, t);
+  let st = ST.get(key); if(st && st.sig !== I.sig){ ST.delete(key); st = null; }
+  const f = (st && st.f) || {}, active = Object.keys(f).length > 0, sort = st && st.sort;
+  // botões ▾ nos cabeçalhos
+  I.cols.forEach(col => {
+    if(col.span > 1) return;
+    let b = Array.from(col.th.children).find(x => x.classList.contains('tf-btn'));
+    if(!b){ b = document.createElement('span'); b.className = 'tf-btn'; b.textContent = '▾'; b.title = 'Filtrar esta coluna'; col.th.appendChild(b); }
+    b.dataset.c = col.idx; b.classList.toggle('on', !!f[col.idx] || !!(sort && sort.c === col.idx));
+  });
+  // ordenação (só tabelas simples; a ordem original é guardada para poder voltar)
+  if(I.flat && I.data.length > 1){
+    if(sort){
+      let max = -1; I.data.forEach(r => { if(r.dataset.tfi !== undefined) max = Math.max(max, +r.dataset.tfi); });
+      I.data.forEach(r => { if(r.dataset.tfi === undefined) r.dataset.tfi = ++max; });
+      const c = sort.c, dir = sort.dir, ord = I.data.slice().sort((a, b) => {
+        const x = cellText(a.cells[c]), y = cellText(b.cells[c]), nx = parseNum(x), ny = parseNum(y); let k;
+        if(x === '' && y !== '') return 1; if(y === '' && x !== '') return -1;
+        k = (nx != null && ny != null) ? (nx - ny) * dir : x.localeCompare(y, 'pt-BR', {numeric:true}) * dir;
+        return k || (+a.dataset.tfi - +b.dataset.tfi);
+      });
+      if(ord.some((r, i) => r !== I.data[i])) ord.forEach(r => I.tb.appendChild(r));
+      I.tb.dataset.tfSorted = '1';
+    } else if(I.tb.dataset.tfSorted === '1'){
+      const ord = I.data.slice().sort((a, b) => +a.dataset.tfi - +b.dataset.tfi);
+      if(ord.some((r, i) => r !== I.data[i])) ord.forEach(r => I.tb.appendChild(r));
+      delete I.tb.dataset.tfSorted;
+    }
+  }
+  // filtro
+  let shown = 0;
+  I.data.forEach(r => { let ok = true; for(const k in f){ if(!pass(r, +k, f[k])){ ok = false; break; } } r.classList.toggle('tf-hide', !ok); if(ok) shown++; });
+  // linhas separadoras (grupos/subgrupos): somem quando não sobra nenhuma linha de dados abaixo delas
+  if(!I.flat && I.data.length){
+    let sep = null, any = false;
+    const flush = () => { if(sep) sep.classList.toggle('tf-hide', active && !any); };
+    Array.from(I.tb.rows).forEach(r => { if(r.cells.length === I.ncols){ if(!r.classList.contains('tf-hide')) any = true; } else { flush(); sep = r; any = false; } });
+    flush();
+  }
+  updateBar(I, key, active, shown);
+  updateFoot(I, active);
+}
+function updateBar(I, key, active, shown){
+  const host = I.t.closest('.tbl-wrap') || I.t, st = ST.get(key);
+  let bar = host.previousElementSibling; if(!(bar && bar.classList.contains('tf-bar'))) bar = null;
+  if(!active){ if(bar) bar.remove(); return; }
+  if(!bar){ bar = document.createElement('div'); bar.className = 'tf-bar'; host.parentNode.insertBefore(bar, host); }
+  bar.dataset.k = key;
+  const nomes = Object.keys(st.f).map(k => { const c = I.cols.find(x => x.idx === +k); return c ? c.label : ''; }).filter(Boolean).join(', ');
+  bar.innerHTML = `<b>Filtro ativo</b> (${esc(nomes)}): ${shown} de ${I.data.length} linhas <button type="button" class="tf-clear">Limpar filtros</button>`;
+}
+// totais de rodapé que são soma da coluna passam a somar só as linhas exibidas
+function updateFoot(I, active){
+  const tf = I.t.tFoot; if(!tf || tf.rows.length !== 1) return;
+  let c = 0;
+  Array.from(tf.rows[0].cells).forEach(cell => {
+    const span = cell.colSpan || 1, idx = c; c += span; if(span > 1 || cell.children.length) return;
+    if(!active){ if(cell.dataset.tfm !== undefined){ cell.textContent = cell.dataset.tfo; delete cell.dataset.tfm; delete cell.dataset.tfo; } return; }
+    const orig = cell.dataset.tfo !== undefined ? cell.dataset.tfo : cell.textContent.trim(), F = parseNum(orig);
+    if(F == null || /%/.test(orig)) return;
+    let all = 0, vis = 0, okAll = true;
+    I.data.forEach(r => { const v = parseNum(cellText(r.cells[idx])); if(v == null){ okAll = false; return; } all += v; if(!r.classList.contains('tf-hide')) vis += v; });
+    if(!okAll || Math.abs(all - F) > Math.max(0.02, Math.abs(F) * 0.0005)) return;
+    const dec = (orig.match(/,(\d+)/) || [0, ''])[1].length, pre = (orig.replace(/[\-−+]/g, '').match(/^[^\d]*/) || [''])[0];
+    cell.dataset.tfo = orig; cell.dataset.tfm = '1';
+    cell.textContent = (vis < 0 ? '-' : '') + pre + Math.abs(vis).toLocaleString('pt-BR', {minimumFractionDigits:dec, maximumFractionDigits:dec});
+  });
+}
+/* ── menu do cabeçalho ── */
+function stOf(key, sig){ let st = ST.get(key); if(!st){ st = {f:{}, sort:null, sig}; ST.set(key, st); } if(!st.f) st.f = {}; return st; }
+function limpaVazio(key){ const st = ST.get(key); if(st && !st.sort && !Object.keys(st.f).length) ST.delete(key); }
+function closePop(){ POP = null; pop.style.display = 'none'; }
+function openPop(t, c, btn){ const r = btn.getBoundingClientRect(); POP = {key:tkey(t), c:+c, x:Math.max(8, Math.min(r.left, window.innerWidth - 300)), y:r.bottom + 4, q:''}; renderPop(); }
+function renderPop(focusQ){
+  if(!POP) return;
+  const t = TBL.get(POP.key), I = t && info(t); if(!I){ closePop(); return; }
+  const col = I.cols.find(x => x.idx === POP.c); if(!col){ closePop(); return; }
+  const st = ST.get(POP.key) || {f:{}, sort:null}, f = (st.f && st.f[POP.c]) || {};
+  const texts = I.data.map(r => cellText(r.cells[POP.c])), ne = texts.filter(x => x !== '');
+  const numeric = ne.length > 0 && ne.filter(x => parseNum(x) != null).length / ne.length >= 0.8;
+  const vals = Array.from(new Set(texts)).sort((a, b) => { const x = parseNum(a), y = parseNum(b); if(x != null && y != null) return x - y; return a.localeCompare(b, 'pt-BR', {numeric:true}); });
+  const q = (POP.q || '').toLowerCase(), filt = vals.filter(v => !q || v.toLowerCase().indexOf(q) >= 0), shown = filt.slice(0, 250), sel = f.sel ? new Set(f.sel) : null;
+  const nativo = col.th.classList.contains('sortable'), podeOrdenar = I.flat && !nativo, dirHere = st.sort && st.sort.c === POP.c ? st.sort.dir : 0;
+  pop.innerHTML = `<div class="tf-ph"><b>${esc(col.label || 'Coluna')}</b><button type="button" class="tf-x" data-p="close" title="Fechar">✕</button></div>
+    ${podeOrdenar ? `<div class="tf-pr"><button type="button" class="tf-b${dirHere === 1 ? ' on' : ''}" data-p="asc">${numeric ? 'Menor → maior' : 'A → Z'}</button><button type="button" class="tf-b${dirHere === -1 ? ' on' : ''}" data-p="desc">${numeric ? 'Maior → menor' : 'Z → A'}</button><button type="button" class="tf-b" data-p="nosort">Sem ordem</button></div>` : (nativo ? '<div class="tf-note">Para ordenar, clique no título da coluna.</div>' : '')}
+    ${numeric ? `<div class="tf-pr">Entre <input type="text" id="tf-min" value="${f.min != null ? f.min : ''}" placeholder="mín"> e <input type="text" id="tf-max" value="${f.max != null ? f.max : ''}" placeholder="máx"> <button type="button" class="tf-b" data-p="range">OK</button></div>` : ''}
+    <div class="tf-pr"><input type="text" id="tf-q" placeholder="Buscar na lista…" value="${esc(POP.q || '')}" style="flex:1"><button type="button" class="tf-b" data-p="contains" title="Filtrar as linhas que contêm este texto">Contém</button></div>
+    <div class="tf-pr"><button type="button" class="tf-b" data-p="all">Marcar todos</button><button type="button" class="tf-b" data-p="none">Desmarcar todos</button><button type="button" class="tf-b" data-p="clear">Limpar coluna</button></div>
+    <div class="tf-pl">${shown.map(v => `<label><input type="checkbox" data-pv="${esc(v)}" ${!sel || sel.has(v) ? 'checked' : ''}> ${v === '' ? '<i>(vazio)</i>' : esc(v)}</label>`).join('') || '<div class="tf-note">Nada encontrado</div>'}${filt.length > shown.length ? `<div class="tf-note">+${filt.length - shown.length} valores; refine a busca</div>` : ''}</div>`;
+  pop.style.display = 'block'; pop.style.left = POP.x + 'px'; pop.style.top = Math.max(8, Math.min(POP.y, window.innerHeight - pop.offsetHeight - 8)) + 'px';
+  if(focusQ){ const i = document.getElementById('tf-q'); if(i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
+}
+function reaplica(){ const t = POP && TBL.get(POP.key); refresh(); if(POP) renderPop(); return t; }
+const tfNum = s => { s = String(s == null ? '' : s).trim().replace(/\s/g, ''); if(!s) return null; if(/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, ''); else if(s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.'); const v = parseFloat(s); return isNaN(v) ? null : v; };
+document.addEventListener('click', e => {
+  if(e.composedPath && e.composedPath().indexOf(pop) >= 0) return;
+  const b = e.target.closest && e.target.closest('.tf-btn');
+  if(b){ e.stopPropagation(); e.preventDefault(); const t = b.closest('table'); if(POP && POP.key === tkey(t) && POP.c === +b.dataset.c) closePop(); else openPop(t, b.dataset.c, b); return; }
+  const clr = e.target.closest && e.target.closest('.tf-clear');
+  if(clr){ const bar = clr.closest('.tf-bar'); ST.delete(bar.dataset.k); closePop(); refresh(); return; }
+  if(POP) closePop();
+}, true);
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closePop(); });
+pop.addEventListener('click', e => {
+  const b = e.target.closest('[data-p]'); if(!b || !POP) return;
+  const a = b.dataset.p, key = POP.key, c = POP.c, t = TBL.get(key), I = t && info(t); if(!I) return;
+  if(a === 'close'){ closePop(); return; }
+  const st = stOf(key, I.sig);
+  if(a === 'asc' || a === 'desc') st.sort = {c, dir:a === 'asc' ? 1 : -1};
+  else if(a === 'nosort') st.sort = null;
+  else {
+    const f = st.f[c] = st.f[c] || {};
+    if(a === 'range'){ const mn = tfNum(document.getElementById('tf-min').value), mx = tfNum(document.getElementById('tf-max').value); if(mn == null) delete f.min; else f.min = mn; if(mx == null) delete f.max; else f.max = mx; }
+    if(a === 'contains'){ if(POP.q) f.q = POP.q; else delete f.q; }
+    if(a === 'all'){ delete f.sel; delete f.q; }
+    if(a === 'none') f.sel = [];
+    if(a === 'clear'){ delete st.f[c]; if(st.sort && st.sort.c === c) st.sort = null; }
+    if(st.f[c] && !Object.keys(st.f[c]).length) delete st.f[c];
+  }
+  limpaVazio(key); reaplica();
+});
+pop.addEventListener('change', e => {
+  const cb = e.target.closest('[data-pv]'); if(!cb || !POP) return;
+  const key = POP.key, c = POP.c, t = TBL.get(key), I = t && info(t); if(!I) return;
+  const col = I.cols.find(x => x.idx === c), all = Array.from(new Set(I.data.map(r => cellText(r.cells[c]))));
+  const st = stOf(key, I.sig), f = st.f[c] = st.f[c] || {}, cur = new Set(f.sel ? f.sel : all);
+  if(cb.checked) cur.add(cb.dataset.pv); else cur.delete(cb.dataset.pv);
+  if(cur.size >= all.length) delete f.sel; else f.sel = Array.from(cur);
+  if(!Object.keys(f).length) delete st.f[c];
+  limpaVazio(key); reaplica();
+});
+pop.addEventListener('input', e => { if(e.target.id === 'tf-q' && POP){ POP.q = e.target.value; renderPop(true); } });
+/* ── varredura: decora e reaplica os filtros sempre que o sistema redesenha uma tabela ── */
+function refresh(){
+  obs.disconnect();
+  try{ document.querySelectorAll('table').forEach(t => { if(t.closest('#tf-pop')) return; try{ apply(t); }catch(err){ console.error('filtros', err); } }); }
+  finally{ obs.takeRecords(); obs.observe(document.body, {childList:true, subtree:true}); }
+}
+obs = new MutationObserver(muts => {
+  const fora = muts.some(m => { const el = m.target.nodeType === 1 ? m.target : m.target.parentElement; return !(el && el.closest && el.closest('#tf-pop, .tf-bar')); });
+  if(!fora) return; clearTimeout(timer); timer = setTimeout(() => { refresh(); if(POP) renderPop(); }, 70);
+});
+refresh();
+window.__tfFiltros = {refresh, estado:ST};
 })();
 </script>
 </body>
